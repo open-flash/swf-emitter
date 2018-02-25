@@ -1,0 +1,56 @@
+{
+  "name": "swf-emitter",
+  "version": "0.0.1",
+  "description": "SWF files emitter",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "keywords": [
+    "swf",
+    "parser"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "prepare": "gulp all:tsconfig.json && gulp :tslint.json && gulp dist",
+    "test": "gulp :lint && gulp test",
+    "prestart": "gulp main:build",
+    "start": "node build/main/main/main.js",
+    "prepublishOnly": "npm test",
+    "lint": "gulp :lint:fix"
+  },
+  "dependencies": {
+    "incident": "^3.1.1",
+    "semantic-types": "^0.1.1",
+    "swf-tree": "^0.0.13"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^2.2.48",
+    "@types/node": "^9.4.5",
+    "bson": "^1.0.4",
+    "chai": "^4.1.2",
+    "gulp": "^4.0.0",
+    "gulp-cli": "^2.0.1",
+    "kryo": "^0.7.0-beta.2",
+    "minimist": "^1.2.0",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.9.1",
+    "turbo-gulp": "^0.16.2",
+    "typescript": "^2.7.1"
+  },
+  "nyc": {
+    "include": [
+      "build/test/lib/**/*.js",
+      "build/test/lib/**/*.mjs"
+    ],
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "extension": [
+      ".mjs"
+    ]
+  },
+  "@std/esm": {
+    "esm": "cjs"
+  }
+}
