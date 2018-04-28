@@ -150,7 +150,7 @@ export function emitStyleChangeBits(
   lineBits: UintSize,
   shapeVersion: ShapeVersion,
 ): [UintSize, UintSize] {
-  const hasNewStyles: boolean = value.fillStyles !== undefined && value.lineStyles !== undefined;
+  const hasNewStyles: boolean = value.newStyles !== undefined;
   const changeLineStyle: boolean = value.lineStyle !== undefined;
   const changeRightFill: boolean = value.rightFill !== undefined;
   const changeLeftFill: boolean = value.leftFill !== undefined;
@@ -180,10 +180,7 @@ export function emitStyleChangeBits(
   }
 
   if (hasNewStyles) {
-    [fillBits, lineBits] = emitShapeStylesBits(bitStream, {
-      fill: value.fillStyles!,
-      line: value.lineStyles!,
-    }, shapeVersion);
+    [fillBits, lineBits] = emitShapeStylesBits(bitStream, value.newStyles!, shapeVersion);
   }
 
   return [fillBits, lineBits];

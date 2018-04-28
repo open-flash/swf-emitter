@@ -1,18 +1,6 @@
 import { Incident } from "incident";
-import { Float32, Uint16, Uint32, Uint4, Uint5, Uint8, UintSize } from "semantic-types";
-import {
-  avm1,
-  BlendMode,
-  ClipActions,
-  ClipEventFlags,
-  ColorStop,
-  Filter,
-  filters,
-  FilterType,
-  Fixed16P16,
-  Fixed8P8,
-  StraightSRgba8,
-} from "swf-tree";
+import { Uint16, Uint32, Uint8 } from "semantic-types";
+import { BlendMode, ClipActions, ClipEventFlags, Filter, filters, FilterType, Sfixed16P16, Sfixed8P8 } from "swf-tree";
 import { ByteStream, Stream } from "../stream";
 import { emitActionsBlock } from "./avm1";
 import { emitStraightSRgba8 } from "./basic-data-types";

@@ -1,7 +1,6 @@
 import { Incident } from "incident";
 import { Float16, Float32, Float64, Sint16, Sint32, Sint8, Uint16, Uint32, Uint8, UintSize } from "semantic-types";
-import { Fixed16P16, Fixed8P8, Ufixed16P16, Ufixed8P8 } from "swf-tree";
-import { createIncompleteStreamError } from "./errors/incomplete-stream";
+import { Sfixed16P16, Sfixed8P8, Ufixed16P16, Ufixed8P8 } from "swf-tree";
 import { concatBytes } from "./concat-bytes";
 
 /**
@@ -27,7 +26,7 @@ export interface BitStream {
 
   writeUint32Bits(n: UintSize, value: Uint32): void;
 
-  writeFixed16P16Bits(n: UintSize, value: Fixed16P16): void;
+  writeFixed16P16Bits(n: UintSize, value: Sfixed16P16): void;
 }
 
 /**
@@ -74,11 +73,11 @@ export interface ByteStream {
 
   writeFloat64LE(value: Float64): void;
 
-  writeFixed8P8LE(value: Fixed8P8): void;
+  writeFixed8P8LE(value: Sfixed8P8): void;
 
   writeUfixed8P8LE(value: Ufixed8P8): void;
 
-  writeFixed16P16LE(value: Fixed16P16): void;
+  writeFixed16P16LE(value: Sfixed16P16): void;
 
   writeUfixed16P16LE(value: Ufixed16P16): void;
 
@@ -251,7 +250,7 @@ export class Stream implements BitStream, ByteStream {
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 8)));
   }
 
-  writeFixed8P8LE(value: Fixed8P8): void {
+  writeFixed8P8LE(value: Sfixed8P8): void {
     this.writeSint16LE(value.epsilons);
   }
 
@@ -259,7 +258,7 @@ export class Stream implements BitStream, ByteStream {
     this.writeUint16LE(value.epsilons);
   }
 
-  writeFixed16P16LE(value: Fixed16P16): void {
+  writeFixed16P16LE(value: Sfixed16P16): void {
     this.writeSint32LE(value.epsilons);
   }
 
@@ -293,7 +292,7 @@ export class Stream implements BitStream, ByteStream {
     this.writeUintBits(n, value);
   }
 
-  writeFixed16P16Bits(n: number, value: Fixed16P16): void {
+  writeFixed16P16Bits(n: number, value: Sfixed16P16): void {
     this.writeSintBits(n, value.epsilons);
   }
 

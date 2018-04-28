@@ -289,11 +289,11 @@ export function emitActionValue(byteStream: ByteStream, value: avm1.Value): void
         byteStream.writeUint8(value.value as Uint8);
       }
       break;
-    case avm1.ValueType.CString:
+    case avm1.ValueType.String:
       byteStream.writeUint8(0);
       byteStream.writeCString(value.value);
       break;
-    case avm1.ValueType.Int32:
+    case avm1.ValueType.Sint32:
       byteStream.writeUint8(7);
       byteStream.writeSint32LE(value.value);
       break;

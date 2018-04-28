@@ -46,8 +46,8 @@ export function emitGradient(byteStream: ByteStream, value: Gradient, withAlpha:
 }
 
 export function emitMorphColorStop(byteStream: ByteStream, value: MorphColorStop, withAlpha: boolean): void {
-  emitColorStop(byteStream, {ratio: value.startRatio, color: value.startColor}, withAlpha);
-  emitColorStop(byteStream, {ratio: value.endRatio, color: value.endColor}, withAlpha);
+  emitColorStop(byteStream, {ratio: value.ratio, color: value.color}, withAlpha);
+  emitColorStop(byteStream, {ratio: value.morphRatio, color: value.morphColor}, withAlpha);
 }
 
 export function emitMorphGradient(byteStream: ByteStream, value: MorphGradient, withAlpha: boolean): void {
