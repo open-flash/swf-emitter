@@ -100,6 +100,7 @@ export function emitAction(byteStream: ByteStream, value: avm1.Action): void {
     [avm1.ActionType.PushDuplicate, 0x4c],
     [avm1.ActionType.RandomNumber, 0x30],
     [avm1.ActionType.Return, 0x3e],
+    [avm1.ActionType.RemoveSprite, 0x25],
     [avm1.ActionType.SetMember, 0x4f],
     [avm1.ActionType.SetProperty, 0x23],
     [avm1.ActionType.SetTarget, [emitSetTargetAction, 0x8b]],
@@ -135,7 +136,7 @@ export function emitAction(byteStream: ByteStream, value: avm1.Action): void {
   const actionEmitter: ActionEmitter | undefined = ACTION_TYPE_TO_EMITTER.get(value.action);
 
   if (actionEmitter === undefined) {
-    throw new Incident("UnexpectedAction");
+    throw new Incident("UnexpectedAction", {type: value.action, typeName: avm1.ActionType[value.action]});
   }
 
   if (typeof actionEmitter === "number") {

@@ -1,9 +1,9 @@
 import * as fs from "fs";
-import { JsonValueWriter } from "kryo/writers/json-value";
+import { JsonReader } from "kryo/readers/json";
 import * as sysPath from "path";
-import { Movie } from "swf-tree";
+import { CompressionMethod, Movie } from "swf-tree";
 import { $Movie } from "swf-tree/movie";
-import { parseMovie } from "../lib/emitters/movie";
+import { emitMovie } from "../lib/emitters/movie";
 import { Stream } from "../lib/stream";
 
 async function main(): Promise<void> {
@@ -13,10 +13,11 @@ async function main(): Promise<void> {
   }
   const filePath: string = process.argv[2];
   const absFilePath: string = sysPath.resolve(filePath);
-  const data: Buffer = fs.readFileSync(absFilePath);
-  const byteStream: Stream = new Stream(data);
-  const result: Movie = parseMovie(byteStream);
-  console.log(JSON.stringify($Movie.write(new JsonValueWriter(), result), null, 2));
+  const raw: string = fs.readFileSync(absFilePath, {encoding: "UTF-8"});
+  const movie: Movie = $Movie.read(new JsonReader(), raw);
+  const byteStream: Stream = new Stream();
+  emitMovie(byteStream, movie, CompressionMethod.None);
+  fs.writeFileSync("movie.swf", byteStream.getBytes(), {encoding: null});
 }
 
 main()

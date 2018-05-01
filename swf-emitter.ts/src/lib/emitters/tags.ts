@@ -58,8 +58,11 @@ function emitTagHeader(byteStream: ByteStream, value: TagHeader): void {
 
 // tslint:disable-next-line:cyclomatic-complexity
 export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): void {
-  type TagEmitter = number
-    | [(byteStream: ByteStream, value: Tag, swfVersion?: Uint8) => any, number | Map<any, number>];
+  type TagEmitter = number | [(
+    byteStream: ByteStream,
+    value: Tag,
+    swfVersion?: Uint8
+  ) => any, number | Map<any, number>];
 
   const TAG_TYPE_TO_EMITTER: Map<TagType, TagEmitter> = new Map<TagType, TagEmitter>([
     [TagType.CsmTextSettings, <TagEmitter> [emitCsmTextSettings, 74]],
@@ -110,15 +113,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
         ]),
       ],
     ],
-    [
-      TagType.DefineSprite,
-      <TagEmitter> [
-        emitDefineSprite,
-        new Map([
-          [DefineTextVersion.DefineText1, 11],
-        ]),
-      ],
-    ],
+    [TagType.DefineSprite, <TagEmitter> [emitDefineSprite, 39]],
     [
       TagType.DefineText,
       <TagEmitter> [
@@ -168,6 +163,12 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
     [TagType.SetBackgroundColor, <TagEmitter> [emitSetBackgroundColor, 9]],
     [TagType.ShowFrame, 1],
   ]);
+
+  if (value.type === TagType.Unknown) {
+    emitTagHeader(byteStream, {code: value.code, length: value.data.length});
+    byteStream.writeBytes(value.data);
+    return;
+  }
 
   const tagEmitter: TagEmitter | undefined = TAG_TYPE_TO_EMITTER.get(value.type);
 
