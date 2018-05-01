@@ -6,7 +6,6 @@ import { MorphLineStyle } from "swf-tree/morph-line-style";
 import { MorphShape } from "swf-tree/morph-shape";
 import { MorphShapeRecord } from "swf-tree/morph-shape-record";
 import { ShapeRecordType } from "swf-tree/shape-records/_type";
-import { getBitCount } from "../get-bit-count";
 import { BitStream, ByteStream, Stream } from "../stream";
 import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types";
 import { emitMorphGradient } from "./gradient";
@@ -14,6 +13,7 @@ import { emitCurvedEdgeBits, emitListLength, emitStraightEdgeBits, getCapStyleCo
 import { MorphStyleChange } from "swf-tree/shape-records";
 import * as fillStyles from "swf-tree/fill-styles/index";
 import { FillStyleType } from "swf-tree";
+import { getMinSintBitCount, getUintBitCount } from "../get-bit-count";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,
@@ -78,8 +78,8 @@ export function emitMorphShapeStylesBits(
   const byteStream: ByteStream = bitStream.asByteStream();
   emitMorphFillStyleList(byteStream, value.fill);
   emitMorphLineStyleList(byteStream, value.line, morphShapeVersion);
-  const fillBits: UintSize = getBitCount(value.fill.length + 1); // `+ 1` because of empty style
-  const lineBits: UintSize = getBitCount(value.line.length + 1); // `+ 1` because of empty style
+  const fillBits: UintSize = getUintBitCount(value.fill.length + 1); // `+ 1` because of empty style
+  const lineBits: UintSize = getUintBitCount(value.line.length + 1); // `+ 1` because of empty style
   bitStream.writeUint32Bits(4, fillBits);
   bitStream.writeUint32Bits(4, lineBits);
   return [fillBits, lineBits];
@@ -149,10 +149,10 @@ export function emitMorphShapeEndRecordStringBits(
       if (record.morphMoveTo === undefined) {
         throw new Incident("UndefinedEndMoveTo");
       }
-      const bitCount: UintSize = getBitCount(record.morphMoveTo.x, record.morphMoveTo.y);
+      const bitCount: UintSize = getMinSintBitCount(record.morphMoveTo.x, record.morphMoveTo.y);
       bitStream.writeUint16Bits(5, bitCount);
-      bitStream.writeSint32Bits(bitCount, record.moveTo!.x);
-      bitStream.writeSint32Bits(bitCount, record.moveTo!.y);
+      bitStream.writeSint32Bits(bitCount, record.morphMoveTo.x);
+      bitStream.writeSint32Bits(bitCount, record.morphMoveTo.y);
     } else {
       bitStream.writeBoolBits(true); // isEdge
       if (record.type === ShapeRecordType.CurvedEdge) {
@@ -210,7 +210,7 @@ export function emitMorphStyleChangeBits(
   bitStream.writeBoolBits(hasMoveTo);
 
   if (hasMoveTo) {
-    const bitCount: UintSize = getBitCount(value.moveTo!.x, value.moveTo!.y);
+    const bitCount: UintSize = getMinSintBitCount(value.moveTo!.x, value.moveTo!.y);
     bitStream.writeUint16Bits(5, bitCount);
     bitStream.writeSint32Bits(bitCount, value.moveTo!.x);
     bitStream.writeSint32Bits(bitCount, value.moveTo!.y);

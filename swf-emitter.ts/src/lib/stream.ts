@@ -26,7 +26,7 @@ export interface BitStream {
 
   writeUint32Bits(n: UintSize, value: Uint32): void;
 
-  writeFixed16P16Bits(n: UintSize, value: Sfixed16P16): void;
+  writeSfixed16P16Bits(n: UintSize, value: Sfixed16P16): void;
 }
 
 /**
@@ -112,6 +112,7 @@ export class Stream implements BitStream, ByteStream {
 
   align(): void {
     if (this.bitPos !== 0) {
+      this.writeUint8(this.bitsBuffer);
       this.bitPos = 0;
       this.bytePos++;
     }
@@ -292,7 +293,7 @@ export class Stream implements BitStream, ByteStream {
     this.writeUintBits(n, value);
   }
 
-  writeFixed16P16Bits(n: number, value: Sfixed16P16): void {
+  writeSfixed16P16Bits(n: number, value: Sfixed16P16): void {
     this.writeSintBits(n, value.epsilons);
   }
 

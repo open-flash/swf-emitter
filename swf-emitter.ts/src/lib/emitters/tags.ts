@@ -1,7 +1,6 @@
 import { Incident } from "incident";
 import { Uint16, Uint32, Uint8, UintSize } from "semantic-types";
 import { Tag, tags, TagType } from "swf-tree";
-import { getBitCount } from "../get-bit-count";
 import { BitStream, ByteStream, Stream } from "../stream";
 import { emitActionsString } from "./avm1";
 import {
@@ -27,6 +26,7 @@ import {
   emitTextRecordString,
   emitTextRendererBits,
 } from "./text";
+import { getUintBitCount } from "../get-bit-count";
 
 /**
  * Read tags until the end of the stream or "end-of-tags".
@@ -482,8 +482,8 @@ export function emitDefineTextAny(byteStream: ByteStream, value: tags.DefineText
       hasAlpha = true;
     }
     for (const entry of record.entries) {
-      indexBits = Math.max(indexBits, getBitCount(entry.index));
-      advanceBits = Math.max(advanceBits, getBitCount(entry.advance));
+      indexBits = Math.max(indexBits, getUintBitCount(entry.index));
+      advanceBits = Math.max(advanceBits, getUintBitCount(entry.advance));
     }
   }
   byteStream.writeUint8(indexBits);

@@ -1,7 +1,123 @@
 import { Incident } from "incident";
-import { Uint16, Uint2, Uint8 } from "semantic-types";
+import { Uint16, Uint2, Uint8, UintSize } from "semantic-types";
 import { avm1 } from "swf-tree";
 import { ByteStream, Stream } from "../stream";
+import { RawAction } from "swf-parser/parsers/avm1";
+
+export interface RawIf {
+  action: avm1.ActionType.If,
+  byteOffset: Uint16,
+}
+
+export interface RawJump {
+  action: avm1.ActionType.Jump,
+  byteOffset: Uint16,
+}
+
+// avm1.Action where If is replaced by RawIf and Jump by RawJump
+export type RawAction =
+  avm1.actions.Unknown
+  | avm1.actions.Add
+  | avm1.actions.Add2
+  | avm1.actions.And
+  | avm1.actions.AsciiToChar
+  | avm1.actions.BitAnd
+  | avm1.actions.BitLShift
+  | avm1.actions.BitOr
+  | avm1.actions.BitRShift
+  | avm1.actions.BitURShift
+  | avm1.actions.BitXor
+  | avm1.actions.Call
+  | avm1.actions.CallFunction
+  | avm1.actions.CallMethod
+  | avm1.actions.CastOp
+  | avm1.actions.CharToAscii
+  | avm1.actions.CloneSprite
+  | avm1.actions.ConstantPool
+  | avm1.actions.Decrement
+  | avm1.actions.DefineFunction
+  | avm1.actions.DefineFunction2
+  | avm1.actions.DefineLocal
+  | avm1.actions.DefineLocal2
+  | avm1.actions.Delete
+  | avm1.actions.Delete2
+  | avm1.actions.Divide
+  | avm1.actions.EndDrag
+  | avm1.actions.Enumerate
+  | avm1.actions.Enumerate2
+  | avm1.actions.Equals
+  | avm1.actions.Equals2
+  | avm1.actions.Extends
+  | avm1.actions.FsCommand2
+  | avm1.actions.GetMember
+  | avm1.actions.GetProperty
+  | avm1.actions.GetTime
+  | avm1.actions.GetUrl
+  | avm1.actions.GetUrl2
+  | avm1.actions.GetVariable
+  | avm1.actions.GotoFrame
+  | avm1.actions.GotoFrame2
+  | avm1.actions.GotoLabel
+  | avm1.actions.Greater
+  | RawIf
+  | avm1.actions.ImplementsOp
+  | avm1.actions.Increment
+  | avm1.actions.InitArray
+  | avm1.actions.InitObject
+  | avm1.actions.InstanceOf
+  | RawJump
+  | avm1.actions.Less
+  | avm1.actions.Less2
+  | avm1.actions.MbAsciiToChar
+  | avm1.actions.MbCharToAscii
+  | avm1.actions.MbStringExtract
+  | avm1.actions.MbStringLength
+  | avm1.actions.Modulo
+  | avm1.actions.Multiply
+  | avm1.actions.NewMethod
+  | avm1.actions.NewObject
+  | avm1.actions.NextFrame
+  | avm1.actions.Not
+  | avm1.actions.Or
+  | avm1.actions.Play
+  | avm1.actions.Pop
+  | avm1.actions.PreviousFrame
+  | avm1.actions.Push
+  | avm1.actions.PushDuplicate
+  | avm1.actions.RandomNumber
+  | avm1.actions.RemoveSprite
+  | avm1.actions.Return
+  | avm1.actions.SetMember
+  | avm1.actions.SetProperty
+  | avm1.actions.SetTarget
+  | avm1.actions.SetTarget2
+  | avm1.actions.SetVariable
+  | avm1.actions.StackSwap
+  | avm1.actions.StartDrag
+  | avm1.actions.Stop
+  | avm1.actions.StopSounds
+  | avm1.actions.StoreRegister
+  | avm1.actions.StrictEquals
+  | avm1.actions.StrictMode
+  | avm1.actions.StringAdd
+  | avm1.actions.StringEquals
+  | avm1.actions.StringExtract
+  | avm1.actions.StringGreater
+  | avm1.actions.StringLength
+  | avm1.actions.StringLess
+  | avm1.actions.Subtract
+  | avm1.actions.TargetPath
+  | avm1.actions.Throw
+  | avm1.actions.ToggleQuality
+  | avm1.actions.ToInteger
+  | avm1.actions.ToNumber
+  | avm1.actions.ToString
+  | avm1.actions.Trace
+  | avm1.actions.Try
+  | avm1.actions.TypeOf
+  | avm1.actions.WaitForFrame
+  | avm1.actions.WaitForFrame2
+  | avm1.actions.With;
 
 export interface ActionHeader {
   actionCode: Uint8;
@@ -20,15 +136,47 @@ export function emitActionsString(byteStream: ByteStream, value: avm1.Action[]):
   byteStream.writeUint8(0);
 }
 
+// Iterates over the actions twice to convert op-offsets to byte-offsets.
 export function emitActionsBlock(byteStream: ByteStream, value: avm1.Action[]): void {
-  for (const action of value) {
-    emitAction(byteStream, action);
+  interface IndexedOp {
+    bytes: Uint8Array;
+    byteIndex: UintSize;
+    byteSize: UintSize;
+  }
+
+  const indexedOps: IndexedOp[] = [];
+  let byteIndex: UintSize = 0;
+  for (const op of value) {
+    const stream: ByteStream = new Stream();
+    if (op.action === avm1.ActionType.If || op.action === avm1.ActionType.Jump) {
+      emitAction(stream, {action: op.action, byteOffset: 0} as RawAction);
+    } else {
+      emitAction(stream, op);
+    }
+    const byteSize: UintSize = stream.bytePos;
+    byteIndex += byteSize;
+    indexedOps.push({bytes: stream.getBytes(), byteIndex, byteSize});
+  }
+  const endByteIndex: UintSize = byteIndex;
+
+  // tslint:disable-next-line:prefer-for-of
+  for (let i: number = 0; i < value.length; i++) {
+    const op: avm1.Action = value[i];
+    const indexedOp: IndexedOp = indexedOps[i];
+    if (op.action === avm1.ActionType.If || op.action === avm1.ActionType.Jump) {
+      const targetIndex: UintSize = i + 1 + op.offset;
+      const targetBytes: UintSize = targetIndex < indexedOps.length ? indexedOps[targetIndex].byteIndex : endByteIndex;
+      const byteOffset: UintSize = targetBytes - (indexedOp.byteIndex + indexedOp.byteSize);
+      emitAction(byteStream, {action: op.action, byteOffset} as RawAction);
+    } else {
+      byteStream.writeBytes(indexedOp.bytes);
+    }
   }
 }
 
 // tslint:disable-next-line:cyclomatic-complexity
-export function emitAction(byteStream: ByteStream, value: avm1.Action): void {
-  type ActionEmitter = number | [(byteStream: ByteStream, value: avm1.Action) => void, number];
+export function emitAction(byteStream: ByteStream, value: RawAction): void {
+  type ActionEmitter = number | [(byteStream: ByteStream, value: RawAction) => void, number];
 
   const ACTION_TYPE_TO_EMITTER: Map<avm1.ActionType, ActionEmitter> = new Map<avm1.ActionType, ActionEmitter>(<any[]> [
     [avm1.ActionType.Add, 0x0a],
@@ -321,8 +469,8 @@ export function emitActionValue(byteStream: ByteStream, value: avm1.Value): void
   }
 }
 
-export function emitJumpAction(byteStream: ByteStream, value: avm1.actions.Jump): void {
-  byteStream.writeUint16LE(value.offset);
+export function emitJumpAction(byteStream: ByteStream, value: RawJump): void {
+  byteStream.writeUint16LE(value.byteOffset);
 }
 
 export function emitGetUrl2Action(byteStream: ByteStream, value: avm1.actions.GetUrl2): void {
@@ -358,8 +506,8 @@ export function emitDefineFunctionAction(byteStream: ByteStream, value: avm1.act
   byteStream.write(bodyStream);
 }
 
-export function emitIfAction(byteStream: ByteStream, value: avm1.actions.If): void {
-  byteStream.writeUint16LE(value.offset);
+export function emitIfAction(byteStream: ByteStream, value: RawIf): void {
+  byteStream.writeUint16LE(value.byteOffset);
 }
 
 export function emitGotoFrame2Action(byteStream: ByteStream, value: avm1.actions.GotoFrame2): void {

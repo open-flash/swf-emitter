@@ -14,10 +14,10 @@ import {
   shapeRecords,
   ShapeRecordType,
 } from "swf-tree";
-import { getBitCount } from "../get-bit-count";
 import { BitStream, ByteStream } from "../stream";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGradient } from "./gradient";
+import { getMinSintBitCount, getUintBitCount } from "../get-bit-count";
 
 export enum ShapeVersion {
   Shape1 = 1,
@@ -75,8 +75,8 @@ export function emitShapeStylesBits(
   const byteStream: ByteStream = bitStream.asByteStream();
   emitFillStyleList(byteStream, value.fill, shapeVersion);
   emitLineStyleList(byteStream, value.line, shapeVersion);
-  const fillBits: UintSize = getBitCount(value.fill.length + 1); // `+ 1` because of empty style
-  const lineBits: UintSize = getBitCount(value.line.length + 1); // `+ 1` because of empty style
+  const fillBits: UintSize = getUintBitCount(value.fill.length + 1); // `+ 1` because of empty style
+  const lineBits: UintSize = getUintBitCount(value.line.length + 1); // `+ 1` because of empty style
   bitStream.writeUint32Bits(4, fillBits);
   bitStream.writeUint32Bits(4, lineBits);
   return [fillBits, lineBits];
@@ -113,10 +113,8 @@ export function emitShapeRecordStringBits(
 }
 
 export function emitCurvedEdgeBits(bitStream: BitStream, value: shapeRecords.CurvedEdge): void {
-  const bitCount: UintSize = Math.max(
-    0,
-    getBitCount(value.controlDelta.x, value.controlDelta.y, value.anchorDelta.x, value.anchorDelta.y) - 2,
-  ) + 2;
+  const valuesBitCount: UintSize = getMinSintBitCount(value.controlDelta.x, value.controlDelta.y, value.anchorDelta.x, value.anchorDelta.y);
+  const bitCount: UintSize = Math.max(0, valuesBitCount - 2) + 2;
   bitStream.writeUint16Bits(4, bitCount - 2);
   bitStream.writeSint32Bits(bitCount, value.controlDelta.x);
   bitStream.writeSint32Bits(bitCount, value.controlDelta.y);
@@ -125,7 +123,7 @@ export function emitCurvedEdgeBits(bitStream: BitStream, value: shapeRecords.Cur
 }
 
 export function emitStraightEdgeBits(bitStream: BitStream, value: shapeRecords.StraightEdge): void {
-  const bitCount: UintSize = Math.max(0, getBitCount(value.delta.x, value.delta.y) - 2) + 2;
+  const bitCount: UintSize = Math.max(0, getMinSintBitCount(value.delta.x, value.delta.y) - 2) + 2;
   bitStream.writeUint16Bits(4, bitCount - 2);
   const isDiagonal: boolean = value.delta.x !== 0 && value.delta.y !== 0;
   bitStream.writeBoolBits(isDiagonal);
@@ -163,7 +161,7 @@ export function emitStyleChangeBits(
   bitStream.writeBoolBits(hasMoveTo);
 
   if (hasMoveTo) {
-    const bitCount: UintSize = getBitCount(value.moveTo!.x, value.moveTo!.y);
+    const bitCount: UintSize = getMinSintBitCount(value.moveTo!.x, value.moveTo!.y);
     bitStream.writeUint16Bits(5, bitCount);
     bitStream.writeSint32Bits(bitCount, value.moveTo!.x);
     bitStream.writeSint32Bits(bitCount, value.moveTo!.y);
