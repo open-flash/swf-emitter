@@ -249,7 +249,10 @@ export function emitMorphFillStyleList(byteStream: ByteStream, value: MorphFillS
 export function emitMorphFillStyle(byteStream: ByteStream, value: MorphFillStyle): void {
   switch (value.type) {
     case FillStyleType.Bitmap:
-      const code: Uint8 = 0x40 | (!value.smoothed ? 1 << 0 : 0) | (!value.repeating ? 1 << 1 : 0);
+      const code: Uint8 = 0
+        | (!value.repeating ? 1 << 0 : 0)
+        | (!value.smoothed ? 1 << 1 : 0)
+        | 0x40;
       byteStream.writeUint8(code);
       emitMorphBitmapFill(byteStream, value);
       break;
