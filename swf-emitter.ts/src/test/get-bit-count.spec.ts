@@ -1,6 +1,6 @@
 import chai from "chai";
 import { SintSize, UintSize } from "semantic-types";
-import { getMinSintBitCount, getMinUintBitCount, getSintBitCount, getUintBitCount } from "../lib/get-bit-count";
+import { getSintMinBitCount, getUintMinBitCount, getSintBitCount, getUintBitCount } from "../lib/get-bit-count";
 
 function toUint8Array(array: number[]): Uint8Array {
   const result: Uint8Array = new Uint8Array(array.length);
@@ -69,7 +69,7 @@ describe("getBitCount", function () {
     }
   });
 
-  describe("getMinUintBitCount", function () {
+  describe("getUintMinBitCount", function () {
     interface TestItem {
       input: UintSize[];
       expected: UintSize;
@@ -91,7 +91,7 @@ describe("getBitCount", function () {
 
     for (const {input, expected} of items) {
       it(`should return ${expected} for ${input}`, function () {
-        chai.assert.strictEqual(getMinUintBitCount(...input), expected);
+        chai.assert.strictEqual(getUintMinBitCount(...input), expected);
       });
     }
   });
@@ -114,7 +114,7 @@ describe("getBitCount", function () {
 
     for (const {input, expected} of items) {
       it(`should return ${expected} for ${input}`, function () {
-        chai.assert.strictEqual(getMinSintBitCount(...input), expected);
+        chai.assert.strictEqual(getSintMinBitCount(...input), expected);
       });
     }
   });

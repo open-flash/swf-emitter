@@ -43,6 +43,8 @@ export interface ByteStream {
 
   writeBytes(value: Uint8Array): void;
 
+  writeString(value: string): void;
+
   writeCString(value: string): void;
 
   writeUint8(value: Uint8): void;
@@ -64,6 +66,8 @@ export interface ByteStream {
   writeSint32LE(value: Sint32): void;
 
   writeFloat16BE(value: Float16): void;
+
+  writeFloat16LE(value: Float16): void;
 
   writeFloat32BE(value: Float32): void;
 
@@ -112,14 +116,14 @@ export class Stream implements BitStream, ByteStream {
 
   align(): void {
     if (this.bitPos !== 0) {
-      this.writeUint8(this.bitsBuffer);
+      this.writeUint8(this.bitsBuffer); // Increments `this.bytePos`
       this.bitPos = 0;
-      this.bytePos++;
+      this.bitsBuffer = 0;
     }
   }
 
   write(value: ByteStream): void {
-    this.chunks.push(value.getBytes());
+    this.writeBytes(value.getBytes());
   }
 
   writeBytes(value: Uint8Array): void {
@@ -137,9 +141,11 @@ export class Stream implements BitStream, ByteStream {
       this.bitPos += size;
       return;
     }
-    size -= 8 - this.bitPos;
+
     this.writeUint8(this.bitsBuffer);
     this.bitsBuffer = 0;
+    size -= 8 - this.bitPos;
+
     const bitPos: UintSize = size % 8;
     this.writeZeros((size - bitPos) / 8);
     this.bitPos = bitPos;
@@ -198,57 +204,36 @@ export class Stream implements BitStream, ByteStream {
     this.writeSint32LE(value | 0);
   }
 
-  /**
-   * Float16:
-   * 1 sign bit
-   * 5 exponent bits
-   * 10 fraction bits
-   */
   writeFloat16BE(value: Float16): void {
-    let encoded: Uint16;
-    if (isNaN(value)) {
-      encoded = 0xffff;
-    } else {
-      const signBit: 0 | 1 = (value < 0 || Object.is(value, -0)) ? 1 : 0;
-      value = Math.abs(value);
-      if (value < Math.pow(2, -14)) {
-        const fraction: Uint16 = Math.floor(value / Math.pow(2, -24));
-        encoded = (signBit << 15) | (fraction & 0x03ff);
-      } else {
-        const MAX_EXPONENT: number = 0x1f;
-        let exponent: number = 1;
-        while (exponent < MAX_EXPONENT && value >= Math.pow(2, exponent - 14)) {
-          exponent++;
-        }
-        if (exponent === MAX_EXPONENT) {
-          encoded = (signBit << 15) | (MAX_EXPONENT << 10); // Infinity
-        } else {
-          const fraction: number = Math.floor(value - Math.pow(2, exponent - 15) / Math.pow(2, exponent - 25));
-          encoded = (signBit << 15) | (exponent << 10) | (fraction & 0x03ff);
-        }
-      }
-    }
-    this.writeUint16BE(encoded);
+    this.writeUint16BE(reinterpretFloat16AsUint16(value));
+  }
+
+  writeFloat16LE(value: Float16): void {
+    this.writeUint16LE(reinterpretFloat16AsUint16(value));
   }
 
   writeFloat32BE(value: Float32): void {
     TMP_DATA_VIEW.setFloat64(0, value, false);
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 4)));
+    this.bytePos += 4;
   }
 
   writeFloat32LE(value: Float32): void {
     TMP_DATA_VIEW.setFloat64(0, value, true);
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 4)));
+    this.bytePos += 4;
   }
 
   writeFloat64BE(value: Float64): void {
     TMP_DATA_VIEW.setFloat64(0, value, false);
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 8)));
+    this.bytePos += 8;
   }
 
   writeFloat64LE(value: Float64): void {
     TMP_DATA_VIEW.setFloat64(0, value, true);
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 8)));
+    this.bytePos += 8;
   }
 
   writeFixed8P8LE(value: Sfixed8P8): void {
@@ -311,6 +296,10 @@ export class Stream implements BitStream, ByteStream {
     this.bytePos += chunk.length;
   }
 
+  writeString(value: string): void {
+    this.writeBytes(Buffer.from(value, "utf8"));
+  }
+
   writeCString(value: string): void {
     this.writeBytes(Buffer.from(value, "utf8"));
     this.writeUint8(0);
@@ -334,7 +323,7 @@ export class Stream implements BitStream, ByteStream {
       const consumedBits: number = Math.min(availableBits, bits);
       const chunk: number = (value >>> (bits - consumedBits)) & ((1 << consumedBits) - 1);
       this.bitsBuffer = this.bitsBuffer | (chunk << (availableBits - consumedBits));
-      bits -= availableBits;
+      bits -= consumedBits;
       this.bitPos += consumedBits;
       if (this.bitPos === 8) {
         this.writeUint8(this.bitsBuffer);
@@ -346,9 +335,38 @@ export class Stream implements BitStream, ByteStream {
 
   private writeSintBits(bits: number, value: number): void {
     if (value < 0) {
-      this.writeUintBits(bits, Math.pow(2, bits) + value);
+      this.writeUintBits(bits, 2 ** bits + value);
     } else {
       this.writeUintBits(bits, value);
     }
+  }
+}
+
+/**
+ * Float16:
+ * 1 sign bit
+ * 5 exponent bits
+ * 10 fraction bits
+ */
+function reinterpretFloat16AsUint16(value: Float16): Uint16 {
+  if (isNaN(value)) {
+    return 0xffff;
+  }
+  const signBit: 0 | 1 = (value < 0 || Object.is(value, -0)) ? 1 : 0;
+  value = Math.abs(value);
+  if (value < Math.pow(2, -14)) {
+    const fraction: Uint16 = Math.floor(value / Math.pow(2, -24));
+    return (signBit << 15) | (fraction & 0x03ff);
+  }
+  const MAX_EXPONENT: number = 0x1f;
+  let exponent: number = 1;
+  while (exponent < MAX_EXPONENT && value >= Math.pow(2, exponent - 14)) {
+    exponent++;
+  }
+  if (exponent === MAX_EXPONENT) {
+    return (signBit << 15) | (MAX_EXPONENT << 10); // Infinity
+  } else {
+    const fraction: number = Math.floor(value - Math.pow(2, exponent - 15) / Math.pow(2, exponent - 25));
+    return (signBit << 15) | (exponent << 10) | (fraction & 0x03ff);
   }
 }

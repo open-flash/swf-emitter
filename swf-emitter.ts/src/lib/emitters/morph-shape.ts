@@ -13,7 +13,7 @@ import { emitCurvedEdgeBits, emitListLength, emitStraightEdgeBits, getCapStyleCo
 import { MorphStyleChange } from "swf-tree/shape-records";
 import * as fillStyles from "swf-tree/fill-styles/index";
 import { FillStyleType } from "swf-tree";
-import { getMinSintBitCount, getUintBitCount } from "../get-bit-count";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,
@@ -103,6 +103,7 @@ export function emitMorphShapeStartRecordStringBits(
         if (record.controlDelta.x === record.anchorDelta.x
           && record.controlDelta.y === record.anchorDelta.y
         ) {
+          bitStream.writeBoolBits(true); // isStraight
           emitStraightEdgeBits(
             bitStream,
             {
@@ -111,6 +112,7 @@ export function emitMorphShapeStartRecordStringBits(
             },
           );
         } else {
+          bitStream.writeBoolBits(false); // isStraight
           emitCurvedEdgeBits(
             bitStream,
             {
@@ -121,6 +123,7 @@ export function emitMorphShapeStartRecordStringBits(
           );
         }
       } else {
+        bitStream.writeBoolBits(true); // isStraight
         emitStraightEdgeBits(
           bitStream,
           {
@@ -149,7 +152,7 @@ export function emitMorphShapeEndRecordStringBits(
       if (record.morphMoveTo === undefined) {
         throw new Incident("UndefinedEndMoveTo");
       }
-      const bitCount: UintSize = getMinSintBitCount(record.morphMoveTo.x, record.morphMoveTo.y);
+      const bitCount: UintSize = getSintMinBitCount(record.morphMoveTo.x, record.morphMoveTo.y);
       bitStream.writeUint16Bits(5, bitCount);
       bitStream.writeSint32Bits(bitCount, record.morphMoveTo.x);
       bitStream.writeSint32Bits(bitCount, record.morphMoveTo.y);
@@ -159,6 +162,7 @@ export function emitMorphShapeEndRecordStringBits(
         if (record.morphControlDelta.x === record.morphAnchorDelta.x
           && record.morphControlDelta.y === record.morphAnchorDelta.y
         ) {
+          bitStream.writeBoolBits(true); // isStraight
           emitStraightEdgeBits(
             bitStream,
             {
@@ -167,6 +171,7 @@ export function emitMorphShapeEndRecordStringBits(
             },
           );
         } else {
+          bitStream.writeBoolBits(false); // isStraight
           emitCurvedEdgeBits(
             bitStream,
             {
@@ -177,6 +182,7 @@ export function emitMorphShapeEndRecordStringBits(
           );
         }
       } else {
+        bitStream.writeBoolBits(true); // isStraight
         emitStraightEdgeBits(
           bitStream,
           {
@@ -210,7 +216,7 @@ export function emitMorphStyleChangeBits(
   bitStream.writeBoolBits(hasMoveTo);
 
   if (hasMoveTo) {
-    const bitCount: UintSize = getMinSintBitCount(value.moveTo!.x, value.moveTo!.y);
+    const bitCount: UintSize = getSintMinBitCount(value.moveTo!.x, value.moveTo!.y);
     bitStream.writeUint16Bits(5, bitCount);
     bitStream.writeSint32Bits(bitCount, value.moveTo!.x);
     bitStream.writeSint32Bits(bitCount, value.moveTo!.y);
@@ -241,28 +247,26 @@ export function emitMorphFillStyleList(byteStream: ByteStream, value: MorphFillS
 }
 
 export function emitMorphFillStyle(byteStream: ByteStream, value: MorphFillStyle): void {
-  let code: Uint8;
   switch (value.type) {
     case FillStyleType.Bitmap:
-      code = 0x40
-        | (!value.smoothed ? 1 << 0 : 0)
-        | (!value.repeating ? 1 << 1 : 0);
+      const code: Uint8 = 0x40 | (!value.smoothed ? 1 << 0 : 0) | (!value.repeating ? 1 << 1 : 0);
+      byteStream.writeUint8(code);
       emitMorphBitmapFill(byteStream, value);
       break;
     case FillStyleType.FocalGradient:
-      code = 0x13;
+      byteStream.writeUint8(0x13);
       emitMorphFocalGradientFill(byteStream, value);
       break;
     case FillStyleType.LinearGradient:
-      code = 0x10;
+      byteStream.writeUint8(0x10);
       emitMorphLinearGradientFill(byteStream, value);
       break;
     case FillStyleType.RadialGradient:
-      code = 0x12;
+      byteStream.writeUint8(0x12);
       emitMorphRadialGradientFill(byteStream, value);
       break;
     case FillStyleType.Solid:
-      code = 0x00;
+      byteStream.writeUint8(0x00);
       emitMorphSolidFill(byteStream, value);
       break;
     default:

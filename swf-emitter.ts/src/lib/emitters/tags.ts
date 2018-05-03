@@ -1,6 +1,6 @@
 import { Incident } from "incident";
 import { Uint16, Uint32, Uint8, UintSize } from "semantic-types";
-import { Tag, tags, TagType } from "swf-tree";
+import { FillStyle, FillStyleType, Tag, tags, TagType } from "swf-tree";
 import { BitStream, ByteStream, Stream } from "../stream";
 import { emitActionsString } from "./avm1";
 import {
@@ -14,7 +14,7 @@ import {
 import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } from "./button";
 import { emitBlendMode, emitClipActionsString, emitFilterList, } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
-import { emitShape, ShapeVersion } from "./shape";
+import { emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -71,9 +71,12 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
       <TagEmitter> [
         emitDefineBitmapAny,
         new Map([
+          [DefineBitmapVersion.DefineBitsJpeg1, 6],
           [DefineBitmapVersion.DefineBitsLossless1, 20],
+          [DefineBitmapVersion.DefineBitsJpeg2, 21],
           [DefineBitmapVersion.DefineBitsJpeg3, 35],
           [DefineBitmapVersion.DefineBitsLossless2, 36],
+          [DefineBitmapVersion.DefineBitsJpeg4, 90],
         ]),
       ],
     ],
@@ -87,9 +90,21 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
       ],
     ],
     [TagType.DefineDynamicText, <TagEmitter> [emitDefineEditText, 37]],
-    [TagType.DefineFont, <TagEmitter> [emitDefineFont, 75]],
+    [
+      TagType.DefineFont,
+      <TagEmitter> [
+        emitDefineFont,
+        new Map([
+          [DefineFontVersion.Font1, 10],
+          [DefineFontVersion.Font2, 48],
+          [DefineFontVersion.Font3, 75],
+          [DefineFontVersion.Font4, 91],
+        ]),
+      ],
+    ],
     [TagType.DefineFontName, <TagEmitter> [emitDefineFontName, 88]],
     [TagType.DefineFontAlignZones, <TagEmitter> [emitDefineFontAlignZones, 73]],
+    [TagType.JpegTables, <TagEmitter> [emitDefineJpegTables, 8]],
     [
       TagType.DefineMorphShape,
       <TagEmitter> [
@@ -127,7 +142,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
     [TagType.DoInitAction, <TagEmitter> [emitDoInitAction, 59]],
     [TagType.ExportAssets, <TagEmitter> [emitExportAssets, 56]],
     [TagType.FileAttributes, <TagEmitter> [emitFileAttributes, 69]],
-    [TagType.FrameLabel, <TagEmitter> [emitFrameLabel, 12]],
+    [TagType.FrameLabel, <TagEmitter> [emitFrameLabel, 43]],
     [
       TagType.ImportAssets,
       <TagEmitter> [
@@ -173,7 +188,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
   const tagEmitter: TagEmitter | undefined = TAG_TYPE_TO_EMITTER.get(value.type);
 
   if (tagEmitter === undefined) {
-    throw new Incident("UnexpectedTagType");
+    throw new Incident("UnexpectedTagType", {type: value.type, typeName: TagType[value.type]});
   }
 
   if (typeof tagEmitter === "number") {
@@ -221,6 +236,9 @@ export function emitDefineBitmapAny(byteStream: ByteStream, value: tags.DefineBi
     case "image/x-ajpeg":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg3;
+    case "image/x-tablesless-jpeg":
+      byteStream.writeBytes(value.data);
+      return DefineBitmapVersion.DefineBitsJpeg1;
     default:
       throw new Incident("UnexpectedMediaType", {tag: value});
   }
@@ -250,16 +268,16 @@ export function emitCsmTextSettings(byteStream: ByteStream, value: tags.CsmTextS
   emitTextRendererBits(bitStream, value.renderer);
   emitGridFittingBits(bitStream, value.fitting);
   bitStream.align();
-  byteStream.writeFloat32BE(value.thickness);
-  byteStream.writeFloat32BE(value.sharpness);
+  byteStream.writeFloat32LE(value.thickness);
+  byteStream.writeFloat32LE(value.sharpness);
   byteStream.writeUint8(0);
 }
 
 export enum DefineFontVersion {
-  DefineFont1,
-  DefineFont2,
-  DefineFont3,
-  DefineFont4,
+  Font1,
+  Font2,
+  Font3,
+  Font4,
 }
 
 export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): DefineFontVersion {
@@ -286,7 +304,7 @@ export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): 
   emitLanguageCode(byteStream, value.language);
 
   const fontNameStream: Stream = new Stream();
-  fontNameStream.writeCString(value.fontName);
+  fontNameStream.writeString(value.fontName); // TODO: See DefineFontInfo for encoding
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
 
@@ -294,7 +312,7 @@ export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): 
     // According to Shumway:
     // > The SWF format docs doesn't say that, but the DefineFont{2,3} tag ends here for device fonts.
     byteStream.writeUint16LE(0);
-    return DefineFontVersion.DefineFont3;
+    return DefineFontVersion.Font3;
   }
 
   byteStream.writeUint16LE(value.glyphs.length);
@@ -307,7 +325,7 @@ export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): 
   if (hasLayout) {
     emitFontLayout(byteStream, value.layout!);
   }
-  return DefineFontVersion.DefineFont3;
+  return DefineFontVersion.Font3;
 }
 
 export function emitDefineFontAlignZones(byteStream: ByteStream, value: tags.DefineFontAlignZones): void {
@@ -318,6 +336,10 @@ export function emitDefineFontAlignZones(byteStream: ByteStream, value: tags.Def
   for (const zone of value.zones) {
     emitFontAlignmentZone(byteStream, zone);
   }
+}
+
+export function emitDefineJpegTables(byteStream: ByteStream, value: tags.JpegTables): void {
+  byteStream.writeBytes(value.data);
 }
 
 export function emitDefineFontName(byteStream: ByteStream, value: tags.DefineFontName): void {
@@ -373,19 +395,17 @@ function emitDefineShapeAny(byteStream: ByteStream, value: tags.DefineShape): Sh
   emitRect(byteStream, value.bounds);
   let shapeVersion: ShapeVersion;
   if (value.edgeBounds !== undefined) {
-    shapeVersion = 4;
+    shapeVersion = ShapeVersion.Shape4;
     emitRect(byteStream, value.edgeBounds);
     const flags: Uint8 = 0
       | (value.hasScalingStrokes ? 1 << 0 : 0)
       | (value.hasNonScalingStrokes ? 1 << 1 : 0)
       | (value.hasFillWinding ? 1 << 2 : 0);
+    byteStream.writeUint8(flags);
   } else {
-    shapeVersion = ShapeVersion.Shape1; // or 2 or 3
-    for (const lineStyle of value.shape.lineStyles) {
-
-    }
+    shapeVersion = getMinShapeVersion(value.shape);
+    // TODO: Check consistency with flags and edgeBounds
   }
-
   emitShape(byteStream, value.shape, shapeVersion);
   return shapeVersion;
 }
@@ -394,14 +414,6 @@ export function emitDefineEditText(byteStream: ByteStream, value: tags.DefineDyn
   byteStream.writeUint16LE(value.id);
   emitRect(byteStream, value.bounds);
 
-  const useGlyphFont: boolean = value.useGlyphFont;
-  const html: boolean = value.html;
-  const wasStatic: boolean = value.wasStatic;
-  const border: boolean = value.border;
-  const noSelect: boolean = value.noSelect;
-  const hasLayout: boolean = value.align !== undefined;
-  const autoSize: boolean = value.autoSize;
-  const hasFontClass: boolean = value.fontClass !== undefined;
   const hasFont: boolean = value.fontId !== undefined && value.fontSize !== undefined;
   const hasMaxLength: boolean = value.maxLength !== undefined;
   const hasColor: boolean = value.color !== undefined;
@@ -410,25 +422,32 @@ export function emitDefineEditText(byteStream: ByteStream, value: tags.DefineDyn
   const multiline: boolean = value.multiline;
   const wordWrap: boolean = value.wordWrap;
   const hasText: boolean = value.text !== undefined;
+  const useGlyphFont: boolean = value.useGlyphFont;
+  const html: boolean = value.html;
+  const wasStatic: boolean = value.wasStatic;
+  const border: boolean = value.border;
+  const noSelect: boolean = value.noSelect;
+  const hasLayout: boolean = value.align !== undefined;
+  const autoSize: boolean = value.autoSize;
+  const hasFontClass: boolean = value.fontClass !== undefined && value.fontSize !== undefined;
 
   const flags: Uint16 = 0
-    | (useGlyphFont ? 1 << 0 : 0)
-    | (html ? 1 << 1 : 0)
-    | (wasStatic ? 1 << 2 : 0)
-    | (border ? 1 << 3 : 0)
-    | (noSelect ? 1 << 4 : 0)
-    | (hasLayout ? 1 << 5 : 0)
-    | (autoSize ? 1 << 6 : 0)
-    | (hasFontClass ? 1 << 7 : 0)
-    | (hasFont ? 1 << 8 : 0)
-    | (hasMaxLength ? 1 << 9 : 0)
-    | (hasColor ? 1 << 10 : 0)
-    | (readonly ? 1 << 11 : 0)
-    | (password ? 1 << 12 : 0)
-    | (multiline ? 1 << 13 : 0)
-    | (wordWrap ? 1 << 14 : 0)
-    | (hasText ? 1 << 15 : 0);
-
+    | (hasFont ? 1 << 0 : 0)
+    | (hasMaxLength ? 1 << 1 : 0)
+    | (hasColor ? 1 << 2 : 0)
+    | (readonly ? 1 << 3 : 0)
+    | (password ? 1 << 4 : 0)
+    | (multiline ? 1 << 5 : 0)
+    | (wordWrap ? 1 << 6 : 0)
+    | (hasText ? 1 << 7 : 0)
+    | (useGlyphFont ? 1 << 8 : 0)
+    | (html ? 1 << 9 : 0)
+    | (wasStatic ? 1 << 10 : 0)
+    | (border ? 1 << 11 : 0)
+    | (noSelect ? 1 << 12 : 0)
+    | (hasLayout ? 1 << 13 : 0)
+    | (autoSize ? 1 << 14 : 0)
+    | (hasFontClass ? 1 << 15 : 0);
   byteStream.writeUint16LE(flags);
 
   if (hasFont) {
@@ -437,7 +456,7 @@ export function emitDefineEditText(byteStream: ByteStream, value: tags.DefineDyn
   if (hasFontClass) {
     byteStream.writeCString(value.fontClass!);
   }
-  if (hasFont) {
+  if (hasFont || hasFontClass) {
     byteStream.writeUint16LE(value.fontSize!);
   }
   if (hasColor) {

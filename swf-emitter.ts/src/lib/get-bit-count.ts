@@ -24,13 +24,13 @@ export function getSintBitCount(value: SintSize): UintSize {
 /**
  * Returns the minimum number of bits required to represent all the `values` using Stream#writeUintBits
  */
-export function getMinUintBitCount(...values: UintSize[]): UintSize {
+export function getUintMinBitCount(...values: UintSize[]): UintSize {
   return values.map(getUintBitCount).reduce((a, b) => Math.max(a, b), 0);
 }
 
 /**
  * Returns the minimum number of bits required to represent all the `values` using Stream#writeSintBits
  */
-export function getMinSintBitCount(...values: SintSize[]): UintSize {
+export function getSintMinBitCount(...values: SintSize[]): UintSize {
   return values.map(getSintBitCount).reduce((a, b) => Math.max(a, b), 0);
 }

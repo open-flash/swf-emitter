@@ -131,8 +131,8 @@ export function emitFontAlignmentZone(byteStream: ByteStream, value: text.FontAl
 }
 
 export function emitFontAlignmentZoneData(byteStream: ByteStream, value: text.FontAlignmentZoneData): void {
-  byteStream.writeFloat16BE(value.origin);
-  byteStream.writeFloat16BE(value.size);
+  byteStream.writeFloat16LE(value.origin);
+  byteStream.writeFloat16LE(value.size);
 }
 
 /**
@@ -158,12 +158,12 @@ export function emitOffsetGlyphs(
   if (useWideOffset) {
     byteStream.writeUint32LE(offsetsSize);
     for (const endOffset of endOffsets) {
-      byteStream.writeUint32LE(endOffset);
+      byteStream.writeUint32LE(offsetsSize + endOffset);
     }
   } else {
     byteStream.writeUint16LE(offsetsSize);
     for (const endOffset of endOffsets) {
-      byteStream.writeUint16LE(endOffset);
+      byteStream.writeUint16LE(offsetsSize + endOffset);
     }
   }
   byteStream.write(glyphStream);
@@ -180,6 +180,7 @@ export function emitFontLayout(byteStream: ByteStream, value: text.FontLayout): 
   for (const bound of value.bounds) {
     emitRect(byteStream, bound);
   }
+  byteStream.writeUint16LE(value.kerning.length);
   for (const kerningRecord of value.kerning) {
     emitKerningRecord(byteStream, kerningRecord);
   }

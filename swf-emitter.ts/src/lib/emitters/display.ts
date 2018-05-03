@@ -190,17 +190,17 @@ export function emitBlurFilter(byteStream: ByteStream, value: filters.Blur): voi
 
 export function emitColorMatrixFilter(byteStream: ByteStream, value: filters.ColorMatrix): void {
   for (const coefficient of value.matrix) {
-    byteStream.writeFloat32BE(coefficient);
+    byteStream.writeFloat32LE(coefficient);
   }
 }
 
 export function emitConvolutionFilter(byteStream: ByteStream, value: filters.Convolution): void {
   byteStream.writeUint8(value.matrixWidth);
   byteStream.writeUint8(value.matrixHeight);
-  byteStream.writeFloat32BE(value.divisor);
-  byteStream.writeFloat32BE(value.bias);
+  byteStream.writeFloat32LE(value.divisor);
+  byteStream.writeFloat32LE(value.bias);
   for (const coefficient of value.matrix) {
-    byteStream.writeFloat32BE(coefficient);
+    byteStream.writeFloat32LE(coefficient);
   }
   emitStraightSRgba8(byteStream, value.defaultColor);
   const flags: Uint8 = 0

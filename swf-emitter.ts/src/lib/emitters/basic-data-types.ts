@@ -1,6 +1,6 @@
 import { UintSize } from "semantic-types";
 import { ColorTransform, ColorTransformWithAlpha, Matrix, Rect, SRgb8, StraightSRgba8 } from "swf-tree";
-import { getMinSintBitCount, getMinUintBitCount } from "../get-bit-count";
+import { getSintMinBitCount, getUintMinBitCount } from "../get-bit-count";
 import { BitStream, ByteStream } from "../stream";
 
 export function emitRect(byteStream: ByteStream, value: Rect): void {
@@ -10,7 +10,7 @@ export function emitRect(byteStream: ByteStream, value: Rect): void {
 }
 
 export function emitRectBits(bitStream: BitStream, value: Rect): void {
-  const nBits: UintSize = getMinSintBitCount(value.xMin, value.xMax, value.yMin, value.yMax);
+  const nBits: UintSize = getSintMinBitCount(value.xMin, value.xMax, value.yMin, value.yMax);
   bitStream.writeUint16Bits(5, nBits);
   bitStream.writeSint16Bits(nBits, value.xMin);
   bitStream.writeSint16Bits(nBits, value.xMax);
@@ -42,7 +42,7 @@ export function emitMatrixBits(bitStream: BitStream, value: Matrix): void {
     bitStream.writeBoolBits(false);
   } else {
     bitStream.writeBoolBits(true);
-    const nBits: UintSize = getMinSintBitCount(value.scaleX.epsilons, value.scaleY.epsilons);
+    const nBits: UintSize = getSintMinBitCount(value.scaleX.epsilons, value.scaleY.epsilons);
     bitStream.writeUint16Bits(5, nBits);
     bitStream.writeSfixed16P16Bits(nBits, value.scaleX);
     bitStream.writeSfixed16P16Bits(nBits, value.scaleY);
@@ -51,16 +51,13 @@ export function emitMatrixBits(bitStream: BitStream, value: Matrix): void {
     bitStream.writeBoolBits(false);
   } else {
     bitStream.writeBoolBits(true);
-    const nBits: UintSize = getMinSintBitCount(value.rotateSkew0.epsilons, value.rotateSkew0.epsilons);
+    const nBits: UintSize = getSintMinBitCount(value.rotateSkew0.epsilons, value.rotateSkew1.epsilons);
     bitStream.writeUint16Bits(5, nBits);
     bitStream.writeSfixed16P16Bits(nBits, value.rotateSkew0);
-    bitStream.writeSfixed16P16Bits(nBits, value.rotateSkew0);
+    bitStream.writeSfixed16P16Bits(nBits, value.rotateSkew1);
   }
-  if (value.translateX === 0 && value.translateY === 0) {
-    bitStream.writeBoolBits(false);
-  } else {
-    bitStream.writeBoolBits(true);
-    const nBits: UintSize = getMinSintBitCount(value.translateX, value.translateY);
+  {
+    const nBits: UintSize = getSintMinBitCount(value.translateX, value.translateY);
     bitStream.writeUint16Bits(5, nBits);
     bitStream.writeSint16Bits(nBits, value.translateX);
     bitStream.writeSint16Bits(nBits, value.translateY);
@@ -78,7 +75,7 @@ export function emitColorTransformBits(bitStream: BitStream, value: ColorTransfo
   const hasMult: boolean = value.redMult.valueOf() !== 1
     || value.greenMult.valueOf() !== 1
     || value.blueMult.valueOf() !== 1;
-  const nBits: UintSize = getMinSintBitCount(
+  const nBits: UintSize = getSintMinBitCount(
     value.redAdd,
     value.greenAdd,
     value.blueAdd,
@@ -115,7 +112,7 @@ export function emitColorTransformWithAlphaBits(bitStream: BitStream, value: Col
     || value.greenMult.valueOf() !== 1
     || value.blueMult.valueOf() !== 1
     || value.alphaMult.valueOf() !== 1;
-  const nBits: UintSize = getMinSintBitCount(
+  const nBits: UintSize = getSintMinBitCount(
     value.redAdd,
     value.greenAdd,
     value.blueAdd,

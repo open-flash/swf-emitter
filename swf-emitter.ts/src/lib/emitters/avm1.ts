@@ -154,8 +154,8 @@ export function emitActionsBlock(byteStream: ByteStream, value: avm1.Action[]): 
       emitAction(stream, op);
     }
     const byteSize: UintSize = stream.bytePos;
-    byteIndex += byteSize;
     indexedOps.push({bytes: stream.getBytes(), byteIndex, byteSize});
+    byteIndex += byteSize;
   }
   const endByteIndex: UintSize = byteIndex;
 
@@ -511,11 +511,13 @@ export function emitIfAction(byteStream: ByteStream, value: RawIf): void {
 }
 
 export function emitGotoFrame2Action(byteStream: ByteStream, value: avm1.actions.GotoFrame2): void {
+  const hasSceneBias: boolean = value.sceneBias !== 0;
   const flags: Uint8 = 0
-    | (value.sceneBias !== 0 ? 1 << 0 : 0)
-    | (value.play ? 1 << 1 : 0);
+    | (value.play ? 1 << 0 : 0)
+    | (hasSceneBias ? 1 << 1 : 0);
+  byteStream.writeUint8(flags);
   // Skip 6 bits
-  if (value.sceneBias !== 0) {
+  if (hasSceneBias) {
     byteStream.writeUint16LE(value.sceneBias);
   }
 }
