@@ -32,6 +32,7 @@ describe("Stream", function () {
       {input: 2 ** 15, expected: [0b01111000, 0b00000000]},
       {input: 2 ** 15 + 1023 * 2 ** 5, expected: [0b01111011, 0b11111111]},
       {input: 2 ** 15 + 1024 * 2 ** 5, expected: [0b01111100, 0b00000000]},
+      {input: 2 ** 16, expected: [0b01111100, 0b00000000]},
       {input: +Infinity, expected: [0b01111100, 0b00000000]},
       {input: NaN, expected: [0b11111111, 0b11111111]},
     ];
