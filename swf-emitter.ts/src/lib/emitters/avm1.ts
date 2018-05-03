@@ -176,7 +176,7 @@ export function emitActionsBlock(byteStream: ByteStream, value: avm1.Action[]): 
 
 // tslint:disable-next-line:cyclomatic-complexity
 export function emitAction(byteStream: ByteStream, value: RawAction): void {
-  type ActionEmitter = number | [(byteStream: ByteStream, value: RawAction) => void, number];
+  type ActionEmitter = number | [(byteStream: ByteStream, value: RawAction) => void | UintSize, number];
 
   const ACTION_TYPE_TO_EMITTER: Map<avm1.ActionType, ActionEmitter> = new Map<avm1.ActionType, ActionEmitter>(<any[]> [
     [avm1.ActionType.Add, 0x0a],
@@ -293,8 +293,14 @@ export function emitAction(byteStream: ByteStream, value: RawAction): void {
   }
 
   const actionStream: Stream = new Stream();
-  actionEmitter[0](actionStream, value);
-  emitActionHeader(byteStream, {actionCode: actionEmitter[1], length: actionStream.bytePos});
+  const lengthOverride: void | UintSize = actionEmitter[0](actionStream, value);
+  emitActionHeader(
+    byteStream,
+    {
+      actionCode: actionEmitter[1],
+      length: typeof lengthOverride === "number" ? lengthOverride : actionStream.bytePos,
+    },
+  );
   byteStream.write(actionStream);
 }
 
@@ -335,7 +341,15 @@ export function emitWaitForFrame2Action(byteStream: ByteStream, value: avm1.acti
   byteStream.writeUint8(value.skipCount);
 }
 
-export function emitDefineFunction2Action(byteStream: ByteStream, value: avm1.actions.DefineFunction2): void {
+/**
+ * Emits a DefineFunction2 action.
+ *
+ * @param byteStream The bytestream used to emit the action.
+ * @param value DefineFunction2 action to emit.
+ * @returns The length for the action header (excluding the function body).
+ */
+export function emitDefineFunction2Action(byteStream: ByteStream, value: avm1.actions.DefineFunction2): UintSize {
+  const startBytePos: UintSize = byteStream.bytePos;
   byteStream.writeCString(value.name);
   byteStream.writeUint16LE(value.parameters.length);
   byteStream.writeUint8(value.registerCount);
@@ -361,7 +375,9 @@ export function emitDefineFunction2Action(byteStream: ByteStream, value: avm1.ac
   emitActionsBlock(bodyStream, value.body);
 
   byteStream.writeUint16LE(bodyStream.bytePos);
+  const lengthOverride: UintSize = byteStream.bytePos - startBytePos;
   byteStream.write(bodyStream);
+  return lengthOverride;
 }
 
 function emitCatchTarget(byteStream: ByteStream, value: avm1.CatchTarget): void {
@@ -410,11 +426,21 @@ export function emitTryAction(byteStream: ByteStream, value: avm1.actions.Try): 
   }
 }
 
-export function emitWithAction(byteStream: ByteStream, value: avm1.actions.With): void {
+/**
+ * Emits a With action.
+ *
+ * @param byteStream The bytestream used to emit the action.
+ * @param value With action to emit.
+ * @returns The length for the action header (excluding the with body).
+ */
+export function emitWithAction(byteStream: ByteStream, value: avm1.actions.With): UintSize {
+  const startBytePos: UintSize = byteStream.bytePos;
   const withStream: Stream = new Stream();
   emitActionsBlock(withStream, value.with);
   byteStream.writeUint16LE(withStream.bytePos);
+  const lengthOverride: UintSize = byteStream.bytePos - startBytePos;
   byteStream.write(withStream);
+  return lengthOverride;
 }
 
 export function emitPushAction(byteStream: ByteStream, value: avm1.actions.Push): void {
@@ -492,7 +518,15 @@ export function emitGetUrl2Action(byteStream: ByteStream, value: avm1.actions.Ge
   byteStream.writeUint8(flags);
 }
 
-export function emitDefineFunctionAction(byteStream: ByteStream, value: avm1.actions.DefineFunction): void {
+/**
+ * Emits a DefineFunction action.
+ *
+ * @param byteStream The bytestream used to emit the action.
+ * @param value DefineFunction action to emit.
+ * @returns The length for the action header (excluding the function body).
+ */
+export function emitDefineFunctionAction(byteStream: ByteStream, value: avm1.actions.DefineFunction): UintSize {
+  const startBytePos: UintSize = byteStream.bytePos;
   byteStream.writeCString(value.name);
   byteStream.writeUint16LE(value.parameters.length);
   for (const parameter of value.parameters) {
@@ -501,9 +535,10 @@ export function emitDefineFunctionAction(byteStream: ByteStream, value: avm1.act
 
   const bodyStream: Stream = new Stream();
   emitActionsBlock(bodyStream, value.body);
-
   byteStream.writeUint16LE(bodyStream.bytePos);
+  const lengthOverride: UintSize = byteStream.bytePos - startBytePos;
   byteStream.write(bodyStream);
+  return lengthOverride;
 }
 
 export function emitIfAction(byteStream: ByteStream, value: RawIf): void {
