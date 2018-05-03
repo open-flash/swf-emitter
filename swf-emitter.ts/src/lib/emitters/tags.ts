@@ -295,8 +295,8 @@ export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): 
     | (value.isItalic ? 1 << 1 : 0)
     | (useWideCodes ? 1 << 2 : 0)
     | (useWideOffsets ? 1 << 3 : 0)
-    | (value.isSmall ? 1 << 4 : 0)
-    | (value.isAnsi ? 1 << 5 : 0)
+    | (value.isAnsi ? 1 << 4 : 0)
+    | (value.isSmall ? 1 << 5 : 0)
     | (value.isShiftJis ? 1 << 6 : 0)
     | (hasLayout ? 1 << 7 : 0);
 
