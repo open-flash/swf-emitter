@@ -25,12 +25,12 @@ export function emitButtonRecord(byteStream: Stream, value: ButtonRecord, button
   const hasBlendMode: boolean = value.blendMode !== BlendMode.Normal;
 
   const flags: Uint8 = 0
-    | (value.stateUp ? 1 << 0 : 1)
-    | (value.stateOver ? 1 << 1 : 1)
-    | (value.stateDown ? 1 << 2 : 1)
-    | (value.stateHitTest ? 1 << 3 : 1)
-    | (value.filters !== undefined ? 1 << 4 : 1)
-    | (hasBlendMode ? 1 << 5 : 1);
+    | (value.stateUp ? 1 << 0 : 0)
+    | (value.stateOver ? 1 << 1 : 0)
+    | (value.stateDown ? 1 << 2 : 0)
+    | (value.stateHitTest ? 1 << 3 : 0)
+    | (value.filters !== undefined ? 1 << 4 : 0)
+    | (hasBlendMode ? 1 << 5 : 0);
   byteStream.writeUint8(flags);
 
   byteStream.writeUint16LE(value.characterId);
