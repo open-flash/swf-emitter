@@ -213,13 +213,13 @@ export class Stream implements BitStream, ByteStream {
   }
 
   writeFloat32BE(value: Float32): void {
-    TMP_DATA_VIEW.setFloat64(0, value, false);
+    TMP_DATA_VIEW.setFloat32(0, value, false);
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 4)));
     this.bytePos += 4;
   }
 
   writeFloat32LE(value: Float32): void {
-    TMP_DATA_VIEW.setFloat64(0, value, true);
+    TMP_DATA_VIEW.setFloat32(0, value, true);
     this.chunks.push(new Uint8Array(TMP_BUFFER.slice(0, 4)));
     this.bytePos += 4;
   }
@@ -344,9 +344,11 @@ export class Stream implements BitStream, ByteStream {
 
 /**
  * Float16:
- * 1 sign bit
- * 5 exponent bits
- * 10 fraction bits
+ * 1 sign bit (S)
+ * 5 exponent bits (E)
+ * 10 fraction bits (F)
+ *
+ * Format: SEEEEEFFFFFFFFFF
  */
 function reinterpretFloat16AsUint16(value: Float16): Uint16 {
   if (isNaN(value)) {
@@ -366,7 +368,7 @@ function reinterpretFloat16AsUint16(value: Float16): Uint16 {
   if (exponent === MAX_EXPONENT) {
     return (signBit << 15) | (MAX_EXPONENT << 10); // Infinity
   } else {
-    const fraction: number = Math.floor(value - Math.pow(2, exponent - 15) / Math.pow(2, exponent - 25));
+    const fraction: number = Math.floor((value - Math.pow(2, exponent - 15)) / Math.pow(2, exponent - 25));
     return (signBit << 15) | (exponent << 10) | (fraction & 0x03ff);
   }
 }
