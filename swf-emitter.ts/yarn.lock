@@ -1620,7 +1620,7 @@ eslint-scope@^3.7.1:
     esrecurse "^4.1.0"
     estraverse "^4.1.1"
 
-esm@^3.0.22:
+esm@^3.0.22, esm@^3.0.28:
   version "3.0.28"
   resolved "https://registry.yarnpkg.com/esm/-/esm-3.0.28.tgz#1b912958328eb1c40538e7d24ce6bf3638bb83df"
 
@@ -4916,22 +4916,13 @@ sver-compat@^1.5.0:
     es6-iterator "^2.0.1"
     es6-symbol "^3.1.1"
 
-swf-parser@^0.0.6:
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/swf-parser/-/swf-parser-0.0.6.tgz#3937afb151596d7e886c27ef2779cc2a16b41a98"
+swf-parser@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/swf-parser/-/swf-parser-0.0.7.tgz#a8b2311d480acb99a07c505a4f33f17541c3729c"
   dependencies:
     incident "^3.1.1"
     semantic-types "^0.1.1"
-    swf-tree "^0.0.16"
-
-swf-tree@^0.0.16:
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/swf-tree/-/swf-tree-0.0.16.tgz#900ff278dd5473918523209895d34b543233e9b8"
-  dependencies:
-    incident "^3.1.1"
-    kryo "^0.7.0"
-    semantic-types "^0.1.1"
-    ts-tagged "^1.0.0"
+    swf-tree "^0.0.17"
 
 swf-tree@^0.0.17:
   version "0.0.17"

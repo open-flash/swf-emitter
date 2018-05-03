@@ -1,5 +1,5 @@
 import { Incident } from "incident";
-import { Uint16, Uint32, Uint8, UintSize } from "semantic-types";
+import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
 import { FillStyle, FillStyleType, Tag, tags, TagType } from "swf-tree";
 import { BitStream, ByteStream, Stream } from "../stream";
 import { emitActionsString } from "./avm1";
@@ -14,7 +14,7 @@ import {
 import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } from "./button";
 import { emitBlendMode, emitClipActionsString, emitFilterList, } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
-import { emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
+import { emitShape, getCapStyleCode, getJoinStyleCode, getMinShapeVersion, ShapeVersion } from "./shape";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -27,6 +27,8 @@ import {
   emitTextRendererBits,
 } from "./text";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
+import { SoundType } from "swf-tree/sound/sound-type";
+import { getAudioCodingFormatCode, getSoundRateCode } from "./sound";
 
 /**
  * Read tags until the end of the stream or "end-of-tags".
@@ -128,6 +130,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
         ]),
       ],
     ],
+    [TagType.DefineSound, <TagEmitter> [emitDefineSound, 14]],
     [TagType.DefineSprite, <TagEmitter> [emitDefineSprite, 39]],
     [
       TagType.DefineText,
@@ -476,6 +479,23 @@ export function emitDefineEditText(byteStream: ByteStream, value: tags.DefineDyn
   if (hasText) {
     byteStream.writeCString(value.text!);
   }
+}
+
+export function emitDefineSound(byteStream: ByteStream, value: tags.DefineSound): void {
+  byteStream.writeUint16LE(value.id);
+
+  const soundRateCode: Uint2 = getSoundRateCode(value.soundRate);
+  const formatCode: Uint4 = getAudioCodingFormatCode(value.format);
+
+  const flags: Uint8 = 0
+    | (value.soundType === SoundType.Stereo ? 1 << 0 : 0)
+    | (value.soundSize === 16 ? 1 << 1 : 0)
+    | ((soundRateCode & 0b11) << 2)
+    | ((formatCode & 0b1111) << 4);
+  byteStream.writeUint8(flags);
+
+  byteStream.writeUint32LE(value.sampleCount);
+  byteStream.writeBytes(value.data);
 }
 
 export function emitDefineSprite(byteStream: ByteStream, value: tags.DefineSprite, swfVersion: Uint8): void {
