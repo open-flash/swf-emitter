@@ -2,16 +2,15 @@ import { Incident } from "incident";
 import { Uint16, Uint2, Uint8, UintSize } from "semantic-types";
 import { avm1 } from "swf-tree";
 import { ByteStream, Stream } from "../stream";
-import { RawAction } from "swf-parser/parsers/avm1";
 
 export interface RawIf {
-  action: avm1.ActionType.If,
-  byteOffset: Uint16,
+  action: avm1.ActionType.If;
+  byteOffset: Uint16;
 }
 
 export interface RawJump {
-  action: avm1.ActionType.Jump,
-  byteOffset: Uint16,
+  action: avm1.ActionType.Jump;
+  byteOffset: Uint16;
 }
 
 // avm1.Action where If is replaced by RawIf and Jump by RawJump

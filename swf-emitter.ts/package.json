@@ -20,15 +20,16 @@
   "dependencies": {
     "incident": "^3.1.1",
     "semantic-types": "^0.1.1",
-    "swf-tree": "^0.0.16"
+    "swf-tree": "^0.0.17"
   },
   "devDependencies": {
     "@types/chai": "^4.1.3",
+    "@types/minimist": "^1.2.0",
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.0.0",
-    "@types/minimist": "^1.2.0",
     "bson": "^2.0.6",
     "chai": "^4.1.2",
+    "esm": "^3.0.28",
     "gulp": "^4.0.0",
     "gulp-cli": "^2.0.1",
     "kryo": "^0.7.0",
@@ -36,7 +37,7 @@
     "swf-parser": "^0.0.6",
     "ts-node": "^6.0.1",
     "tslint": "^5.9.1",
-    "turbo-gulp": "^0.17.0",
+    "turbo-gulp": "^0.17.1",
     "typescript": "^2.8.3"
   },
   "nyc": {
@@ -52,7 +53,7 @@
       ".mjs"
     ]
   },
-  "@std/esm": {
-    "esm": "cjs"
+  "esm": {
+    "esm": "strict"
   }
 }

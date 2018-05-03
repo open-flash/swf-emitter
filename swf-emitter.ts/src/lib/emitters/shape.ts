@@ -51,7 +51,7 @@ export function emitShape(byteStream: ByteStream, value: Shape, shapeVersion: Sh
 export function emitShapeBits(bitStream: BitStream, value: Shape, shapeVersion: ShapeVersion): void {
   let fillBits: UintSize;
   let lineBits: UintSize;
-  [fillBits, lineBits] = emitShapeStylesBits(bitStream, {fill: value.fillStyles, line: value.lineStyles}, shapeVersion);
+  [fillBits, lineBits] = emitShapeStylesBits(bitStream, value.initialStyles, shapeVersion);
   emitShapeRecordStringBits(bitStream, value.records, fillBits, lineBits, shapeVersion);
 }
 
@@ -443,10 +443,7 @@ function getShapeStylesMinShapeVersion(shapeStyles: ShapeStyles): ShapeVersion {
 }
 
 export function getMinShapeVersion(shape: Shape): ShapeVersion {
-  let minVersion: ShapeVersion = getShapeStylesMinShapeVersion({
-    fill: shape.fillStyles,
-    line: shape.lineStyles
-  });
+  let minVersion: ShapeVersion = getShapeStylesMinShapeVersion(shape.initialStyles);
   for (const record of shape.records) {
     if (record.type === ShapeRecordType.StyleChange && record.newStyles !== undefined) {
       const stylesMinVersion: ShapeVersion = getShapeStylesMinShapeVersion(record.newStyles);

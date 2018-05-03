@@ -236,7 +236,7 @@ export function emitDefineBitmapAny(byteStream: ByteStream, value: tags.DefineBi
     case "image/x-ajpeg":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg3;
-    case "image/x-tablesless-jpeg":
+    case "image/x-partial-jpeg":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg1;
     default:
@@ -245,7 +245,7 @@ export function emitDefineBitmapAny(byteStream: ByteStream, value: tags.DefineBi
 }
 
 export function emitDefineButton(byteStream: ByteStream, value: tags.DefineButton): ButtonVersion {
-  byteStream.writeUint16LE(value.buttonId);
+  byteStream.writeUint16LE(value.id);
   const flags: Uint8 = 0
     | (value.trackAsMenu ? 1 << 0 : 0);
   byteStream.writeUint8(flags);
@@ -338,7 +338,7 @@ export function emitDefineFontAlignZones(byteStream: ByteStream, value: tags.Def
   }
 }
 
-export function emitDefineJpegTables(byteStream: ByteStream, value: tags.JpegTables): void {
+export function emitDefineJpegTables(byteStream: ByteStream, value: tags.DefineJpegTables): void {
   byteStream.writeBytes(value.data);
 }
 
@@ -353,14 +353,14 @@ export function emitDefineMorphShapeAny(
   value: tags.DefineMorphShape,
 ): MorphShapeVersion {
   byteStream.writeUint16LE(value.id);
-  emitRect(byteStream, value.startBounds);
-  emitRect(byteStream, value.endBounds);
+  emitRect(byteStream, value.bounds);
+  emitRect(byteStream, value.morphBounds);
 
   let version: MorphShapeVersion;
-  if (value.startEdgeBounds !== undefined && value.endEdgeBounds !== undefined) {
+  if (value.edgeBounds !== undefined && value.morphEdgeBounds !== undefined) {
     version = MorphShapeVersion.MorphShape2;
-    emitRect(byteStream, value.startEdgeBounds);
-    emitRect(byteStream, value.endEdgeBounds);
+    emitRect(byteStream, value.edgeBounds);
+    emitRect(byteStream, value.morphEdgeBounds);
     const flags: Uint8 = 0
       | (value.hasScalingStrokes ? 1 << 0 : 0)
       | (value.hasNonScalingStrokes ? 1 << 0 : 0);

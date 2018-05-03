@@ -40,11 +40,7 @@ export function emitMorphShapeBits(
 ): UintSize {
   let fillBits: UintSize;
   let lineBits: UintSize;
-  [fillBits, lineBits] = emitMorphShapeStylesBits(
-    bitStream,
-    {fill: value.fillStyles, line: value.lineStyles},
-    morphShapeVersion,
-  );
+  [fillBits, lineBits] = emitMorphShapeStylesBits(bitStream, value.initialStyles, morphShapeVersion);
   emitMorphShapeStartRecordStringBits(bitStream, value.records, fillBits, lineBits, morphShapeVersion);
   bitStream.align();
 
