@@ -1,6 +1,6 @@
 {
   "name": "swf-emitter",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "SWF files emitter",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
