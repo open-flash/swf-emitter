@@ -1,11 +1,10 @@
 import { Incident } from "incident";
 import { Uint16, Uint7, Uint8, UintSize } from "semantic-types";
 import { BlendMode } from "swf-tree/blend-mode";
-import { ButtonCond } from "swf-tree/buttons/button-cond";
-import { ButtonCondAction } from "swf-tree/buttons/button-cond-action";
-import { ButtonRecord } from "swf-tree/buttons/button-record";
+import { ButtonCond } from "swf-tree/button/button-cond";
+import { ButtonCondAction } from "swf-tree/button/button-cond-action";
+import { ButtonRecord } from "swf-tree/button/button-record";
 import { ByteStream, Stream } from "../stream";
-import { emitActionsString } from "./avm1";
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types";
 import { emitBlendMode, emitFilterList } from "./display";
 
@@ -70,7 +69,7 @@ export function emitButton2CondAction(byteStream: ByteStream, value: ButtonCondA
     throw new Incident("ExpectedConditionsToBeDefined");
   }
   emitButtonCond(byteStream, value.conditions);
-  emitActionsString(byteStream, value.actions);
+  byteStream.writeBytes(value.actions);
 }
 
 export function emitButtonCond(byteStream: ByteStream, value: ButtonCond): void {

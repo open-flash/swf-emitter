@@ -2,7 +2,6 @@ import { Incident } from "incident";
 import { Uint16, Uint32, Uint8 } from "semantic-types";
 import { BlendMode, ClipActions, ClipEventFlags, Filter, filters, FilterType, Sfixed16P16, Sfixed8P8 } from "swf-tree";
 import { ByteStream, Stream } from "../stream";
-import { emitActionsBlock } from "./avm1";
 import { emitStraightSRgba8 } from "./basic-data-types";
 
 export function emitBlendMode(byteStream: ByteStream, value: BlendMode): void {
@@ -128,7 +127,7 @@ export function emitClipActions(byteStream: ByteStream, value: ClipActions, exte
     }
     actionStream.writeUint8(value.keyCode);
   }
-  emitActionsBlock(actionStream, value.actions);
+  actionStream.writeBytes(value.actions);
 
   byteStream.writeUint32LE(actionStream.bytePos);
   byteStream.write(actionStream);

@@ -1,8 +1,7 @@
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
-import { FillStyle, FillStyleType, Tag, tags, TagType } from "swf-tree";
+import { Tag, tags, TagType } from "swf-tree";
 import { BitStream, ByteStream, Stream } from "../stream";
-import { emitActionsString } from "./avm1";
 import {
   emitColorTransform,
   emitColorTransformWithAlpha,
@@ -63,7 +62,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
   type TagEmitter = number | [(
     byteStream: ByteStream,
     value: Tag,
-    swfVersion?: Uint8
+    swfVersion?: Uint8,
   ) => any, number | Map<any, number>];
 
   const TAG_TYPE_TO_EMITTER: Map<TagType, TagEmitter> = new Map<TagType, TagEmitter>([
@@ -106,7 +105,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
     ],
     [TagType.DefineFontName, <TagEmitter> [emitDefineFontName, 88]],
     [TagType.DefineFontAlignZones, <TagEmitter> [emitDefineFontAlignZones, 73]],
-    [TagType.JpegTables, <TagEmitter> [emitDefineJpegTables, 8]],
+    [TagType.DefineJpegTables, <TagEmitter> [emitDefineJpegTables, 8]],
     [
       TagType.DefineMorphShape,
       <TagEmitter> [
@@ -532,12 +531,12 @@ export function emitDefineTextAny(byteStream: ByteStream, value: tags.DefineText
 }
 
 export function emitDoAction(byteStream: ByteStream, value: tags.DoAction): void {
-  emitActionsString(byteStream, value.actions);
+  byteStream.writeBytes(value.actions);
 }
 
 export function emitDoInitAction(byteStream: ByteStream, value: tags.DoInitAction): void {
   byteStream.writeUint16LE(value.spriteId);
-  emitActionsString(byteStream, value.actions);
+  byteStream.writeBytes(value.actions);
 }
 
 export function emitExportAssets(byteStream: ByteStream, value: tags.ExportAssets): void {
@@ -563,7 +562,7 @@ export function emitFileAttributes(byteStream: ByteStream, value: tags.FileAttri
 
 export function emitFrameLabel(byteStream: ByteStream, value: tags.FrameLabel): void {
   byteStream.writeCString(value.name);
-  if (value.anchorFlag) {
+  if (value.isAnchor) {
     byteStream.writeUint8(1);
   }
 }
