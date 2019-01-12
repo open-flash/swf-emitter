@@ -1,5 +1,5 @@
 import { Incident } from "incident";
-import { Float16, Uint2, Uint3, Uint8, UintSize } from "semantic-types";
+import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
 import { Glyph, LanguageCode, text } from "swf-tree";
 import { BitStream, ByteStream, Stream } from "../stream";
 import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";

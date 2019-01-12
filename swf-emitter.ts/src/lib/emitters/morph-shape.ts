@@ -1,19 +1,19 @@
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
+import { FillStyleType } from "swf-tree";
+import * as fillStyles from "swf-tree/fill-styles/index";
 import { JoinStyleType } from "swf-tree/join-styles/_type";
 import { MorphFillStyle } from "swf-tree/morph-fill-style";
 import { MorphLineStyle } from "swf-tree/morph-line-style";
 import { MorphShape } from "swf-tree/morph-shape";
 import { MorphShapeRecord } from "swf-tree/morph-shape-record";
+import { MorphStyleChange } from "swf-tree/shape-records";
 import { ShapeRecordType } from "swf-tree/shape-records/_type";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { BitStream, ByteStream, Stream } from "../stream";
 import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types";
 import { emitMorphGradient } from "./gradient";
 import { emitCurvedEdgeBits, emitListLength, emitStraightEdgeBits, getCapStyleCode, getJoinStyleCode } from "./shape";
-import { MorphStyleChange } from "swf-tree/shape-records";
-import * as fillStyles from "swf-tree/fill-styles/index";
-import { FillStyleType } from "swf-tree";
-import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,

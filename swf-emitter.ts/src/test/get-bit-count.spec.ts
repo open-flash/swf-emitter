@@ -1,12 +1,12 @@
 import chai from "chai";
 import { SintSize, UintSize } from "semantic-types";
-import { getSintMinBitCount, getUintMinBitCount, getSintBitCount, getUintBitCount } from "../lib/get-bit-count";
+import { getSintBitCount, getSintMinBitCount, getUintBitCount, getUintMinBitCount } from "../lib/get-bit-count";
 
-function toUint8Array(array: number[]): Uint8Array {
-  const result: Uint8Array = new Uint8Array(array.length);
-  result.set(array);
-  return result;
-}
+// function toUint8Array(array: number[]): Uint8Array {
+//   const result: Uint8Array = new Uint8Array(array.length);
+//   result.set(array);
+//   return result;
+// }
 
 describe("getBitCount", function () {
   describe("getUintBitCount", function () {

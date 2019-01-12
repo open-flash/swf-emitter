@@ -1,5 +1,5 @@
 import { Incident } from "incident";
-import { SintSize, Uint32, UintSize } from "semantic-types";
+import { SintSize, UintSize } from "semantic-types";
 
 /**
  * Returns the minimum number of bits required to represent `value` using Stream#writeUintBits

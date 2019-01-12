@@ -1,6 +1,6 @@
 import { UintSize } from "semantic-types";
 import { ColorTransform, ColorTransformWithAlpha, Matrix, Rect, SRgb8, StraightSRgba8 } from "swf-tree";
-import { getSintMinBitCount, getUintMinBitCount } from "../get-bit-count";
+import { getSintMinBitCount } from "../get-bit-count";
 import { BitStream, ByteStream } from "../stream";
 
 export function emitRect(byteStream: ByteStream, value: Rect): void {

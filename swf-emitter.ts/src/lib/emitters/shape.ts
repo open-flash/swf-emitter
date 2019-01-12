@@ -1,7 +1,7 @@
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint8, UintSize } from "semantic-types";
 import {
-  CapStyle,
+  CapStyle, ColorStop,
   FillStyle,
   fillStyles,
   FillStyleType,
@@ -14,10 +14,10 @@ import {
   shapeRecords,
   ShapeRecordType,
 } from "swf-tree";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { BitStream, ByteStream } from "../stream";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGradient } from "./gradient";
-import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 
 export enum ShapeVersion {
   Shape1 = 1,
@@ -113,7 +113,12 @@ export function emitShapeRecordStringBits(
 }
 
 export function emitCurvedEdgeBits(bitStream: BitStream, value: shapeRecords.CurvedEdge): void {
-  const valuesBitCount: UintSize = getSintMinBitCount(value.controlDelta.x, value.controlDelta.y, value.anchorDelta.x, value.anchorDelta.y);
+  const valuesBitCount: UintSize = getSintMinBitCount(
+    value.controlDelta.x,
+    value.controlDelta.y,
+    value.anchorDelta.x,
+    value.anchorDelta.y,
+  );
   const bitCount: UintSize = Math.max(0, valuesBitCount - 2) + 2;
   bitStream.writeUint16Bits(4, bitCount - 2);
   bitStream.writeSint32Bits(bitCount, value.controlDelta.x);
@@ -392,7 +397,7 @@ function getFillStyleMinShapeVersion(style: FillStyle): ShapeVersion {
     case FillStyleType.LinearGradient:
     case FillStyleType.RadialGradient:
     case FillStyleType.FocalGradient:
-      if (style.gradient.colors.map(cs => cs.color.a !== 0xff).reduce((acc, old) => acc || old, false)) {
+      if (style.gradient.colors.some((cs: ColorStop): boolean => cs.color.a !== 0xff)) {
         return ShapeVersion.Shape3;
       }
       break;

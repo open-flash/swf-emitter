@@ -1,6 +1,8 @@
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
 import { Tag, tags, TagType } from "swf-tree";
+import { SoundType } from "swf-tree/sound/sound-type";
+import { getSintBitCount, getUintBitCount } from "../get-bit-count";
 import { BitStream, ByteStream, Stream } from "../stream";
 import {
   emitColorTransform,
@@ -11,9 +13,10 @@ import {
   emitStraightSRgba8,
 } from "./basic-data-types";
 import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } from "./button";
-import { emitBlendMode, emitClipActionsString, emitFilterList, } from "./display";
+import { emitBlendMode, emitClipActionsString, emitFilterList } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
-import { emitShape, getCapStyleCode, getJoinStyleCode, getMinShapeVersion, ShapeVersion } from "./shape";
+import { emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
+import { getAudioCodingFormatCode, getSoundRateCode } from "./sound";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -25,9 +28,6 @@ import {
   emitTextRecordString,
   emitTextRendererBits,
 } from "./text";
-import { getSintBitCount, getUintBitCount } from "../get-bit-count";
-import { SoundType } from "swf-tree/sound/sound-type";
-import { getAudioCodingFormatCode, getSoundRateCode } from "./sound";
 
 /**
  * Read tags until the end of the stream or "end-of-tags".

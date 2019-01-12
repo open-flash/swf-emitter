@@ -1,6 +1,6 @@
 import { Incident } from "incident";
 import { Uint16, Uint32, Uint8 } from "semantic-types";
-import { BlendMode, ClipActions, ClipEventFlags, Filter, filters, FilterType, Sfixed16P16, Sfixed8P8 } from "swf-tree";
+import { BlendMode, ClipActions, ClipEventFlags, Filter, filters, FilterType } from "swf-tree";
 import { ByteStream, Stream } from "../stream";
 import { emitStraightSRgba8 } from "./basic-data-types";
 
