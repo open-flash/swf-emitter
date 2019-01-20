@@ -38,7 +38,7 @@ describe("Stream", function () {
     ];
 
     for (const {input, expected} of items) {
-      it.only(`should write ${input}`, function () {
+      it(`should write ${input}`, function () {
         const stream: Stream = new Stream();
         stream.writeFloat16BE(input);
         const actual: Uint8Array = stream.getBytes();

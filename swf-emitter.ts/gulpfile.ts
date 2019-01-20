@@ -61,11 +61,6 @@ const lib: LibTarget = {
       branch: "gh-pages",
     },
   },
-  copy: [
-    {
-      files: ["**/*.json"],
-    },
-  ],
   clean: {
     dirs: ["build/lib", "dist/lib"],
   },
@@ -82,9 +77,7 @@ const test: MochaTarget = {
   },
   copy: [
     {
-      src: "../../test",
-      files: ["parsers/**/*.json"],
-      dest: "test",
+      files: ["**/*.{json,swf}"],
     },
   ],
   clean: {

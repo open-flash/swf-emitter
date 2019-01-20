@@ -33,10 +33,15 @@ import {
  * Read tags until the end of the stream or "end-of-tags".
  */
 export function emitTagString(byteStream: ByteStream, value: Tag[], swfVersion: Uint8): void {
+  let count: number = 0;
   for (const tag of value) {
     emitTag(byteStream, tag, swfVersion);
+    count += 1;
+    if (count >= 15) {
+      break;
+    }
   }
-  byteStream.writeUint8(0);
+  byteStream.writeUint32LE(0);
 }
 
 interface TagHeader {
@@ -548,16 +553,17 @@ export function emitExportAssets(byteStream: ByteStream, value: tags.ExportAsset
 }
 
 export function emitFileAttributes(byteStream: ByteStream, value: tags.FileAttributes): void {
-  const bitStream: BitStream = byteStream.asBitStream();
-  bitStream.writeZerosBits(1);
-  bitStream.writeBoolBits(value.useDirectBlit);
-  bitStream.writeBoolBits(value.useGpu);
-  bitStream.writeBoolBits(value.hasMetadata);
-  bitStream.writeBoolBits(value.useAs3);
-  bitStream.writeBoolBits(value.noCrossDomainCaching);
-  bitStream.writeBoolBits(value.useRelativeUrls);
-  bitStream.writeBoolBits(value.useNetwork);
-  bitStream.align(); // TODO: assert noop
+  const flags: Uint8 = 0
+    | (value.useNetwork ? 1 << 0 : 0)
+    | (value.useRelativeUrls ? 1 << 1 : 0)
+    | (value.noCrossDomainCaching ? 1 << 2 : 0)
+    | (value.useAs3 ? 1 << 3 : 0)
+    | (value.hasMetadata ? 1 << 4 : 0)
+    | (value.useGpu ? 1 << 5 : 0)
+    | (value.useDirectBlit ? 1 << 6 : 0);
+  // It seems that an `uint32` is expected despite the spec only describing 8 bits.
+  // TODO: Further investigate if a an `uint32` is really needed or if an `uint8` is enough.
+  byteStream.writeUint32LE(flags);
 }
 
 export function emitFrameLabel(byteStream: ByteStream, value: tags.FrameLabel): void {
