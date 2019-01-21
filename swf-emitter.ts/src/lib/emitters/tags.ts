@@ -1,6 +1,6 @@
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
-import { Tag, tags, TagType } from "swf-tree";
+import { BlendMode, Matrix, Sfixed16P16, Tag, tags, TagType } from "swf-tree";
 import { SoundType } from "swf-tree/sound/sound-type";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
 import { BitStream, ByteStream, Stream } from "../stream";
@@ -37,11 +37,11 @@ export function emitTagString(byteStream: ByteStream, value: Tag[], swfVersion: 
   for (const tag of value) {
     emitTag(byteStream, tag, swfVersion);
     count += 1;
-    if (count >= 15) {
+    if (count >= 29) {
       break;
     }
   }
-  byteStream.writeUint32LE(0);
+  emitEndOfTags(byteStream);
 }
 
 interface TagHeader {
@@ -60,6 +60,10 @@ function emitTagHeader(byteStream: ByteStream, value: TagHeader): void {
     byteStream.writeUint16LE(codeAndLength);
     byteStream.writeUint32LE(value.length);
   }
+}
+
+function emitEndOfTags(byteStream: ByteStream): void {
+  byteStream.writeUint16LE(0);
 }
 
 // tslint:disable-next-line:cyclomatic-complexity
@@ -609,6 +613,17 @@ export enum PlaceObjectVersion {
   PlaceObject3 = 3,
 }
 
+function isIdentityMatrix(value: Matrix): boolean {
+  const result: boolean =
+    Sfixed16P16.equals(value.scaleX, Sfixed16P16.fromValue(1))
+    && Sfixed16P16.equals(value.rotateSkew0, Sfixed16P16.fromValue(0))
+    && Sfixed16P16.equals(value.rotateSkew1, Sfixed16P16.fromValue(0))
+    && Sfixed16P16.equals(value.scaleY, Sfixed16P16.fromValue(1))
+    && value.translateX === 0
+    && value.translateY === 0;
+  return result;
+}
+
 // tslint:disable-next-line:cyclomatic-complexity
 export function emitPlaceObjectAny(
   byteStream: ByteStream,
@@ -617,20 +632,20 @@ export function emitPlaceObjectAny(
 ): PlaceObjectVersion {
   const isMove: boolean = value.isMove;
   const hasCharacterId: boolean = value.characterId !== undefined;
-  const hasMatrix: boolean = value.matrix !== undefined;
+  const hasMatrix: boolean = value.matrix !== undefined && !isIdentityMatrix(value.matrix);
   const hasColorTransform: boolean = value.colorTransform !== undefined;
   const hasColorTransformWithAlpha: boolean = value.colorTransform !== undefined
     && (value.colorTransform.alphaMult.valueOf() !== 1 || value.colorTransform.alphaAdd !== 0);
   const hasRatio: boolean = value.ratio !== undefined;
   const hasName: boolean = value.name !== undefined;
   const hasClipDepth: boolean = value.clipDepth !== undefined;
-  const hasClipActions: boolean = value.clipActions !== undefined;
-  const hasFilters: boolean = value.filters !== undefined;
-  const hasBlendMode: boolean = value.blendMode !== undefined;
+  const hasClipActions: boolean = value.clipActions.length > 0;
+  const hasFilters: boolean = value.filters.length > 0;
+  const hasBlendMode: boolean = value.blendMode !== BlendMode.Normal;
   const hasCacheHint: boolean = value.bitmapCache !== undefined;
   const hasClassName: boolean = value.className !== undefined;
   const hasImage: boolean = false; // TODO: We need more context to handle images
-  const hasVisibility: boolean = value.visible !== undefined;
+  const hasVisibility: boolean = !value.visible;
   const hasBackgroundColor: boolean = value.backgroundColor !== undefined;
 
   if (hasFilters || hasBlendMode || hasCacheHint || hasClassName || hasImage || hasVisibility || hasBackgroundColor) {
