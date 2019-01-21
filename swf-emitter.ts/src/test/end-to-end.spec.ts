@@ -1,3 +1,4 @@
+import { WritableStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
 import sysPath from "path";
@@ -6,7 +7,6 @@ import { Stream as ParserStream } from "swf-parser/stream";
 import { CompressionMethod, Movie } from "swf-tree";
 import { $Movie } from "swf-tree/movie";
 import { emitMovie } from "../lib/emitters/movie";
-import { Stream as EmitterStream } from "../lib/stream";
 import meta from "./meta.js";
 
 export const END_TO_END_DIR: string = sysPath.join(meta.dirname, "end-to-end");
@@ -28,7 +28,7 @@ describe("End-to-end", function () {
 
       // console.log("input is parsed");
 
-      const emitterStream: EmitterStream = new EmitterStream();
+      const emitterStream: WritableStream = new WritableStream();
       emitMovie(emitterStream, inputMovie, CompressionMethod.None);
       const outputBuffer: Uint8Array = emitterStream.getBytes();
 

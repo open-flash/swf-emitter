@@ -1,11 +1,11 @@
+import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
 import { Glyph, LanguageCode, text } from "swf-tree";
-import { BitStream, ByteStream, Stream } from "../stream";
 import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGlyph } from "./shape";
 
-export function emitGridFittingBits(bitStream: BitStream, value: text.GridFitting): void {
+export function emitGridFittingBits(bitStream: WritableBitStream, value: text.GridFitting): void {
   const VALUE_TO_CODE: Map<text.GridFitting, Uint3> = new Map([
     [text.GridFitting.None, 0 as Uint3],
     [text.GridFitting.Pixel, 1 as Uint3],
@@ -18,7 +18,7 @@ export function emitGridFittingBits(bitStream: BitStream, value: text.GridFittin
   bitStream.writeUint32Bits(3, code);
 }
 
-export function emitLanguageCode(byteStream: ByteStream, value: LanguageCode): void {
+export function emitLanguageCode(byteStream: WritableByteStream, value: LanguageCode): void {
   const VALUE_TO_CODE: Map<LanguageCode, Uint8> = new Map([
     [LanguageCode.Auto, 0],
     [LanguageCode.Latin, 1],
@@ -34,7 +34,7 @@ export function emitLanguageCode(byteStream: ByteStream, value: LanguageCode): v
   byteStream.writeUint8(code);
 }
 
-export function emitTextRendererBits(bitStream: BitStream, value: text.TextRenderer): void {
+export function emitTextRendererBits(bitStream: WritableBitStream, value: text.TextRenderer): void {
   const VALUE_TO_CODE: Map<text.TextRenderer, Uint2> = new Map([
     [text.TextRenderer.Normal, 0 as Uint2],
     [text.TextRenderer.Advanced, 1 as Uint2],
@@ -47,7 +47,7 @@ export function emitTextRendererBits(bitStream: BitStream, value: text.TextRende
 }
 
 export function emitTextRecordString(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: ReadonlyArray<text.TextRecord>,
   hasAlpha: boolean,
   indexBits: UintSize,
@@ -60,7 +60,7 @@ export function emitTextRecordString(
 }
 
 export function emitTextRecord(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: text.TextRecord,
   hasAlpha: boolean,
   indexBits: UintSize,
@@ -98,7 +98,7 @@ export function emitTextRecord(
     byteStream.writeUint16LE(value.fontSize!);
   }
   byteStream.writeUint8(value.entries.length);
-  const bitStream: BitStream = byteStream.asBitStream();
+  const bitStream: WritableBitStream = byteStream.asBitStream();
   for (const entry of value.entries) {
     bitStream.writeUint32Bits(indexBits, entry.index);
     bitStream.writeUint32Bits(advanceBits, entry.advance);
@@ -106,7 +106,7 @@ export function emitTextRecord(
   bitStream.align();
 }
 
-export function emitCsmTableHintBits(bitStream: BitStream, value: text.CsmTableHint): void {
+export function emitCsmTableHintBits(bitStream: WritableBitStream, value: text.CsmTableHint): void {
   const VALUE_TO_CODE: Map<text.CsmTableHint, Uint2> = new Map([
     [text.CsmTableHint.Thin, 0 as Uint2],
     [text.CsmTableHint.Medium, 1 as Uint2],
@@ -119,7 +119,7 @@ export function emitCsmTableHintBits(bitStream: BitStream, value: text.CsmTableH
   bitStream.writeUint32Bits(2, code);
 }
 
-export function emitFontAlignmentZone(byteStream: ByteStream, value: text.FontAlignmentZone): void {
+export function emitFontAlignmentZone(byteStream: WritableByteStream, value: text.FontAlignmentZone): void {
   byteStream.writeUint8(value.data.length);
   for (const zoneData of value.data) {
     emitFontAlignmentZoneData(byteStream, zoneData);
@@ -130,7 +130,7 @@ export function emitFontAlignmentZone(byteStream: ByteStream, value: text.FontAl
   byteStream.writeUint8(flags);
 }
 
-export function emitFontAlignmentZoneData(byteStream: ByteStream, value: text.FontAlignmentZoneData): void {
+export function emitFontAlignmentZoneData(byteStream: WritableByteStream, value: text.FontAlignmentZoneData): void {
   byteStream.writeFloat16LE(value.origin);
   byteStream.writeFloat16LE(value.size);
 }
@@ -141,12 +141,12 @@ export function emitFontAlignmentZoneData(byteStream: ByteStream, value: text.Fo
  * @return useWideOffset
  */
 export function emitOffsetGlyphs(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: ReadonlyArray<Glyph>,
 ): boolean {
   let useWideOffset: boolean = false;
   const endOffsets: UintSize[] = new Array(value.length);
-  const glyphStream: Stream = new Stream();
+  const glyphStream: WritableStream = new WritableStream();
   for (let i: UintSize = 0; i < value.length; i++) {
     emitGlyph(glyphStream, value[i]);
     endOffsets[i] = glyphStream.bytePos;
@@ -170,7 +170,7 @@ export function emitOffsetGlyphs(
   return useWideOffset;
 }
 
-export function emitFontLayout(byteStream: ByteStream, value: text.FontLayout): void {
+export function emitFontLayout(byteStream: WritableByteStream, value: text.FontLayout): void {
   byteStream.writeUint16LE(value.ascent);
   byteStream.writeUint16LE(value.descent);
   byteStream.writeUint16LE(value.leading);
@@ -186,13 +186,13 @@ export function emitFontLayout(byteStream: ByteStream, value: text.FontLayout): 
   }
 }
 
-export function emitKerningRecord(byteStream: ByteStream, value: text.KerningRecord): void {
+export function emitKerningRecord(byteStream: WritableByteStream, value: text.KerningRecord): void {
   byteStream.writeUint16LE(value.left);
   byteStream.writeUint16LE(value.right);
   byteStream.writeSint16LE(value.adjustment);
 }
 
-export function emitTextAlignment(byteStream: ByteStream, value: text.TextAlignment): void {
+export function emitTextAlignment(byteStream: WritableByteStream, value: text.TextAlignment): void {
   const TEXT_ALIGNMENT_TO_CODE: Map<text.TextAlignment, Uint8> = new Map([
     [text.TextAlignment.Center, 2],
     [text.TextAlignment.Justify, 3],

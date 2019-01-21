@@ -1,10 +1,10 @@
+import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint32, Uint8 } from "semantic-types";
 import { BlendMode, ClipActions, ClipEventFlags, Filter, filters, FilterType } from "swf-tree";
-import { ByteStream, Stream } from "../stream";
 import { emitStraightSRgba8 } from "./basic-data-types";
 
-export function emitBlendMode(byteStream: ByteStream, value: BlendMode): void {
+export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode): void {
   const BLEND_MODE_TO_CODE: Map<BlendMode, Uint8> = new Map<BlendMode, Uint8>([
     [BlendMode.Normal, 0],
     [BlendMode.Layer, 2],
@@ -30,7 +30,7 @@ export function emitBlendMode(byteStream: ByteStream, value: BlendMode): void {
 }
 
 export function emitClipActionsString(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: ReadonlyArray<ClipActions>,
   extendedEvents: boolean,
 ): void {
@@ -91,7 +91,11 @@ export function emitClipActionsString(
   }
 }
 
-export function emitClipEventFlags(byteStream: ByteStream, value: ClipEventFlags, extendedEvents: boolean): void {
+export function emitClipEventFlags(
+  byteStream: WritableByteStream,
+  value: ClipEventFlags,
+  extendedEvents: boolean,
+): void {
   const flags: Uint16 = 0
     | (value.load ? 1 << 0 : 0)
     | (value.enterFrame ? 1 << 1 : 0)
@@ -121,9 +125,9 @@ export function emitClipEventFlags(byteStream: ByteStream, value: ClipEventFlags
   byteStream.writeUint32LE(extendedFlags);
 }
 
-export function emitClipActions(byteStream: ByteStream, value: ClipActions, extendedEvents: boolean): void {
+export function emitClipActions(byteStream: WritableByteStream, value: ClipActions, extendedEvents: boolean): void {
   emitClipEventFlags(byteStream, value.events, extendedEvents);
-  const actionStream: Stream = new Stream();
+  const actionStream: WritableByteStream = new WritableStream();
 
   if (value.events.keyPress) {
     if (value.keyCode === undefined) {
@@ -137,15 +141,15 @@ export function emitClipActions(byteStream: ByteStream, value: ClipActions, exte
   byteStream.write(actionStream);
 }
 
-export function emitFilterList(byteStream: ByteStream, value: ReadonlyArray<Filter>): void {
+export function emitFilterList(byteStream: WritableByteStream, value: ReadonlyArray<Filter>): void {
   byteStream.writeUint8(value.length);
   for (const filter of value) {
     emitFilter(byteStream, filter);
   }
 }
 
-export function emitFilter(byteStream: ByteStream, value: Filter): void {
-  type FilterEmitter = [(byteStream: ByteStream, value: Filter) => void, Uint8];
+export function emitFilter(byteStream: WritableByteStream, value: Filter): void {
+  type FilterEmitter = [(byteStream: WritableByteStream, value: Filter) => void, Uint8];
   const FILTER_TYPE_TO_EMITTER: Map<FilterType, FilterEmitter> = new Map([
     [FilterType.Bevel, <FilterEmitter> [emitBevelFilter, 3]],
     [FilterType.Blur, <FilterEmitter> [emitBlurFilter, 1]],
@@ -165,14 +169,14 @@ export function emitFilter(byteStream: ByteStream, value: Filter): void {
   filterEmitter[0](byteStream, value);
 }
 
-export function emitBevelFilter(byteStream: ByteStream, value: filters.Bevel): void {
+export function emitBevelFilter(byteStream: WritableByteStream, value: filters.Bevel): void {
   emitStraightSRgba8(byteStream, value.shadowColor);
   emitStraightSRgba8(byteStream, value.highlightColor);
-  byteStream.writeFixed16P16LE(value.blurX);
-  byteStream.writeFixed16P16LE(value.blurY);
-  byteStream.writeFixed16P16LE(value.angle);
-  byteStream.writeFixed16P16LE(value.distance);
-  byteStream.writeFixed8P8LE(value.strength);
+  byteStream.writeSint32LE(value.blurX.epsilons);
+  byteStream.writeSint32LE(value.blurY.epsilons);
+  byteStream.writeSint32LE(value.angle.epsilons);
+  byteStream.writeSint32LE(value.distance.epsilons);
+  byteStream.writeSint16LE(value.strength.epsilons);
 
   const flags: Uint8 = 0
     | ((value.passes & 0x0f) << 0)
@@ -183,21 +187,21 @@ export function emitBevelFilter(byteStream: ByteStream, value: filters.Bevel): v
   byteStream.writeUint8(flags);
 }
 
-export function emitBlurFilter(byteStream: ByteStream, value: filters.Blur): void {
-  byteStream.writeFixed16P16LE(value.blurX);
-  byteStream.writeFixed16P16LE(value.blurY);
+export function emitBlurFilter(byteStream: WritableByteStream, value: filters.Blur): void {
+  byteStream.writeSint32LE(value.blurX.epsilons);
+  byteStream.writeSint32LE(value.blurY.epsilons);
   const flags: Uint8 = 0
     | ((value.passes & 0x1f) << 3);
   byteStream.writeUint8(flags);
 }
 
-export function emitColorMatrixFilter(byteStream: ByteStream, value: filters.ColorMatrix): void {
+export function emitColorMatrixFilter(byteStream: WritableByteStream, value: filters.ColorMatrix): void {
   for (const coefficient of value.matrix) {
     byteStream.writeFloat32LE(coefficient);
   }
 }
 
-export function emitConvolutionFilter(byteStream: ByteStream, value: filters.Convolution): void {
+export function emitConvolutionFilter(byteStream: WritableByteStream, value: filters.Convolution): void {
   byteStream.writeUint8(value.matrixWidth);
   byteStream.writeUint8(value.matrixHeight);
   byteStream.writeFloat32LE(value.divisor);
@@ -212,13 +216,13 @@ export function emitConvolutionFilter(byteStream: ByteStream, value: filters.Con
   byteStream.writeUint8(flags);
 }
 
-export function emitDropShadowFilter(byteStream: ByteStream, value: filters.DropShadow): void {
+export function emitDropShadowFilter(byteStream: WritableByteStream, value: filters.DropShadow): void {
   emitStraightSRgba8(byteStream, value.color);
-  byteStream.writeFixed16P16LE(value.blurX);
-  byteStream.writeFixed16P16LE(value.blurY);
-  byteStream.writeFixed16P16LE(value.angle);
-  byteStream.writeFixed16P16LE(value.distance);
-  byteStream.writeFixed8P8LE(value.strength);
+  byteStream.writeSint32LE(value.blurX.epsilons);
+  byteStream.writeSint32LE(value.blurY.epsilons);
+  byteStream.writeSint32LE(value.angle.epsilons);
+  byteStream.writeSint32LE(value.distance.epsilons);
+  byteStream.writeSint16LE(value.strength.epsilons);
 
   const flags: Uint8 = 0
     | ((value.passes & 0x1f) << 0)
@@ -228,11 +232,11 @@ export function emitDropShadowFilter(byteStream: ByteStream, value: filters.Drop
   byteStream.writeUint8(flags);
 }
 
-export function emitGlowFilter(byteStream: ByteStream, value: filters.Glow): void {
+export function emitGlowFilter(byteStream: WritableByteStream, value: filters.Glow): void {
   emitStraightSRgba8(byteStream, value.color);
-  byteStream.writeFixed16P16LE(value.blurX);
-  byteStream.writeFixed16P16LE(value.blurY);
-  byteStream.writeFixed8P8LE(value.strength);
+  byteStream.writeSint32LE(value.blurX.epsilons);
+  byteStream.writeSint32LE(value.blurY.epsilons);
+  byteStream.writeSint16LE(value.strength.epsilons);
 
   const flags: Uint8 = 0
     | ((value.passes & 0x1f) << 0)
@@ -242,7 +246,7 @@ export function emitGlowFilter(byteStream: ByteStream, value: filters.Glow): voi
   byteStream.writeUint8(flags);
 }
 
-export function emitGradientBevelFilter(byteStream: ByteStream, value: filters.GradientBevel): void {
+export function emitGradientBevelFilter(byteStream: WritableByteStream, value: filters.GradientBevel): void {
   byteStream.writeUint8(value.gradient.length);
   for (const colorStop of value.gradient) {
     emitStraightSRgba8(byteStream, colorStop.color);
@@ -250,11 +254,11 @@ export function emitGradientBevelFilter(byteStream: ByteStream, value: filters.G
   for (const colorStop of value.gradient) {
     byteStream.writeUint8(colorStop.ratio);
   }
-  byteStream.writeFixed16P16LE(value.blurX);
-  byteStream.writeFixed16P16LE(value.blurY);
-  byteStream.writeFixed16P16LE(value.angle);
-  byteStream.writeFixed16P16LE(value.distance);
-  byteStream.writeFixed8P8LE(value.strength);
+  byteStream.writeSint32LE(value.blurX.epsilons);
+  byteStream.writeSint32LE(value.blurY.epsilons);
+  byteStream.writeSint32LE(value.angle.epsilons);
+  byteStream.writeSint32LE(value.distance.epsilons);
+  byteStream.writeSint16LE(value.strength.epsilons);
 
   const flags: Uint8 = 0
     | ((value.passes & 0x0f) << 0)
@@ -265,7 +269,7 @@ export function emitGradientBevelFilter(byteStream: ByteStream, value: filters.G
   byteStream.writeUint8(flags);
 }
 
-export function emitGradientGlowFilter(byteStream: ByteStream, value: filters.GradientGlow): void {
+export function emitGradientGlowFilter(byteStream: WritableByteStream, value: filters.GradientGlow): void {
   byteStream.writeUint8(value.gradient.length);
   for (const colorStop of value.gradient) {
     emitStraightSRgba8(byteStream, colorStop.color);
@@ -273,11 +277,11 @@ export function emitGradientGlowFilter(byteStream: ByteStream, value: filters.Gr
   for (const colorStop of value.gradient) {
     byteStream.writeUint8(colorStop.ratio);
   }
-  byteStream.writeFixed16P16LE(value.blurX);
-  byteStream.writeFixed16P16LE(value.blurY);
-  byteStream.writeFixed16P16LE(value.angle);
-  byteStream.writeFixed16P16LE(value.distance);
-  byteStream.writeFixed8P8LE(value.strength);
+  byteStream.writeSint32LE(value.blurX.epsilons);
+  byteStream.writeSint32LE(value.blurY.epsilons);
+  byteStream.writeSint32LE(value.angle.epsilons);
+  byteStream.writeSint32LE(value.distance.epsilons);
+  byteStream.writeSint16LE(value.strength.epsilons);
 
   const flags: Uint8 = 0
     | ((value.passes & 0x0f) << 0)

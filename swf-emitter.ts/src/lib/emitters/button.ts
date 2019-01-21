@@ -1,10 +1,10 @@
+import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint7, Uint8, UintSize } from "semantic-types";
 import { BlendMode } from "swf-tree/blend-mode";
 import { ButtonCond } from "swf-tree/button/button-cond";
 import { ButtonCondAction } from "swf-tree/button/button-cond-action";
 import { ButtonRecord } from "swf-tree/button/button-record";
-import { ByteStream, Stream } from "../stream";
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types";
 import { emitBlendMode, emitFilterList } from "./display";
 
@@ -14,7 +14,7 @@ export enum ButtonVersion {
 }
 
 export function emitButtonRecordString(
-  byteStream: Stream,
+  byteStream: WritableByteStream,
   value: ReadonlyArray<ButtonRecord>,
   buttonVersion: ButtonVersion,
 ): void {
@@ -24,7 +24,11 @@ export function emitButtonRecordString(
   byteStream.writeUint8(0);
 }
 
-export function emitButtonRecord(byteStream: Stream, value: ButtonRecord, buttonVersion: ButtonVersion): void {
+export function emitButtonRecord(
+  byteStream: WritableByteStream,
+  value: ButtonRecord,
+  buttonVersion: ButtonVersion,
+): void {
   const hasBlendMode: boolean = value.blendMode !== BlendMode.Normal;
 
   const flags: Uint8 = 0
@@ -53,11 +57,13 @@ export function emitButtonRecord(byteStream: Stream, value: ButtonRecord, button
   }
 }
 
-export function emitButton2CondActionString(byteStream: ByteStream, value: ReadonlyArray<ButtonCondAction>): void {
-  let actionStream: Stream;
+export function emitButton2CondActionString(
+  byteStream: WritableByteStream,
+  value: ReadonlyArray<ButtonCondAction>,
+): void {
   const actionCount: UintSize = value.length;
   for (let i: UintSize = 0; i < actionCount; i++) {
-    actionStream = new Stream();
+    const actionStream: WritableStream = new WritableStream();
     emitButton2CondAction(actionStream, value[i]);
     if (i < value.length - 1) {
       byteStream.writeUint16LE(actionStream.bytePos);
@@ -68,7 +74,7 @@ export function emitButton2CondActionString(byteStream: ByteStream, value: Reado
   }
 }
 
-export function emitButton2CondAction(byteStream: ByteStream, value: ButtonCondAction): void {
+export function emitButton2CondAction(byteStream: WritableByteStream, value: ButtonCondAction): void {
   if (value.conditions === undefined) {
     throw new Incident("ExpectedConditionsToBeDefined");
   }
@@ -76,7 +82,7 @@ export function emitButton2CondAction(byteStream: ByteStream, value: ButtonCondA
   byteStream.writeBytes(value.actions);
 }
 
-export function emitButtonCond(byteStream: ByteStream, value: ButtonCond): void {
+export function emitButtonCond(byteStream: WritableByteStream, value: ButtonCond): void {
   const keyCode: Uint7 = value.keyPress !== undefined ? value.keyPress & 0x7f : 0;
   const flags: Uint16 = 0
     | (keyCode << 0)

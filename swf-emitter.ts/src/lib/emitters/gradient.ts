@@ -1,7 +1,7 @@
+import { WritableByteStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint2, Uint8 } from "semantic-types";
 import { ColorSpace, ColorStop, Gradient, GradientSpread, MorphColorStop, MorphGradient } from "swf-tree";
-import { ByteStream } from "../stream";
 import { emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 
 const GRADIENT_SPREAD_TO_CODE: Map<GradientSpread, Uint2> = new Map([
@@ -15,7 +15,7 @@ const COLOR_SPACE_TO_CODE: Map<ColorSpace, Uint2> = new Map([
   [ColorSpace.SRgb, 0 as Uint2],
 ]);
 
-export function emitColorStop(byteStream: ByteStream, value: ColorStop, withAlpha: boolean): void {
+export function emitColorStop(byteStream: WritableByteStream, value: ColorStop, withAlpha: boolean): void {
   byteStream.writeUint8(value.ratio);
   if (withAlpha) {
     emitStraightSRgba8(byteStream, value.color);
@@ -24,7 +24,7 @@ export function emitColorStop(byteStream: ByteStream, value: ColorStop, withAlph
   }
 }
 
-export function emitGradient(byteStream: ByteStream, value: Gradient, withAlpha: boolean): void {
+export function emitGradient(byteStream: WritableByteStream, value: Gradient, withAlpha: boolean): void {
   const spreadCode: Uint2 | undefined = GRADIENT_SPREAD_TO_CODE.get(value.spread);
   const colorSpaceCode: Uint2 | undefined = COLOR_SPACE_TO_CODE.get(value.colorSpace);
   if (spreadCode === undefined) {
@@ -45,12 +45,12 @@ export function emitGradient(byteStream: ByteStream, value: Gradient, withAlpha:
   }
 }
 
-export function emitMorphColorStop(byteStream: ByteStream, value: MorphColorStop, withAlpha: boolean): void {
+export function emitMorphColorStop(byteStream: WritableByteStream, value: MorphColorStop, withAlpha: boolean): void {
   emitColorStop(byteStream, {ratio: value.ratio, color: value.color}, withAlpha);
   emitColorStop(byteStream, {ratio: value.morphRatio, color: value.morphColor}, withAlpha);
 }
 
-export function emitMorphGradient(byteStream: ByteStream, value: MorphGradient, withAlpha: boolean): void {
+export function emitMorphGradient(byteStream: WritableByteStream, value: MorphGradient, withAlpha: boolean): void {
   const spreadCode: Uint2 | undefined = GRADIENT_SPREAD_TO_CODE.get(value.spread);
   const colorSpaceCode: Uint2 | undefined = COLOR_SPACE_TO_CODE.get(value.colorSpace);
   if (spreadCode === undefined) {

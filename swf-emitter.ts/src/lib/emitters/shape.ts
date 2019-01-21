@@ -1,3 +1,4 @@
+import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint8, UintSize } from "semantic-types";
 import {
@@ -15,7 +16,6 @@ import {
   ShapeRecordType,
 } from "swf-tree";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
-import { BitStream, ByteStream } from "../stream";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGradient } from "./gradient";
 
@@ -26,13 +26,13 @@ export enum ShapeVersion {
   Shape4 = 4,
 }
 
-export function emitGlyph(byteStream: ByteStream, value: Glyph): void {
-  const bitStream: BitStream = byteStream.asBitStream();
+export function emitGlyph(byteStream: WritableByteStream, value: Glyph): void {
+  const bitStream: WritableBitStream = byteStream.asBitStream();
   emitGlyphBits(bitStream, value);
   bitStream.align();
 }
 
-export function emitGlyphBits(bitStream: BitStream, value: Glyph): void {
+export function emitGlyphBits(bitStream: WritableBitStream, value: Glyph): void {
   // TODO: We use the maximum at the moment, but we should check how to determine the bit count
   const fillBits: UintSize = 0b1111;
   const lineBits: UintSize = 0b1111;
@@ -42,13 +42,13 @@ export function emitGlyphBits(bitStream: BitStream, value: Glyph): void {
   emitShapeRecordStringBits(bitStream, value.records, fillBits, lineBits, ShapeVersion.Shape1);
 }
 
-export function emitShape(byteStream: ByteStream, value: Shape, shapeVersion: ShapeVersion): void {
-  const bitStream: BitStream = byteStream.asBitStream();
+export function emitShape(byteStream: WritableByteStream, value: Shape, shapeVersion: ShapeVersion): void {
+  const bitStream: WritableBitStream = byteStream.asBitStream();
   emitShapeBits(bitStream, value, shapeVersion);
   bitStream.align();
 }
 
-export function emitShapeBits(bitStream: BitStream, value: Shape, shapeVersion: ShapeVersion): void {
+export function emitShapeBits(bitStream: WritableBitStream, value: Shape, shapeVersion: ShapeVersion): void {
   let fillBits: UintSize;
   let lineBits: UintSize;
   [fillBits, lineBits] = emitShapeStylesBits(bitStream, value.initialStyles, shapeVersion);
@@ -68,11 +68,11 @@ export interface ShapeStyles {
  * @return [fillBits, lineBits]
  */
 export function emitShapeStylesBits(
-  bitStream: BitStream,
+  bitStream: WritableBitStream,
   value: ShapeStyles,
   shapeVersion: ShapeVersion,
 ): [UintSize, UintSize] {
-  const byteStream: ByteStream = bitStream.asByteStream();
+  const byteStream: WritableByteStream = bitStream.asByteStream();
   emitFillStyleList(byteStream, value.fill, shapeVersion);
   emitLineStyleList(byteStream, value.line, shapeVersion);
   const fillBits: UintSize = getUintBitCount(value.fill.length + 1); // `+ 1` because of empty style
@@ -83,7 +83,7 @@ export function emitShapeStylesBits(
 }
 
 export function emitShapeRecordStringBits(
-  bitStream: BitStream,
+  bitStream: WritableBitStream,
   value: ShapeRecord[],
   fillBits: UintSize,
   lineBits: UintSize,
@@ -112,7 +112,7 @@ export function emitShapeRecordStringBits(
   bitStream.writeUint16Bits(6, 0);
 }
 
-export function emitCurvedEdgeBits(bitStream: BitStream, value: shapeRecords.CurvedEdge): void {
+export function emitCurvedEdgeBits(bitStream: WritableBitStream, value: shapeRecords.CurvedEdge): void {
   const valuesBitCount: UintSize = getSintMinBitCount(
     value.controlDelta.x,
     value.controlDelta.y,
@@ -127,7 +127,7 @@ export function emitCurvedEdgeBits(bitStream: BitStream, value: shapeRecords.Cur
   bitStream.writeSint32Bits(bitCount, value.anchorDelta.y);
 }
 
-export function emitStraightEdgeBits(bitStream: BitStream, value: shapeRecords.StraightEdge): void {
+export function emitStraightEdgeBits(bitStream: WritableBitStream, value: shapeRecords.StraightEdge): void {
   const bitCount: UintSize = Math.max(0, getSintMinBitCount(value.delta.x, value.delta.y) - 2) + 2;
   bitStream.writeUint16Bits(4, bitCount - 2);
   const isDiagonal: boolean = value.delta.x !== 0 && value.delta.y !== 0;
@@ -147,7 +147,7 @@ export function emitStraightEdgeBits(bitStream: BitStream, value: shapeRecords.S
 }
 
 export function emitStyleChangeBits(
-  bitStream: BitStream,
+  bitStream: WritableBitStream,
   value: shapeRecords.StyleChange,
   fillBits: UintSize,
   lineBits: UintSize,
@@ -189,7 +189,7 @@ export function emitStyleChangeBits(
   return [fillBits, lineBits];
 }
 
-export function emitListLength(byteStream: ByteStream, value: UintSize, supportExtended: boolean): void {
+export function emitListLength(byteStream: WritableByteStream, value: UintSize, supportExtended: boolean): void {
   if (value < 0xff || (value === 0xff && !supportExtended)) {
     byteStream.writeUint8(value);
   } else {
@@ -199,7 +199,7 @@ export function emitListLength(byteStream: ByteStream, value: UintSize, supportE
 }
 
 export function emitFillStyleList(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: FillStyle[],
   shapeVersion: ShapeVersion,
 ): void {
@@ -209,7 +209,7 @@ export function emitFillStyleList(
   }
 }
 
-export function emitFillStyle(byteStream: ByteStream, value: FillStyle, withAlpha: boolean): void {
+export function emitFillStyle(byteStream: WritableByteStream, value: FillStyle, withAlpha: boolean): void {
   switch (value.type) {
     case FillStyleType.Bitmap:
       const code: Uint8 = 0
@@ -240,23 +240,23 @@ export function emitFillStyle(byteStream: ByteStream, value: FillStyle, withAlph
   }
 }
 
-export function emitBitmapFill(byteStream: ByteStream, value: { bitmapId: Uint16; matrix: Matrix }): void {
+export function emitBitmapFill(byteStream: WritableByteStream, value: { bitmapId: Uint16; matrix: Matrix }): void {
   byteStream.writeUint16LE(value.bitmapId);
   emitMatrix(byteStream, value.matrix);
 }
 
 export function emitFocalGradientFill(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: fillStyles.FocalGradient,
   withAlpha: boolean,
 ): void {
   emitMatrix(byteStream, value.matrix);
   emitGradient(byteStream, value.gradient, withAlpha);
-  byteStream.writeFixed8P8LE(value.focalPoint);
+  byteStream.writeSint16LE(value.focalPoint.epsilons);
 }
 
 export function emitLinearGradientFill(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: fillStyles.LinearGradient,
   withAlpha: boolean,
 ): void {
@@ -265,7 +265,7 @@ export function emitLinearGradientFill(
 }
 
 export function emitRadialGradientFill(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: fillStyles.RadialGradient,
   withAlpha: boolean,
 ): void {
@@ -273,7 +273,7 @@ export function emitRadialGradientFill(
   emitGradient(byteStream, value.gradient, withAlpha);
 }
 
-export function emitSolidFill(byteStream: ByteStream, value: fillStyles.Solid, withAlpha: boolean): void {
+export function emitSolidFill(byteStream: WritableByteStream, value: fillStyles.Solid, withAlpha: boolean): void {
   if (withAlpha) {
     emitStraightSRgba8(byteStream, value.color);
   } else {
@@ -282,7 +282,7 @@ export function emitSolidFill(byteStream: ByteStream, value: fillStyles.Solid, w
 }
 
 export function emitLineStyleList(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: LineStyle[],
   shapeVersion: ShapeVersion,
 ): void {
@@ -296,7 +296,7 @@ export function emitLineStyleList(
   }
 }
 
-export function emitLineStyle1(byteStream: ByteStream, value: LineStyle, withAlpha: boolean): void {
+export function emitLineStyle1(byteStream: WritableByteStream, value: LineStyle, withAlpha: boolean): void {
   if (value.fill.type !== FillStyleType.Solid) {
     throw new Incident("ExpectedSolidFill");
   }
@@ -308,7 +308,7 @@ export function emitLineStyle1(byteStream: ByteStream, value: LineStyle, withAlp
   }
 }
 
-export function emitLineStyle2(byteStream: ByteStream, value: LineStyle): void {
+export function emitLineStyle2(byteStream: WritableByteStream, value: LineStyle): void {
   byteStream.writeUint16LE(value.width);
 
   const hasFill: boolean = value.fill.type !== FillStyleType.Solid;
@@ -328,7 +328,7 @@ export function emitLineStyle2(byteStream: ByteStream, value: LineStyle): void {
   byteStream.writeUint16LE(flags);
 
   if (value.join.type === JoinStyleType.Miter) {
-    byteStream.writeFixed8P8LE(value.join.limit);
+    byteStream.writeSint16LE(value.join.limit.epsilons);
   }
 
   if (hasFill) {

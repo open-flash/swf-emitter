@@ -1,9 +1,9 @@
+import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
 import { BlendMode, Matrix, Sfixed16P16, Tag, tags, TagType } from "swf-tree";
 import { SoundType } from "swf-tree/sound/sound-type";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
-import { BitStream, ByteStream, Stream } from "../stream";
 import {
   emitColorTransform,
   emitColorTransformWithAlpha,
@@ -32,7 +32,7 @@ import {
 /**
  * Read tags until the end of the stream or "end-of-tags".
  */
-export function emitTagString(byteStream: ByteStream, value: ReadonlyArray<Tag>, swfVersion: Uint8): void {
+export function emitTagString(byteStream: WritableByteStream, value: ReadonlyArray<Tag>, swfVersion: Uint8): void {
   for (const tag of value) {
     emitTag(byteStream, tag, swfVersion);
   }
@@ -44,7 +44,7 @@ interface TagHeader {
   length: Uint32;
 }
 
-function emitTagHeader(byteStream: ByteStream, value: TagHeader): void {
+function emitTagHeader(byteStream: WritableByteStream, value: TagHeader): void {
   const LENGTH_MASK: Uint8 = 0b00111111;
 
   if (value.length < LENGTH_MASK && (value.length > 0 || (value.code & 0b11) !== 0)) {
@@ -57,14 +57,14 @@ function emitTagHeader(byteStream: ByteStream, value: TagHeader): void {
   }
 }
 
-function emitEndOfTags(byteStream: ByteStream): void {
+function emitEndOfTags(byteStream: WritableByteStream): void {
   byteStream.writeUint16LE(0);
 }
 
 // tslint:disable-next-line:cyclomatic-complexity
-export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): void {
+export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: Uint8): void {
   type TagEmitter = number | [(
-    byteStream: ByteStream,
+    byteStream: WritableByteStream,
     value: Tag,
     swfVersion?: Uint8,
   ) => any, number | Map<any, number>];
@@ -202,7 +202,7 @@ export function emitTag(byteStream: ByteStream, value: Tag, swfVersion: Uint8): 
     return;
   }
 
-  const tagStream: Stream = new Stream();
+  const tagStream: WritableStream = new WritableStream();
   const result: any = tagEmitter[0](tagStream, value, swfVersion);
   let code: number | Map<any, number> = <any> tagEmitter[tagEmitter.length - 1];
   if (typeof code !== "number") {
@@ -225,7 +225,7 @@ export enum DefineBitmapVersion {
   DefineBitsLossless2,
 }
 
-export function emitDefineBitmapAny(byteStream: ByteStream, value: tags.DefineBitmap): DefineBitmapVersion {
+export function emitDefineBitmapAny(byteStream: WritableByteStream, value: tags.DefineBitmap): DefineBitmapVersion {
   byteStream.writeUint16LE(value.id);
   switch (value.mediaType) {
     case "image/x-swf-bmp":
@@ -250,12 +250,12 @@ export function emitDefineBitmapAny(byteStream: ByteStream, value: tags.DefineBi
   }
 }
 
-export function emitDefineButton(byteStream: ByteStream, value: tags.DefineButton): ButtonVersion {
+export function emitDefineButton(byteStream: WritableByteStream, value: tags.DefineButton): ButtonVersion {
   byteStream.writeUint16LE(value.id);
   const flags: Uint8 = 0
     | (value.trackAsMenu ? 1 << 0 : 0);
   byteStream.writeUint8(flags);
-  const buttonRecordStream: Stream = new Stream();
+  const buttonRecordStream: WritableStream = new WritableStream();
   emitButtonRecordString(buttonRecordStream, value.characters, ButtonVersion.Button2);
   if (value.actions.length === 0) {
     byteStream.writeUint16LE(0);
@@ -268,9 +268,9 @@ export function emitDefineButton(byteStream: ByteStream, value: tags.DefineButto
   return ButtonVersion.Button2;
 }
 
-export function emitCsmTextSettings(byteStream: ByteStream, value: tags.CsmTextSettings): void {
+export function emitCsmTextSettings(byteStream: WritableByteStream, value: tags.CsmTextSettings): void {
   byteStream.writeUint16LE(value.textId);
-  const bitStream: BitStream = byteStream.asBitStream();
+  const bitStream: WritableBitStream = byteStream.asBitStream();
   emitTextRendererBits(bitStream, value.renderer);
   emitGridFittingBits(bitStream, value.fitting);
   bitStream.align();
@@ -286,11 +286,11 @@ export enum DefineFontVersion {
   Font4,
 }
 
-export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): DefineFontVersion {
+export function emitDefineFont(byteStream: WritableByteStream, value: tags.DefineFont): DefineFontVersion {
   byteStream.writeUint16LE(value.id);
 
   const useWideCodes: boolean = true; // `false` is deprecated since SWF6
-  const offsetGlyphStream: Stream = new Stream();
+  const offsetGlyphStream: WritableStream = new WritableStream();
   const useWideOffsets: boolean = value.glyphs !== undefined
     ? emitOffsetGlyphs(offsetGlyphStream, value.glyphs)
     : false;
@@ -309,7 +309,7 @@ export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): 
   byteStream.writeUint8(flags);
   emitLanguageCode(byteStream, value.language);
 
-  const fontNameStream: Stream = new Stream();
+  const fontNameStream: WritableStream = new WritableStream();
   fontNameStream.writeString(value.fontName); // TODO: See DefineFontInfo for encoding
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
@@ -334,9 +334,9 @@ export function emitDefineFont(byteStream: ByteStream, value: tags.DefineFont): 
   return DefineFontVersion.Font3;
 }
 
-export function emitDefineFontAlignZones(byteStream: ByteStream, value: tags.DefineFontAlignZones): void {
+export function emitDefineFontAlignZones(byteStream: WritableByteStream, value: tags.DefineFontAlignZones): void {
   byteStream.writeUint16LE(value.fontId);
-  const bitStream: BitStream = byteStream.asBitStream();
+  const bitStream: WritableBitStream = byteStream.asBitStream();
   emitCsmTableHintBits(bitStream, value.csmTableHint);
   bitStream.align();
   for (const zone of value.zones) {
@@ -344,18 +344,18 @@ export function emitDefineFontAlignZones(byteStream: ByteStream, value: tags.Def
   }
 }
 
-export function emitDefineJpegTables(byteStream: ByteStream, value: tags.DefineJpegTables): void {
+export function emitDefineJpegTables(byteStream: WritableByteStream, value: tags.DefineJpegTables): void {
   byteStream.writeBytes(value.data);
 }
 
-export function emitDefineFontName(byteStream: ByteStream, value: tags.DefineFontName): void {
+export function emitDefineFontName(byteStream: WritableByteStream, value: tags.DefineFontName): void {
   byteStream.writeUint16LE(value.fontId);
   byteStream.writeCString(value.name);
   byteStream.writeCString(value.copyright);
 }
 
 export function emitDefineMorphShapeAny(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: tags.DefineMorphShape,
 ): MorphShapeVersion {
   byteStream.writeUint16LE(value.id);
@@ -381,7 +381,7 @@ export function emitDefineMorphShapeAny(
 }
 
 export function emitDefineSceneAndFrameLabelData(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: tags.DefineSceneAndFrameLabelData,
 ): void {
   byteStream.writeUint32LE(value.scenes.length);
@@ -396,7 +396,7 @@ export function emitDefineSceneAndFrameLabelData(
   }
 }
 
-function emitDefineShapeAny(byteStream: ByteStream, value: tags.DefineShape): ShapeVersion {
+function emitDefineShapeAny(byteStream: WritableByteStream, value: tags.DefineShape): ShapeVersion {
   byteStream.writeUint16LE(value.id);
   emitRect(byteStream, value.bounds);
   let shapeVersion: ShapeVersion;
@@ -416,7 +416,7 @@ function emitDefineShapeAny(byteStream: ByteStream, value: tags.DefineShape): Sh
   return shapeVersion;
 }
 
-export function emitDefineEditText(byteStream: ByteStream, value: tags.DefineDynamicText): void {
+export function emitDefineEditText(byteStream: WritableByteStream, value: tags.DefineDynamicText): void {
   byteStream.writeUint16LE(value.id);
   emitRect(byteStream, value.bounds);
 
@@ -484,7 +484,7 @@ export function emitDefineEditText(byteStream: ByteStream, value: tags.DefineDyn
   }
 }
 
-export function emitDefineSound(byteStream: ByteStream, value: tags.DefineSound): void {
+export function emitDefineSound(byteStream: WritableByteStream, value: tags.DefineSound): void {
   byteStream.writeUint16LE(value.id);
 
   const soundRateCode: Uint2 = getSoundRateCode(value.soundRate);
@@ -501,7 +501,7 @@ export function emitDefineSound(byteStream: ByteStream, value: tags.DefineSound)
   byteStream.writeBytes(value.data);
 }
 
-export function emitDefineSprite(byteStream: ByteStream, value: tags.DefineSprite, swfVersion: Uint8): void {
+export function emitDefineSprite(byteStream: WritableByteStream, value: tags.DefineSprite, swfVersion: Uint8): void {
   byteStream.writeUint16LE(value.id);
   byteStream.writeUint16LE(value.frameCount);
   emitTagString(byteStream, value.tags, swfVersion);
@@ -512,7 +512,7 @@ export enum DefineTextVersion {
   DefineText2 = 2,
 }
 
-export function emitDefineTextAny(byteStream: ByteStream, value: tags.DefineText): DefineTextVersion {
+export function emitDefineTextAny(byteStream: WritableByteStream, value: tags.DefineText): DefineTextVersion {
   byteStream.writeUint16LE(value.id);
   emitRect(byteStream, value.bounds);
   emitMatrix(byteStream, value.matrix);
@@ -534,16 +534,16 @@ export function emitDefineTextAny(byteStream: ByteStream, value: tags.DefineText
   return hasAlpha ? DefineTextVersion.DefineText2 : DefineTextVersion.DefineText1;
 }
 
-export function emitDoAction(byteStream: ByteStream, value: tags.DoAction): void {
+export function emitDoAction(byteStream: WritableByteStream, value: tags.DoAction): void {
   byteStream.writeBytes(value.actions);
 }
 
-export function emitDoInitAction(byteStream: ByteStream, value: tags.DoInitAction): void {
+export function emitDoInitAction(byteStream: WritableByteStream, value: tags.DoInitAction): void {
   byteStream.writeUint16LE(value.spriteId);
   byteStream.writeBytes(value.actions);
 }
 
-export function emitExportAssets(byteStream: ByteStream, value: tags.ExportAssets): void {
+export function emitExportAssets(byteStream: WritableByteStream, value: tags.ExportAssets): void {
   byteStream.writeUint16LE(value.assets.length);
   for (const asset of value.assets) {
     byteStream.writeUint16LE(asset.id);
@@ -551,7 +551,7 @@ export function emitExportAssets(byteStream: ByteStream, value: tags.ExportAsset
   }
 }
 
-export function emitFileAttributes(byteStream: ByteStream, value: tags.FileAttributes): void {
+export function emitFileAttributes(byteStream: WritableByteStream, value: tags.FileAttributes): void {
   const flags: Uint8 = 0
     | (value.useNetwork ? 1 << 0 : 0)
     | (value.useRelativeUrls ? 1 << 1 : 0)
@@ -565,7 +565,7 @@ export function emitFileAttributes(byteStream: ByteStream, value: tags.FileAttri
   byteStream.writeUint32LE(flags);
 }
 
-export function emitFrameLabel(byteStream: ByteStream, value: tags.FrameLabel): void {
+export function emitFrameLabel(byteStream: WritableByteStream, value: tags.FrameLabel): void {
   byteStream.writeCString(value.name);
   if (value.isAnchor) {
     byteStream.writeUint8(1);
@@ -578,7 +578,7 @@ export enum ImportAssetsVersion {
 }
 
 export function emitImportAssetsAny(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: tags.ImportAssets,
   swfVersion: Uint8,
 ): ImportAssetsVersion {
@@ -598,7 +598,7 @@ export function emitImportAssetsAny(
   return version;
 }
 
-export function emitMetadata(byteStream: ByteStream, value: tags.Metadata): void {
+export function emitMetadata(byteStream: WritableByteStream, value: tags.Metadata): void {
   byteStream.writeCString(value.metadata);
 }
 
@@ -621,7 +621,7 @@ function isDefaultMatrix(value: Matrix): boolean {
 
 // tslint:disable-next-line:cyclomatic-complexity
 export function emitPlaceObjectAny(
-  byteStream: ByteStream,
+  byteStream: WritableByteStream,
   value: tags.PlaceObject,
   swfVersion: UintSize,
 ): PlaceObjectVersion {
@@ -756,7 +756,7 @@ export enum RemoveObjectVersion {
   RemoveObject2 = 2,
 }
 
-export function emitRemoveObjectAny(byteStream: ByteStream, value: tags.RemoveObject): RemoveObjectVersion {
+export function emitRemoveObjectAny(byteStream: WritableByteStream, value: tags.RemoveObject): RemoveObjectVersion {
   if (value.characterId !== undefined) {
     byteStream.writeUint16LE(value.characterId);
     byteStream.writeUint16LE(value.depth);
@@ -767,6 +767,6 @@ export function emitRemoveObjectAny(byteStream: ByteStream, value: tags.RemoveOb
   }
 }
 
-export function emitSetBackgroundColor(byteStream: ByteStream, value: tags.SetBackgroundColor): void {
+export function emitSetBackgroundColor(byteStream: WritableByteStream, value: tags.SetBackgroundColor): void {
   emitSRgb8(byteStream, value.color);
 }
