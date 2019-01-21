@@ -18,10 +18,10 @@ describe("Tags", function () {
     const baseName: string = dirEnt.name.replace(/\.input\.json$/, "");
     const inputPath: string = sysPath.join(TAGS_DIR, `${baseName}.input.json`);
     const expectedPath: string = sysPath.join(TAGS_DIR, `${baseName}.expected.bin`);
-    const inputTag: Tag = $Tag.read(JSON_READER, fs.readFileSync(inputPath, {encoding: "UTF-8"}));
-    const expectedBytes: Uint8Array = new Uint8Array(fs.readFileSync(expectedPath));
 
-    it.only(baseName, function (this: Mocha.Context) {
+    it(baseName, function (this: Mocha.Context) {
+      const inputTag: Tag = $Tag.read(JSON_READER, fs.readFileSync(inputPath, {encoding: "UTF-8"}));
+      const expectedBytes: Uint8Array = new Uint8Array(fs.readFileSync(expectedPath));
       const emitterStream: EmitterStream = new EmitterStream();
       emitTag(emitterStream, inputTag, 8);
       const actualBytes: Uint8Array = emitterStream.getBytes();

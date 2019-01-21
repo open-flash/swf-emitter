@@ -13,7 +13,11 @@ export enum ButtonVersion {
   Button2,
 }
 
-export function emitButtonRecordString(byteStream: Stream, value: ButtonRecord[], buttonVersion: ButtonVersion): void {
+export function emitButtonRecordString(
+  byteStream: Stream,
+  value: ReadonlyArray<ButtonRecord>,
+  buttonVersion: ButtonVersion,
+): void {
   for (const buttonRecord of value) {
     emitButtonRecord(byteStream, buttonRecord, buttonVersion);
   }
@@ -49,7 +53,7 @@ export function emitButtonRecord(byteStream: Stream, value: ButtonRecord, button
   }
 }
 
-export function emitButton2CondActionString(byteStream: ByteStream, value: ButtonCondAction[]): void {
+export function emitButton2CondActionString(byteStream: ByteStream, value: ReadonlyArray<ButtonCondAction>): void {
   let actionStream: Stream;
   const actionCount: UintSize = value.length;
   for (let i: UintSize = 0; i < actionCount; i++) {

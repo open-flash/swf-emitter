@@ -48,7 +48,7 @@ export function emitTextRendererBits(bitStream: BitStream, value: text.TextRende
 
 export function emitTextRecordString(
   byteStream: ByteStream,
-  value: text.TextRecord[],
+  value: ReadonlyArray<text.TextRecord>,
   hasAlpha: boolean,
   indexBits: UintSize,
   advanceBits: UintSize,
@@ -142,7 +142,7 @@ export function emitFontAlignmentZoneData(byteStream: ByteStream, value: text.Fo
  */
 export function emitOffsetGlyphs(
   byteStream: ByteStream,
-  value: Glyph[],
+  value: ReadonlyArray<Glyph>,
 ): boolean {
   let useWideOffset: boolean = false;
   const endOffsets: UintSize[] = new Array(value.length);

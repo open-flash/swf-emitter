@@ -32,14 +32,9 @@ import {
 /**
  * Read tags until the end of the stream or "end-of-tags".
  */
-export function emitTagString(byteStream: ByteStream, value: Tag[], swfVersion: Uint8): void {
-  let count: number = 0;
+export function emitTagString(byteStream: ByteStream, value: ReadonlyArray<Tag>, swfVersion: Uint8): void {
   for (const tag of value) {
     emitTag(byteStream, tag, swfVersion);
-    count += 1;
-    if (count >= 29) {
-      break;
-    }
   }
   emitEndOfTags(byteStream);
 }
@@ -52,7 +47,7 @@ interface TagHeader {
 function emitTagHeader(byteStream: ByteStream, value: TagHeader): void {
   const LENGTH_MASK: Uint8 = 0b00111111;
 
-  if (value.length < LENGTH_MASK) {
+  if (value.length < LENGTH_MASK && (value.length > 0 || (value.code & 0b11) !== 0)) {
     const codeAndLength: Uint16 = (value.code << 6) | value.length;
     byteStream.writeUint16LE(codeAndLength);
   } else {
@@ -613,15 +608,15 @@ export enum PlaceObjectVersion {
   PlaceObject3 = 3,
 }
 
-function isIdentityMatrix(value: Matrix): boolean {
-  const result: boolean =
+function isDefaultMatrix(value: Matrix): boolean {
+  return (
     Sfixed16P16.equals(value.scaleX, Sfixed16P16.fromValue(1))
+    && Sfixed16P16.equals(value.scaleY, Sfixed16P16.fromValue(1))
     && Sfixed16P16.equals(value.rotateSkew0, Sfixed16P16.fromValue(0))
     && Sfixed16P16.equals(value.rotateSkew1, Sfixed16P16.fromValue(0))
-    && Sfixed16P16.equals(value.scaleY, Sfixed16P16.fromValue(1))
     && value.translateX === 0
-    && value.translateY === 0;
-  return result;
+    && value.translateY === 0
+  );
 }
 
 // tslint:disable-next-line:cyclomatic-complexity
@@ -632,7 +627,7 @@ export function emitPlaceObjectAny(
 ): PlaceObjectVersion {
   const isMove: boolean = value.isMove;
   const hasCharacterId: boolean = value.characterId !== undefined;
-  const hasMatrix: boolean = value.matrix !== undefined && !isIdentityMatrix(value.matrix);
+  const hasMatrix: boolean = !isDefaultMatrix(value.matrix);
   const hasColorTransform: boolean = value.colorTransform !== undefined;
   const hasColorTransformWithAlpha: boolean = value.colorTransform !== undefined
     && (value.colorTransform.alphaMult.valueOf() !== 1 || value.colorTransform.alphaAdd !== 0);

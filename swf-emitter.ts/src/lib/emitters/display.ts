@@ -29,7 +29,11 @@ export function emitBlendMode(byteStream: ByteStream, value: BlendMode): void {
   byteStream.writeUint8(code);
 }
 
-export function emitClipActionsString(byteStream: ByteStream, value: ClipActions[], extendedEvents: boolean): void {
+export function emitClipActionsString(
+  byteStream: ByteStream,
+  value: ReadonlyArray<ClipActions>,
+  extendedEvents: boolean,
+): void {
   byteStream.writeUint16LE(0); // Reserved
 
   const eventUnion: ClipEventFlags = {
@@ -133,7 +137,7 @@ export function emitClipActions(byteStream: ByteStream, value: ClipActions, exte
   byteStream.write(actionStream);
 }
 
-export function emitFilterList(byteStream: ByteStream, value: Filter[]): void {
+export function emitFilterList(byteStream: ByteStream, value: ReadonlyArray<Filter>): void {
   byteStream.writeUint8(value.length);
   for (const filter of value) {
     emitFilter(byteStream, filter);

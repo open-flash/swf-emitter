@@ -13,7 +13,7 @@ export const END_TO_END_DIR: string = sysPath.join(meta.dirname, "end-to-end");
 
 describe("End-to-end", function () {
   for (const dirEnt of fs.readdirSync(END_TO_END_DIR, {withFileTypes: true})) {
-    if (!dirEnt.isFile() || !/^game\.swf$/.test(dirEnt.name)) {
+    if (!dirEnt.isFile() || !/\.swf$/.test(dirEnt.name)) {
       continue;
     }
     it(dirEnt.name, function (this: Mocha.Context) {
@@ -22,11 +22,11 @@ describe("End-to-end", function () {
       const filePath: string = sysPath.join(END_TO_END_DIR, dirEnt.name);
       const inputBuffer: Uint8Array = fs.readFileSync(filePath);
 
-      console.log("start");
+      // console.log("start");
 
       const inputMovie: Movie = parseMovie(new ParserStream(inputBuffer));
 
-      console.log("input is parsed");
+      // console.log("input is parsed");
 
       const emitterStream: EmitterStream = new EmitterStream();
       emitMovie(emitterStream, inputMovie, CompressionMethod.None);
@@ -34,11 +34,11 @@ describe("End-to-end", function () {
 
       fs.writeFileSync(sysPath.join(END_TO_END_DIR, `out-${dirEnt.name}`), outputBuffer);
 
-      console.log("output is emitted");
+      // console.log("output is emitted");
 
       const outputMovie: Movie = parseMovie(new ParserStream(outputBuffer));
 
-      console.log("output is parsed");
+      // console.log("output is parsed");
 
       chai.assert.isTrue($Movie.equals(outputMovie, inputMovie));
     });
