@@ -1,7 +1,7 @@
 import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
-import { BlendMode, Matrix, Sfixed16P16, Tag, tags, TagType } from "swf-tree";
+import { Tag, tags, TagType } from "swf-tree";
 import { SoundType } from "swf-tree/sound/sound-type";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
 import {
@@ -608,39 +608,28 @@ export enum PlaceObjectVersion {
   PlaceObject3 = 3,
 }
 
-function isDefaultMatrix(value: Matrix): boolean {
-  return (
-    Sfixed16P16.equals(value.scaleX, Sfixed16P16.fromValue(1))
-    && Sfixed16P16.equals(value.scaleY, Sfixed16P16.fromValue(1))
-    && Sfixed16P16.equals(value.rotateSkew0, Sfixed16P16.fromValue(0))
-    && Sfixed16P16.equals(value.rotateSkew1, Sfixed16P16.fromValue(0))
-    && value.translateX === 0
-    && value.translateY === 0
-  );
-}
-
 // tslint:disable-next-line:cyclomatic-complexity
 export function emitPlaceObjectAny(
   byteStream: WritableByteStream,
   value: tags.PlaceObject,
   swfVersion: UintSize,
 ): PlaceObjectVersion {
-  const isMove: boolean = value.isMove;
+  const isUpdate: boolean = value.isUpdate;
   const hasCharacterId: boolean = value.characterId !== undefined;
-  const hasMatrix: boolean = !isDefaultMatrix(value.matrix);
+  const hasMatrix: boolean = value.matrix !== undefined;
   const hasColorTransform: boolean = value.colorTransform !== undefined;
   const hasColorTransformWithAlpha: boolean = value.colorTransform !== undefined
     && (value.colorTransform.alphaMult.valueOf() !== 1 || value.colorTransform.alphaAdd !== 0);
   const hasRatio: boolean = value.ratio !== undefined;
   const hasName: boolean = value.name !== undefined;
   const hasClipDepth: boolean = value.clipDepth !== undefined;
-  const hasClipActions: boolean = value.clipActions.length > 0;
-  const hasFilters: boolean = value.filters.length > 0;
-  const hasBlendMode: boolean = value.blendMode !== BlendMode.Normal;
+  const hasClipActions: boolean = value.clipActions !== undefined;
+  const hasFilters: boolean = value.filters !== undefined;
+  const hasBlendMode: boolean = value.blendMode !== undefined;
   const hasCacheHint: boolean = value.bitmapCache !== undefined;
   const hasClassName: boolean = value.className !== undefined;
   const hasImage: boolean = false; // TODO: We need more context to handle images
-  const hasVisibility: boolean = !value.visible;
+  const hasVisibility: boolean = value.visible !== undefined;
   const hasBackgroundColor: boolean = value.backgroundColor !== undefined;
 
   if (hasFilters || hasBlendMode || hasCacheHint || hasClassName || hasImage || hasVisibility || hasBackgroundColor) {
@@ -659,7 +648,7 @@ export function emitPlaceObjectAny(
       | (hasColorTransform ? 1 << 3 : 0)
       | (hasMatrix ? 1 << 2 : 0)
       | (hasCharacterId ? 1 << 1 : 0)
-      | (isMove ? 1 << 0 : 0);
+      | (isUpdate ? 1 << 0 : 0);
     byteStream.writeUint16LE(flags);
     byteStream.writeUint16LE(value.depth);
     if (hasClassName) {
@@ -703,7 +692,7 @@ export function emitPlaceObjectAny(
     }
     return PlaceObjectVersion.PlaceObject3;
   } else if (
-    !hasCharacterId || !hasMatrix || isMove || hasColorTransformWithAlpha
+    !hasCharacterId || !hasMatrix || isUpdate || hasColorTransformWithAlpha
     || hasRatio || hasName || hasClipDepth || hasClipActions
   ) {
     const flags: Uint8 = 0
@@ -714,7 +703,7 @@ export function emitPlaceObjectAny(
       | (hasColorTransform ? 1 << 3 : 0)
       | (hasMatrix ? 1 << 2 : 0)
       | (hasCharacterId ? 1 << 1 : 0)
-      | (isMove ? 1 << 0 : 0);
+      | (isUpdate ? 1 << 0 : 0);
     byteStream.writeUint8(flags);
     byteStream.writeUint16LE(value.depth);
     if (hasCharacterId) {

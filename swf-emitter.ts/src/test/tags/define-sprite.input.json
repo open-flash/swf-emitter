@@ -5,7 +5,7 @@
   "tags": [
     {
       "type": "place-object",
-      "is_move": false,
+      "is_update": false,
       "depth": 2,
       "character_id": 1,
       "matrix": {
@@ -15,221 +15,97 @@
         "rotate_skew1": 0,
         "translate_x": 0,
         "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      }
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 2,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 2
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 3,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 3
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 4,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 4
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 5,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 5
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 6,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 6
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 7,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 7
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 8,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 8
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 9,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 9
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 10,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 10
     },
     {
       "type": "show-frame"
     },
     {
       "type": "place-object",
-      "is_move": true,
+      "is_update": true,
       "depth": 2,
-      "character_id": 11,
-      "matrix": {
-        "scale_x": 65536,
-        "scale_y": 65536,
-        "rotate_skew0": 0,
-        "rotate_skew1": 0,
-        "translate_x": 0,
-        "translate_y": 0
-      },
-      "filters": [],
-      "blend_mode": "normal",
-      "visible": true,
-      "clip_actions": []
+      "character_id": 11
     },
     {
       "type": "show-frame"
