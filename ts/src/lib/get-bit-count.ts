@@ -18,6 +18,9 @@ export function getSintBitCount(value: SintSize): UintSize {
   if (value < -(2 ** 31) || value >= 2 ** 31) {
     throw new Incident("UnsupportedValue", {value});
   }
+  if (value === 0) {
+    return 0;
+  }
   return value < 0 ? 33 - Math.clz32(~value) : 33 - Math.clz32(value);
 }
 

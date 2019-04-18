@@ -43,7 +43,7 @@ describe("getBitCount", function () {
     }
 
     const items: TestItem[] = [
-      {input: 0, expected: 1},
+      {input: 0, expected: 0},
       {input: 1, expected: 2},
       {input: 2, expected: 3},
       {input: 3, expected: 3},
@@ -104,7 +104,7 @@ describe("getBitCount", function () {
 
     const items: TestItem[] = [
       {input: [], expected: 0},
-      {input: [0], expected: 1},
+      {input: [0], expected: 0},
       {input: [-1], expected: 1},
       {input: [0, -1], expected: 1},
       {input: [-1, 0], expected: 1},

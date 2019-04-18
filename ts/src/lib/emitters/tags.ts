@@ -634,21 +634,21 @@ export function emitPlaceObjectAny(
 
   if (hasFilters || hasBlendMode || hasCacheHint || hasClassName || hasImage || hasVisibility || hasBackgroundColor) {
     const flags: Uint16 = 0
-      | (hasBackgroundColor ? 1 << 14 : 0)
-      | (hasVisibility ? 1 << 13 : 0)
-      | (hasImage ? 1 << 12 : 0)
-      | (hasClassName ? 1 << 11 : 0)
-      | (hasCacheHint ? 1 << 10 : 0)
-      | (hasBlendMode ? 1 << 9 : 0)
-      | (hasFilters ? 1 << 8 : 0)
-      | (hasClipActions ? 1 << 7 : 0)
-      | (hasClipDepth ? 1 << 6 : 0)
-      | (hasName ? 1 << 5 : 0)
-      | (hasRatio ? 1 << 4 : 0)
-      | (hasColorTransform ? 1 << 3 : 0)
-      | (hasMatrix ? 1 << 2 : 0)
+      | (isUpdate ? 1 << 0 : 0)
       | (hasCharacterId ? 1 << 1 : 0)
-      | (isUpdate ? 1 << 0 : 0);
+      | (hasMatrix ? 1 << 2 : 0)
+      | (hasColorTransform ? 1 << 3 : 0)
+      | (hasRatio ? 1 << 4 : 0)
+      | (hasName ? 1 << 5 : 0)
+      | (hasClipDepth ? 1 << 6 : 0)
+      | (hasClipActions ? 1 << 7 : 0)
+      | (hasFilters ? 1 << 8 : 0)
+      | (hasBlendMode ? 1 << 9 : 0)
+      | (hasCacheHint ? 1 << 10 : 0)
+      | (hasClassName ? 1 << 11 : 0)
+      | (hasImage ? 1 << 12 : 0)
+      | (hasVisibility ? 1 << 13 : 0)
+      | (hasBackgroundColor ? 1 << 14 : 0);
     byteStream.writeUint16LE(flags);
     byteStream.writeUint16LE(value.depth);
     if (hasClassName) {
@@ -696,14 +696,14 @@ export function emitPlaceObjectAny(
     || hasRatio || hasName || hasClipDepth || hasClipActions
   ) {
     const flags: Uint8 = 0
-      | (hasClipActions ? 1 << 7 : 0)
-      | (hasClipDepth ? 1 << 6 : 0)
-      | (hasName ? 1 << 5 : 0)
-      | (hasRatio ? 1 << 4 : 0)
-      | (hasColorTransform ? 1 << 3 : 0)
-      | (hasMatrix ? 1 << 2 : 0)
+      | (isUpdate ? 1 << 0 : 0)
       | (hasCharacterId ? 1 << 1 : 0)
-      | (isUpdate ? 1 << 0 : 0);
+      | (hasMatrix ? 1 << 2 : 0)
+      | (hasColorTransform ? 1 << 3 : 0)
+      | (hasRatio ? 1 << 4 : 0)
+      | (hasName ? 1 << 5 : 0)
+      | (hasClipDepth ? 1 << 6 : 0)
+      | (hasClipActions ? 1 << 7 : 0);
     byteStream.writeUint8(flags);
     byteStream.writeUint16LE(value.depth);
     if (hasCharacterId) {
