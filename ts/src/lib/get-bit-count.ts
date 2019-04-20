@@ -5,6 +5,7 @@ import { SintSize, UintSize } from "semantic-types";
  * Returns the minimum number of bits required to represent `value` using Stream#writeUintBits
  */
 export function getUintBitCount(value: UintSize): UintSize {
+  // TODO: Check why we are restricting to 2^31 instead of 2^32
   if (value < 0 || value >= 2 ** 31) {
     throw new Incident("UnsupportedValue", {value});
   }

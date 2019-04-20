@@ -131,7 +131,7 @@ export function emitClipActions(byteStream: WritableByteStream, value: ClipActio
 
   if (value.events.keyPress) {
     if (value.keyCode === undefined) {
-      throw new Incident("Expected keycode");
+      throw new Incident("Expected keyCode to be defined");
     }
     actionStream.writeUint8(value.keyCode);
   }
@@ -191,6 +191,7 @@ export function emitBlurFilter(byteStream: WritableByteStream, value: filters.Bl
   byteStream.writeSint32LE(value.blurX.epsilons);
   byteStream.writeSint32LE(value.blurY.epsilons);
   const flags: Uint8 = 0
+    // Skip bits [0, 2]
     | ((value.passes & 0x1f) << 3);
   byteStream.writeUint8(flags);
 }

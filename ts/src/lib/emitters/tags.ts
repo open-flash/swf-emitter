@@ -384,14 +384,14 @@ export function emitDefineSceneAndFrameLabelData(
   byteStream: WritableByteStream,
   value: tags.DefineSceneAndFrameLabelData,
 ): void {
-  byteStream.writeUint32LE(value.scenes.length);
+  byteStream.writeUint32Leb128(value.scenes.length);
   for (const scene of value.scenes) {
-    byteStream.writeUint32LE(scene.offset);
+    byteStream.writeUint32Leb128(scene.offset);
     byteStream.writeCString(scene.name);
   }
-  byteStream.writeUint32LE(value.labels.length);
+  byteStream.writeUint32Leb128(value.labels.length);
   for (const label of value.labels) {
-    byteStream.writeUint32LE(label.frame);
+    byteStream.writeUint32Leb128(label.frame);
     byteStream.writeCString(label.name);
   }
 }
