@@ -49,7 +49,7 @@ pub fn emit_rect_bits<W: WriteBits>(writer: &mut W, value: &ast::Rect) -> io::Re
   writer.write_i32_bits(bits, value.y_max)
 }
 
-pub fn emit_straight_s_rgb8<W: io::Write>(writer: &mut W, value: ast::SRgb8) -> io::Result<()> {
+pub fn emit_s_rgb8<W: io::Write>(writer: &mut W, value: ast::SRgb8) -> io::Result<()> {
   emit_u8(writer, value.r)?;
   emit_u8(writer, value.g)?;
   emit_u8(writer, value.b)

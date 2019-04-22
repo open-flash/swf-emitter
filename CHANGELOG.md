@@ -2,7 +2,8 @@
 
 ### Rust
 
-- **[Feature]** Implement `emit_define_font_align_zones`.
+- **[Feature]** Implement emitters for the following tags: `DefineFontAlignZones`, `DefineSceneAndFrameLabelData`, `DefineSprite`, `DoAction`, `FileAttributes`, `PlaceObject`, `RemoveObject`, `SetBackgroundColor`, `ShowFrame`.
+- **[Feature]** Implement `emit_movie`.
 
 ### Typescript
 

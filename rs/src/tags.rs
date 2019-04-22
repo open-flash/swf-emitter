@@ -4,7 +4,7 @@ use std::io;
 use swf_fixed::Sfixed8P8;
 use swf_tree as ast;
 
-use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_matrix, emit_straight_s_rgba8};
+use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_matrix, emit_s_rgb8, emit_straight_s_rgba8, emit_leb128_u32};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::text::emit_font_alignment_zone;
@@ -48,6 +48,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_font_align_zones(&mut tag_writer, tag)?;
       73
     }
+    ast::Tag::DefineSceneAndFrameLabelData(ref tag) => {
+      emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
+      86
+    }
     ast::Tag::DefineSprite(ref tag) => {
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
@@ -55,6 +59,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::DoAction(ref tag) => {
       emit_do_action(&mut tag_writer, tag)?;
       12
+    }
+    ast::Tag::FileAttributes(ref tag) => {
+      emit_file_attributes(&mut tag_writer, tag)?;
+      69
     }
     ast::Tag::PlaceObject(ref tag) => {
       match emit_place_object_any(&mut tag_writer, tag, swf_version)? {
@@ -68,6 +76,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         RemoveObjectVersion::RemoveObject1 => 5,
         RemoveObjectVersion::RemoveObject2 => 28,
       }
+    }
+    ast::Tag::SetBackgroundColor(ref tag) => {
+      emit_set_background_color(&mut tag_writer, tag)?;
+      9
     }
     ast::Tag::ShowFrame => {
       1
@@ -99,6 +111,20 @@ pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::t
   Ok(())
 }
 
+pub fn emit_define_scene_and_frame_label_data<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSceneAndFrameLabelData) -> io::Result<()> {
+  emit_leb128_u32(writer, value.scenes.len().try_into().unwrap())?;
+  for scene in &value.scenes {
+    emit_leb128_u32(writer, scene.offset)?;
+    emit_c_string(writer, &scene.name)?;
+  }
+  emit_leb128_u32(writer, value.labels.len().try_into().unwrap())?;
+  for label in &value.labels {
+    emit_leb128_u32(writer, label.frame)?;
+    emit_c_string(writer, &label.name)?;
+  }
+  Ok(())
+}
+
 pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSprite, swf_version: u8) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
   emit_le_u16(writer, value.frame_count.try_into().unwrap())?;
@@ -107,6 +133,20 @@ pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::Defin
 
 pub fn emit_do_action<W: io::Write>(writer: &mut W, value: &ast::tags::DoAction) -> io::Result<()> {
   writer.write_all(&value.actions)
+}
+
+pub fn emit_file_attributes<W: io::Write>(writer: &mut W, value: &ast::tags::FileAttributes) -> io::Result<()> {
+  let flags: u32 = 0
+    | (if value.use_network { 1 << 0 } else { 0 })
+    | (if value.use_relative_urls { 1 << 1 } else { 0 })
+    | (if value.no_cross_domain_caching { 1 << 2 } else { 0 })
+    | (if value.use_as3 { 1 << 3 } else { 0 })
+    | (if value.has_metadata { 1 << 4 } else { 0 })
+    | (if value.use_gpu { 1 << 5 } else { 0 })
+    | (if value.use_direct_blit { 1 << 6 } else { 0 });
+  // Skip bits [7, 31]
+
+  emit_le_u32(writer, flags)
 }
 
 pub enum PlaceObjectVersion {
@@ -264,4 +304,8 @@ pub fn emit_remove_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::R
     emit_le_u16(writer, value.depth)?;
     Ok(RemoveObjectVersion::RemoveObject2)
   }
+}
+
+pub fn emit_set_background_color<W: io::Write>(writer: &mut W, value: &ast::tags::SetBackgroundColor) -> io::Result<()> {
+  emit_s_rgb8(writer, value.color)
 }

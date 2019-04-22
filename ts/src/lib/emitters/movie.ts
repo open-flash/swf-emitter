@@ -8,20 +8,6 @@ import { emitTagString } from "./tags";
 
 const SWF_SIGNATURE_SIZE: UintSize = 8;
 
-export function emitCompressionMethod(byteStream: WritableByteStream, value: CompressionMethod): void {
-  const COMPRESSION_TO_CHUNK: Map<CompressionMethod, Uint8Array> = new Map([
-    [CompressionMethod.Deflate, new Uint8Array([0x43, 0x57, 0x53])],
-    [CompressionMethod.Lzma, new Uint8Array([0x5a, 0x57, 0x53])],
-    [CompressionMethod.None, new Uint8Array([0x46, 0x57, 0x53])],
-  ]);
-
-  const chunk: Uint8Array | undefined = COMPRESSION_TO_CHUNK.get(value);
-  if (chunk === undefined) {
-    throw new Incident("UnexpectedCompressionMethod");
-  }
-  byteStream.writeBytes(chunk);
-}
-
 export function emitMovie(byteStream: WritableByteStream, value: Movie, compressionMethod: CompressionMethod): void {
   const movieStream: WritableByteStream = new WritableStream();
   emitPayload(movieStream, value);
@@ -51,6 +37,20 @@ export function emitSwfSignature(byteStream: WritableByteStream, value: SwfSigna
   emitCompressionMethod(byteStream, value.compressionMethod);
   byteStream.writeUint8(value.swfVersion);
   byteStream.writeUint32LE(value.uncompressedFileLength);
+}
+
+export function emitCompressionMethod(byteStream: WritableByteStream, value: CompressionMethod): void {
+  const COMPRESSION_TO_CHUNK: Map<CompressionMethod, Uint8Array> = new Map([
+    [CompressionMethod.Deflate, new Uint8Array([0x43, 0x57, 0x53])],
+    [CompressionMethod.Lzma, new Uint8Array([0x5a, 0x57, 0x53])],
+    [CompressionMethod.None, new Uint8Array([0x46, 0x57, 0x53])],
+  ]);
+
+  const chunk: Uint8Array | undefined = COMPRESSION_TO_CHUNK.get(value);
+  if (chunk === undefined) {
+    throw new Incident("UnexpectedCompressionMethod");
+  }
+  byteStream.writeBytes(chunk);
 }
 
 function emitPayload(byteStream: WritableByteStream, value: Movie): void {

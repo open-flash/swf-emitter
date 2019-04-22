@@ -552,7 +552,7 @@ export function emitExportAssets(byteStream: WritableByteStream, value: tags.Exp
 }
 
 export function emitFileAttributes(byteStream: WritableByteStream, value: tags.FileAttributes): void {
-  const flags: Uint8 = 0
+  const flags: Uint32 = 0
     | (value.useNetwork ? 1 << 0 : 0)
     | (value.useRelativeUrls ? 1 << 1 : 0)
     | (value.noCrossDomainCaching ? 1 << 2 : 0)
@@ -560,7 +560,8 @@ export function emitFileAttributes(byteStream: WritableByteStream, value: tags.F
     | (value.hasMetadata ? 1 << 4 : 0)
     | (value.useGpu ? 1 << 5 : 0)
     | (value.useDirectBlit ? 1 << 6 : 0);
-  // It seems that an `uint32` is expected despite the spec only describing 8 bits.
+  // Skip bits [7, 31]
+
   // TODO: Further investigate if a an `uint32` is really needed or if an `uint8` is enough.
   byteStream.writeUint32LE(flags);
 }

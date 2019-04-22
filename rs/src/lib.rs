@@ -1,10 +1,11 @@
 extern crate swf_fixed;
 extern crate swf_tree;
 
+pub mod basic_data_types;
 pub mod bit_count;
 pub mod display;
 pub mod io_bits;
-pub mod basic_data_types;
+pub mod movie;
 pub mod primitives;
 pub mod tags;
 pub mod text;
@@ -13,11 +14,36 @@ pub mod text;
 mod lib_tests {
   use std::path::Path;
 
-  use swf_tree::Tag;
+  use swf_parser;
+  use swf_tree::{CompressionMethod, Movie, Tag};
 
   use ::test_generator::test_expand_paths;
 
+  use crate::movie::emit_movie;
   use crate::tags::emit_tag;
+
+  test_expand_paths! { test_emit_movie; "../tests/movies/*/" }
+  fn test_emit_movie(path: &str) {
+    let path: &Path = Path::new(path);
+    let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
+
+    if _name != "blank" {
+      return;
+    }
+
+    let ast_path = path.join("ast.json");
+    let ast_file = ::std::fs::File::open(ast_path).expect("Failed to open AST file");
+    let ast_reader = ::std::io::BufReader::new(ast_file);
+    let value: Movie = serde_json::from_reader(ast_reader).expect("Failed to read value");
+
+    let mut actual_bytes = Vec::new();
+    emit_movie(&mut actual_bytes, &value, CompressionMethod::None).unwrap();
+
+    let (_, actual_movie): (_, Movie) = swf_parser::parsers::movie::parse_movie(&actual_bytes)
+      .expect("Failed to parse movie");
+
+    assert_eq!(actual_movie, value);
+  }
 
   test_expand_paths! { test_emit_tag; "../tests/tags/*/*/" }
   fn test_emit_tag(path: &str) {
