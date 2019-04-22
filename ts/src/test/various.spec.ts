@@ -4,11 +4,15 @@ import fs from "fs";
 import { $Uint32 } from "kryo/builtins/uint32";
 import { IoType } from "kryo/core";
 import { JsonReader } from "kryo/readers/json";
+import { Float64Type } from "kryo/types/float64";
 import sysPath from "path";
-import { Uint32 } from "semantic-types";
+import { Float32, Uint32 } from "semantic-types";
+import { $Header } from "swf-tree/header";
 import { $Matrix } from "swf-tree/matrix";
 import { $Rect } from "swf-tree/rect";
+import { $SwfSignature } from "swf-tree/swf-signature";
 import { emitMatrix, emitRect } from "../lib/emitters/basic-data-types";
+import { emitHeader, emitSwfSignature } from "../lib/emitters/movie";
 import meta from "./meta.js";
 import { prettyPrintBytes, readFile, readTextFile } from "./utils";
 
@@ -54,12 +58,28 @@ function* getSampleGroups(): IterableIterator<SampleGroup<any>> {
     }
     const name: string = dirEnt.name;
     switch (name) {
+      case "float16-le": {
+        yield {
+          name,
+          emitter: (stream: WritableByteStream, value: Float32) => stream.writeFloat16LE(value),
+          type: new Float64Type(),
+        };
+        break;
+      }
+      case "header": {
+        yield {name, emitter: emitHeader, type: $Header};
+        break;
+      }
       case "matrix": {
         yield {name, emitter: emitMatrix, type: $Matrix};
         break;
       }
       case "rect": {
         yield {name, emitter: emitRect, type: $Rect};
+        break;
+      }
+      case "swf-signature": {
+        yield {name, emitter: emitSwfSignature, type: $SwfSignature};
         break;
       }
       case "uint32-leb128": {

@@ -1,10 +1,12 @@
 import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { UintSize } from "semantic-types";
-import { CompressionMethod, Movie, SwfSignature } from "swf-tree";
+import { CompressionMethod, Header, Movie, SwfSignature } from "swf-tree";
 import * as zlib from "zlib";
 import { emitRect } from "./basic-data-types";
 import { emitTagString } from "./tags";
+
+const SWF_SIGNATURE_SIZE: UintSize = 8;
 
 export function emitCompressionMethod(byteStream: WritableByteStream, value: CompressionMethod): void {
   const COMPRESSION_TO_CHUNK: Map<CompressionMethod, Uint8Array> = new Map([
@@ -20,25 +22,10 @@ export function emitCompressionMethod(byteStream: WritableByteStream, value: Com
   byteStream.writeBytes(chunk);
 }
 
-const SIGNATURE_SIZE: UintSize = 8;
-
-export function emitSwfSignature(byteStream: WritableByteStream, value: SwfSignature): void {
-  emitCompressionMethod(byteStream, value.compressionMethod);
-  byteStream.writeUint8(value.swfVersion);
-  byteStream.writeUint32LE(value.uncompressedFileLength);
-}
-
-function emitMovieWithoutSignature(byteStream: WritableByteStream, value: Movie): void {
-  emitRect(byteStream, value.header.frameSize);
-  byteStream.writeUint16LE(value.header.frameRate.epsilons);
-  byteStream.writeUint16LE(value.header.frameCount);
-  emitTagString(byteStream, value.tags, value.header.swfVersion);
-}
-
 export function emitMovie(byteStream: WritableByteStream, value: Movie, compressionMethod: CompressionMethod): void {
   const movieStream: WritableByteStream = new WritableStream();
-  emitMovieWithoutSignature(movieStream, value);
-  const uncompressedFileLength: UintSize = SIGNATURE_SIZE + movieStream.bytePos;
+  emitPayload(movieStream, value);
+  const uncompressedFileLength: UintSize = SWF_SIGNATURE_SIZE + movieStream.bytePos;
   const signature: SwfSignature = {
     compressionMethod,
     swfVersion: value.header.swfVersion,
@@ -58,4 +45,21 @@ export function emitMovie(byteStream: WritableByteStream, value: Movie, compress
     default:
       throw new Incident("UnexpectedCompressionMethod");
   }
+}
+
+export function emitSwfSignature(byteStream: WritableByteStream, value: SwfSignature): void {
+  emitCompressionMethod(byteStream, value.compressionMethod);
+  byteStream.writeUint8(value.swfVersion);
+  byteStream.writeUint32LE(value.uncompressedFileLength);
+}
+
+function emitPayload(byteStream: WritableByteStream, value: Movie): void {
+  emitHeader(byteStream, value.header);
+  emitTagString(byteStream, value.tags, value.header.swfVersion);
+}
+
+export function emitHeader(byteStream: WritableByteStream, value: Header): void {
+  emitRect(byteStream, value.frameSize);
+  byteStream.writeUint16LE(value.frameRate.epsilons);
+  byteStream.writeUint16LE(value.frameCount);
 }

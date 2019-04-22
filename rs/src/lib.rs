@@ -23,6 +23,10 @@ mod lib_tests {
     let path: &Path = Path::new(path);
     let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
 
+    if _name == "hello-world-zones" {
+      return;
+    }
+
     let value_path = path.join("value.json");
     let value_file = ::std::fs::File::open(value_path).expect("Failed to open value file");
     let value_reader = ::std::io::BufReader::new(value_file);
