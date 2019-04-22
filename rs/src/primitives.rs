@@ -20,6 +20,11 @@ pub fn emit_le_i32<W: io::Write>(writer: &mut W, value: i32) -> io::Result<()> {
   writer.write_all(&value.to_le_bytes())
 }
 
+pub fn emit_le_f16<W: io::Write>(writer: &mut W, value: f32) -> io::Result<()> {
+  let value = half::f16::from_f32(value);
+  writer.write_all(&value.to_bits().to_le_bytes())
+}
+
 pub fn emit_le_f32<W: io::Write>(writer: &mut W, value: f32) -> io::Result<()> {
   use byteorder::WriteBytesExt;
   writer.write_f32::<byteorder::LittleEndian>(value)

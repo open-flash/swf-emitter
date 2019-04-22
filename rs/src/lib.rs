@@ -7,6 +7,7 @@ pub mod io_bits;
 pub mod basic_data_types;
 pub mod primitives;
 pub mod tags;
+pub mod text;
 
 #[cfg(test)]
 mod lib_tests {
@@ -23,10 +24,6 @@ mod lib_tests {
     let path: &Path = Path::new(path);
     let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
 
-    if _name == "hello-world-zones" {
-      return;
-    }
-
     let value_path = path.join("value.json");
     let value_file = ::std::fs::File::open(value_path).expect("Failed to open value file");
     let value_reader = ::std::io::BufReader::new(value_file);
@@ -35,8 +32,14 @@ mod lib_tests {
     let mut actual_bytes = Vec::new();
     emit_tag(&mut actual_bytes, &value, 10).unwrap();
 
-    let expected_path = path.join("output.bytes");
-    let expected_bytes: Vec<u8> = ::std::fs::read(expected_path).expect("Failed to read expected output");
+    let expected_bytes: Vec<u8> = {
+      match ::std::fs::read(path.join("output.bytes")) {
+        Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => {
+          ::std::fs::read(path.join("input.bytes")).expect("Failed to read expected output (input.bytes)")
+        },
+        r => r.expect("Failed to read expected output (output.bytes)")
+      }
+    };
 
     assert_eq!(expected_bytes, actual_bytes);
   }

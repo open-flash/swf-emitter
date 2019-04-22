@@ -7,6 +7,7 @@ use swf_tree as ast;
 use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_matrix, emit_straight_s_rgba8};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
+use crate::text::emit_font_alignment_zone;
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -43,6 +44,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
   let mut tag_writer = Vec::new();
 
   let code: u16 = match value {
+    ast::Tag::DefineFontAlignZones(ref tag) => {
+      emit_define_font_align_zones(&mut tag_writer, tag)?;
+      73
+    }
     ast::Tag::DefineSprite(ref tag) => {
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
@@ -72,6 +77,26 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
 
   emit_tag_header(writer, TagHeader { code, length: tag_writer.len().try_into().unwrap() })?;
   writer.write_all(&tag_writer)
+}
+
+fn csm_table_hint_to_code(value: ast::text::CsmTableHint) -> u8 {
+  match value {
+    ast::text::CsmTableHint::Thin => 0,
+    ast::text::CsmTableHint::Medium => 1,
+    ast::text::CsmTableHint::Thick => 2,
+  }
+}
+
+pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontAlignZones) -> io::Result<()> {
+  emit_le_u16(writer, value.font_id)?;
+  let flags: u8 = 0
+    // Skip bits [0, 5]
+    | (csm_table_hint_to_code(value.csm_table_hint) << 6);
+  emit_u8(writer, flags)?;
+  for zone in &value.zones {
+    emit_font_alignment_zone(writer, zone)?;
+  }
+  Ok(())
 }
 
 pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSprite, swf_version: u8) -> io::Result<()> {

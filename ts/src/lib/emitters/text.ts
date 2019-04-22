@@ -126,7 +126,8 @@ export function emitFontAlignmentZone(byteStream: WritableByteStream, value: tex
   }
   const flags: Uint8 = 0
     | (value.hasX ? 1 << 0 : 0)
-    | (value.hasX ? 1 << 1 : 0);
+    | (value.hasY ? 1 << 1 : 0);
+    // Skip bits [2, 7]
   byteStream.writeUint8(flags);
 }
 
