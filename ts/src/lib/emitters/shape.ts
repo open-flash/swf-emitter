@@ -2,7 +2,8 @@ import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
 import {
-  CapStyle, ColorStop,
+  CapStyle,
+  ColorStop,
   FillStyle,
   fillStyles,
   FillStyleType,
@@ -16,6 +17,7 @@ import {
   ShapeRecordType,
 } from "swf-tree";
 import { ShapeStyles } from "swf-tree/shape-styles";
+import { Vector2D } from "swf-tree/vector-2d";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGradient } from "./gradient";
@@ -91,15 +93,9 @@ export function emitShapeRecordStringBits(
 ): void {
   for (const record of value) {
     switch (record.type) {
-      case ShapeRecordType.CurvedEdge:
+      case ShapeRecordType.Edge:
         bitStream.writeBoolBits(true); // isEdge
-        bitStream.writeBoolBits(false); // isStraight
-        emitCurvedEdgeBits(bitStream, record);
-        break;
-      case ShapeRecordType.StraightEdge:
-        bitStream.writeBoolBits(true); // isEdge
-        bitStream.writeBoolBits(true); // isStraight
-        emitStraightEdgeBits(bitStream, record);
+        emitEdgeBits(bitStream, record);
         break;
       case ShapeRecordType.StyleChange:
         bitStream.writeBoolBits(false); // isEdge
@@ -112,36 +108,43 @@ export function emitShapeRecordStringBits(
   bitStream.writeUint16Bits(6, 0);
 }
 
-export function emitCurvedEdgeBits(bitStream: WritableBitStream, value: shapeRecords.CurvedEdge): void {
-  const valuesBitCount: UintSize = getSintMinBitCount(
-    value.controlDelta.x,
-    value.controlDelta.y,
-    value.anchorDelta.x,
-    value.anchorDelta.y,
-  );
-  const bitCount: UintSize = 2 + Math.max(0, valuesBitCount - 2);
-  bitStream.writeUint16Bits(4, bitCount - 2);
-  bitStream.writeSint32Bits(bitCount, value.controlDelta.x);
-  bitStream.writeSint32Bits(bitCount, value.controlDelta.y);
-  bitStream.writeSint32Bits(bitCount, value.anchorDelta.x);
-  bitStream.writeSint32Bits(bitCount, value.anchorDelta.y);
-}
-
-export function emitStraightEdgeBits(bitStream: WritableBitStream, value: shapeRecords.StraightEdge): void {
-  const bitCount: UintSize = 2 + Math.max(0, getSintMinBitCount(value.delta.x, value.delta.y) - 2);
-  bitStream.writeUint16Bits(4, bitCount - 2);
-  const isDiagonal: boolean = value.delta.x !== 0 && value.delta.y !== 0;
-  bitStream.writeBoolBits(isDiagonal);
-  if (isDiagonal) {
-    bitStream.writeSint32Bits(bitCount, value.delta.x);
-    bitStream.writeSint32Bits(bitCount, value.delta.y);
+export function emitEdgeBits(bitStream: WritableBitStream, value: shapeRecords.Edge): void {
+  if (value.controlDelta !== undefined) {
+    bitStream.writeBoolBits(false); // isStraight
+    const anchorDelta: Vector2D = {
+      x: value.delta.x - value.controlDelta.x,
+      y: value.delta.y - value.controlDelta.y,
+    };
+    const valueBits: UintSize = getSintMinBitCount(
+      value.controlDelta.x,
+      value.controlDelta.y,
+      anchorDelta.x,
+      anchorDelta.y,
+    );
+    const bits: UintSize = 2 + Math.max(0, valueBits - 2);
+    bitStream.writeUint16Bits(4, bits - 2);
+    bitStream.writeSint32Bits(bits, value.controlDelta.x);
+    bitStream.writeSint32Bits(bits, value.controlDelta.y);
+    bitStream.writeSint32Bits(bits, anchorDelta.x);
+    bitStream.writeSint32Bits(bits, anchorDelta.y);
   } else {
-    const isVertical: boolean = value.delta.x === 0;
-    bitStream.writeBoolBits(isVertical);
-    if (isVertical) {
+    bitStream.writeBoolBits(true); // isStraight
+    const valueBits: UintSize = getSintMinBitCount(value.delta.x, value.delta.y);
+    const bitCount: UintSize = 2 + Math.max(0, valueBits - 2);
+    bitStream.writeUint16Bits(4, bitCount - 2);
+    const isDiagonal: boolean = value.delta.x !== 0 && value.delta.y !== 0;
+    bitStream.writeBoolBits(isDiagonal);
+    if (isDiagonal) {
+      bitStream.writeSint32Bits(bitCount, value.delta.x);
       bitStream.writeSint32Bits(bitCount, value.delta.y);
     } else {
-      bitStream.writeSint32Bits(bitCount, value.delta.x);
+      const isVertical: boolean = value.delta.x === 0;
+      bitStream.writeBoolBits(isVertical);
+      if (isVertical) {
+        bitStream.writeSint32Bits(bitCount, value.delta.y);
+      } else {
+        bitStream.writeSint32Bits(bitCount, value.delta.x);
+      }
     }
   }
 }
@@ -243,7 +246,7 @@ export function emitFillStyle(byteStream: WritableByteStream, value: FillStyle, 
   }
 }
 
-export function emitBitmapFill(byteStream: WritableByteStream, value: { bitmapId: Uint16; matrix: Matrix }): void {
+export function emitBitmapFill(byteStream: WritableByteStream, value: {bitmapId: Uint16; matrix: Matrix}): void {
   byteStream.writeUint16LE(value.bitmapId);
   emitMatrix(byteStream, value.matrix);
 }

@@ -13,7 +13,7 @@ import { ShapeRecordType } from "swf-tree/shape-records/_type";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types";
 import { emitMorphGradient } from "./gradient";
-import { capStyleToCode, emitCurvedEdgeBits, emitListLength, emitStraightEdgeBits, joinStyleToCode } from "./shape";
+import { capStyleToCode, emitEdgeBits, emitListLength, joinStyleToCode } from "./shape";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,
@@ -97,41 +97,9 @@ export function emitMorphShapeStartRecordStringBits(
       bitStream.writeBoolBits(false); // isEdge
       [fillBits, lineBits] = emitMorphStyleChangeBits(bitStream, record, fillBits, lineBits, morphShapeVersion);
     } else {
+      // assert(record.type === ShapeRecordType.Edge)
       bitStream.writeBoolBits(true); // isEdge
-
-      if (record.type === ShapeRecordType.CurvedEdge) {
-        if (record.controlDelta.x === record.anchorDelta.x
-          && record.controlDelta.y === record.anchorDelta.y
-        ) {
-          bitStream.writeBoolBits(true); // isStraight
-          emitStraightEdgeBits(
-            bitStream,
-            {
-              type: ShapeRecordType.StraightEdge,
-              delta: {x: 2 * record.controlDelta.x, y: 2 * record.controlDelta.y},
-            },
-          );
-        } else {
-          bitStream.writeBoolBits(false); // isStraight
-          emitCurvedEdgeBits(
-            bitStream,
-            {
-              type: ShapeRecordType.CurvedEdge,
-              controlDelta: record.controlDelta,
-              anchorDelta: record.anchorDelta,
-            },
-          );
-        }
-      } else {
-        bitStream.writeBoolBits(true); // isStraight
-        emitStraightEdgeBits(
-          bitStream,
-          {
-            type: ShapeRecordType.StraightEdge,
-            delta: record.delta,
-          },
-        );
-      }
+      emitEdgeBits(bitStream, record);
     }
   }
   bitStream.writeUint16Bits(6, 0);
@@ -157,40 +125,16 @@ export function emitMorphShapeEndRecordStringBits(
       bitStream.writeSint32Bits(bitCount, record.morphMoveTo.x);
       bitStream.writeSint32Bits(bitCount, record.morphMoveTo.y);
     } else {
+      // assert(record.type === ShapeRecordType.Edge)
       bitStream.writeBoolBits(true); // isEdge
-      if (record.type === ShapeRecordType.CurvedEdge) {
-        if (record.morphControlDelta.x === record.morphAnchorDelta.x
-          && record.morphControlDelta.y === record.morphAnchorDelta.y
-        ) {
-          bitStream.writeBoolBits(true); // isStraight
-          emitStraightEdgeBits(
-            bitStream,
-            {
-              type: ShapeRecordType.StraightEdge,
-              delta: {x: 2 * record.morphControlDelta.x, y: 2 * record.morphControlDelta.y},
-            },
-          );
-        } else {
-          bitStream.writeBoolBits(false); // isStraight
-          emitCurvedEdgeBits(
-            bitStream,
-            {
-              type: ShapeRecordType.CurvedEdge,
-              controlDelta: record.morphControlDelta,
-              anchorDelta: record.morphAnchorDelta,
-            },
-          );
-        }
-      } else {
-        bitStream.writeBoolBits(true); // isStraight
-        emitStraightEdgeBits(
-          bitStream,
-          {
-            type: ShapeRecordType.StraightEdge,
-            delta: record.morphDelta,
-          },
-        );
-      }
+      emitEdgeBits(
+        bitStream,
+        {
+          type: ShapeRecordType.Edge,
+          delta: record.morphDelta,
+          controlDelta: record.morphControlDelta,
+        },
+      );
     }
   }
   bitStream.writeUint16Bits(6, 0);

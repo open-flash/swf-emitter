@@ -13,7 +13,7 @@ import {
   emitStraightSRgba8,
 } from "./basic-data-types";
 import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } from "./button";
-import { emitBlendMode, emitClipActionsString, emitFilterList } from "./display";
+import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
 import { emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
 import { getAudioCodingFormatCode, getSoundRateCode } from "./sound";
@@ -690,7 +690,7 @@ export function emitPlaceObjectAny(
       emitStraightSRgba8(byteStream, value.backgroundColor!);
     }
     if (hasClipActions) {
-      emitClipActionsString(byteStream, value.clipActions!, swfVersion >= 6);
+      emitClipActionString(byteStream, value.clipActions!, swfVersion >= 6);
     }
     return PlaceObjectVersion.PlaceObject3;
   } else if (
@@ -727,7 +727,7 @@ export function emitPlaceObjectAny(
       byteStream.writeUint16LE(value.clipDepth!);
     }
     if (hasClipActions) {
-      emitClipActionsString(byteStream, value.clipActions!, swfVersion >= 6);
+      emitClipActionString(byteStream, value.clipActions!, swfVersion >= 6);
     }
     return PlaceObjectVersion.PlaceObject2;
   } else {

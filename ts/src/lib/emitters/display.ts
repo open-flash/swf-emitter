@@ -1,7 +1,7 @@
 import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint32, Uint8 } from "semantic-types";
-import { BlendMode, ClipActions, ClipEventFlags, Filter, filters, FilterType } from "swf-tree";
+import { BlendMode, ClipAction, ClipEventFlags, Filter, filters, FilterType } from "swf-tree";
 import { emitStraightSRgba8 } from "./basic-data-types";
 
 export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode): void {
@@ -29,9 +29,9 @@ export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode):
   byteStream.writeUint8(code);
 }
 
-export function emitClipActionsString(
+export function emitClipActionString(
   byteStream: WritableByteStream,
-  value: ReadonlyArray<ClipActions>,
+  value: ReadonlyArray<ClipAction>,
   extendedEvents: boolean,
 ): void {
   byteStream.writeUint16LE(0); // Reserved
@@ -82,7 +82,7 @@ export function emitClipActionsString(
 
   emitClipEventFlags(byteStream, eventUnion, extendedEvents);
   for (const clipAction of value) {
-    emitClipActions(byteStream, clipAction, extendedEvents);
+    emitClipAction(byteStream, clipAction, extendedEvents);
   }
   if (extendedEvents) {
     byteStream.writeUint32LE(0);
@@ -125,7 +125,7 @@ export function emitClipEventFlags(
   byteStream.writeUint32LE(extendedFlags);
 }
 
-export function emitClipActions(byteStream: WritableByteStream, value: ClipActions, extendedEvents: boolean): void {
+export function emitClipAction(byteStream: WritableByteStream, value: ClipAction, extendedEvents: boolean): void {
   emitClipEventFlags(byteStream, value.events, extendedEvents);
   const actionStream: WritableByteStream = new WritableStream();
 

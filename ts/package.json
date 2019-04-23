@@ -22,25 +22,24 @@
     "@open-flash/stream": "^0.1.1",
     "incident": "^3.2.0",
     "semantic-types": "^0.1.1",
-    "swf-tree": "^0.2.0"
+    "swf-tree": "^0.6.0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
-    "@types/gulp": "^4.0.5",
+    "@types/gulp": "^4.0.6",
     "@types/minimist": "^1.2.0",
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.18",
-    "bson": "^4.0.1",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^11.13.7",
     "chai": "^4.2.0",
-    "gulp": "^4.0.0",
-    "gulp-cli": "^2.0.1",
+    "gulp": "^4.0.1",
+    "gulp-cli": "^2.2.0",
     "kryo": "^0.8.1",
     "minimist": "^1.2.0",
-    "swf-parser": "^0.2.1",
-    "ts-node": "^7.0.1",
-    "tslint": "^5.12.1",
+    "swf-parser": "^0.5.0",
+    "ts-node": "^8.1.0",
+    "tslint": "^5.16.0",
     "turbo-gulp": "^0.18.0",
-    "typescript": "^3.2.2"
+    "typescript": "^3.4.5"
   },
   "c88": {
     "match": [

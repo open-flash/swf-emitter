@@ -48,11 +48,11 @@ pub(crate) fn emit_shape_record_string_bits<W: WriteBits>(writer: &mut W, value:
   for record in value {
     match record {
       ast::ShapeRecord::Edge(ref record) => {
-        writer.write_bool_bits(true)?;
+        writer.write_bool_bits(true)?; // is_edge
         emit_edge_bits(writer, record)?;
       }
       ast::ShapeRecord::StyleChange(ref record) => {
-        writer.write_bool_bits(false)?;
+        writer.write_bool_bits(false)?; // is_edge
         let (next_fill_bits, next_line_bits) = emit_style_change_bits(writer, record, fill_bits, line_bits, version)?;
         fill_bits = next_fill_bits;
         line_bits = next_line_bits;
@@ -64,7 +64,7 @@ pub(crate) fn emit_shape_record_string_bits<W: WriteBits>(writer: &mut W, value:
 
 pub(crate) fn emit_edge_bits<W: WriteBits>(writer: &mut W, value: &ast::shape_records::Edge) -> io::Result<()> {
   if let Some(control_delta) = value.control_delta {
-    writer.write_bool_bits(false)?;
+    writer.write_bool_bits(false)?; // is_straight
     let anchor_delta = ast::Vector2D {
       x: value.delta.x - control_delta.x,
       y: value.delta.y - control_delta.y,
@@ -82,7 +82,7 @@ pub(crate) fn emit_edge_bits<W: WriteBits>(writer: &mut W, value: &ast::shape_re
     writer.write_i32_bits(bits, anchor_delta.x)?;
     writer.write_i32_bits(bits, anchor_delta.y)?;
   } else {
-    writer.write_bool_bits(true)?;
+    writer.write_bool_bits(true)?; // is_straight
     let bits = get_i32_min_bit_count(vec![value.delta.x, value.delta.y].into_iter());
     let bits = 2 + bits.saturating_sub(2);
     writer.write_u32_bits(4, bits - 2)?;
