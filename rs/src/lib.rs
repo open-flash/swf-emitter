@@ -6,6 +6,7 @@ pub mod bit_count;
 pub mod display;
 pub mod gradient;
 pub mod io_bits;
+pub mod morph_shape;
 pub mod movie;
 pub mod primitives;
 pub mod shape;
@@ -34,7 +35,7 @@ mod tests {
     let path: &Path = Path::new(path);
     let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
 
-    if _name != "blank" && _name != "squares" {
+    if _name != "blank" && _name != "squares" && _name != "morph-rotating-square" {
       return;
     }
 

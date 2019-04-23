@@ -45,3 +45,23 @@ pub(crate) fn emit_color_stop<W: io::Write + ?Sized>(writer: &mut W, value: &ast
     emit_s_rgb8(writer, ast::SRgb8 { r: value.color.r, g: value.color.g, b: value.color.b })
   }
 }
+
+pub(crate) fn emit_morph_gradient<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphGradient) -> io::Result<()> {
+  assert!(value.colors.len() <= 0x0f);
+  let flags: u8 = 0
+    | ((u8::try_from(value.colors.len()).unwrap() & 0x0f) << 0)
+    | ((gradient_spread_to_code(value.spread) & 0b11) << 4)
+    | ((color_space_to_code(value.color_space) & 0b11) << 6);
+  emit_u8(writer, flags)?;
+
+  for color_stop in &value.colors {
+    emit_morph_color_stop(writer, color_stop)?;
+  }
+
+  Ok(())
+}
+
+pub(crate) fn emit_morph_color_stop<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphColorStop) -> io::Result<()> {
+  emit_color_stop(writer, &ast::ColorStop { ratio: value.ratio, color: value.color }, true)?;
+  emit_color_stop(writer, &ast::ColorStop { ratio: value.morph_ratio, color: value.morph_color }, true)
+}

@@ -289,7 +289,7 @@ pub(crate) fn emit_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &as
   }
 }
 
-fn join_style_to_code(value: ast::JoinStyle) -> u8 {
+pub(crate) fn join_style_to_code(value: ast::JoinStyle) -> u8 {
   match value {
     ast::JoinStyle::Bevel => 1,
     ast::JoinStyle::Round => 0,
@@ -297,7 +297,7 @@ fn join_style_to_code(value: ast::JoinStyle) -> u8 {
   }
 }
 
-fn cap_style_to_code(value: ast::CapStyle) -> u8 {
+pub(crate) fn cap_style_to_code(value: ast::CapStyle) -> u8 {
   match value {
     ast::CapStyle::None => 1,
     ast::CapStyle::Round => 0,

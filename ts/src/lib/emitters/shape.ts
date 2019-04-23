@@ -337,7 +337,7 @@ export function emitLineStyle2(byteStream: WritableByteStream, value: LineStyle)
   if (hasFill) {
     emitFillStyle(byteStream, value.fill, true);
   } else {
-    emitStraightSRgba8(byteStream, (value.fill as fillStyles.Solid).color);
+    emitSolidFill(byteStream, value.fill as fillStyles.Solid, true);
   }
 }
 

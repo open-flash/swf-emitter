@@ -15,15 +15,6 @@ const COLOR_SPACE_TO_CODE: Map<ColorSpace, Uint2> = new Map([
   [ColorSpace.SRgb, 0 as Uint2],
 ]);
 
-export function emitColorStop(byteStream: WritableByteStream, value: ColorStop, withAlpha: boolean): void {
-  byteStream.writeUint8(value.ratio);
-  if (withAlpha) {
-    emitStraightSRgba8(byteStream, value.color);
-  } else {
-    emitSRgb8(byteStream, value.color);
-  }
-}
-
 export function emitGradient(byteStream: WritableByteStream, value: Gradient, withAlpha: boolean): void {
   const spreadCode: Uint2 | undefined = GRADIENT_SPREAD_TO_CODE.get(value.spread);
   const colorSpaceCode: Uint2 | undefined = COLOR_SPACE_TO_CODE.get(value.colorSpace);
@@ -45,12 +36,16 @@ export function emitGradient(byteStream: WritableByteStream, value: Gradient, wi
   }
 }
 
-export function emitMorphColorStop(byteStream: WritableByteStream, value: MorphColorStop, withAlpha: boolean): void {
-  emitColorStop(byteStream, {ratio: value.ratio, color: value.color}, withAlpha);
-  emitColorStop(byteStream, {ratio: value.morphRatio, color: value.morphColor}, withAlpha);
+export function emitColorStop(byteStream: WritableByteStream, value: ColorStop, withAlpha: boolean): void {
+  byteStream.writeUint8(value.ratio);
+  if (withAlpha) {
+    emitStraightSRgba8(byteStream, value.color);
+  } else {
+    emitSRgb8(byteStream, value.color);
+  }
 }
 
-export function emitMorphGradient(byteStream: WritableByteStream, value: MorphGradient, withAlpha: boolean): void {
+export function emitMorphGradient(byteStream: WritableByteStream, value: MorphGradient): void {
   const spreadCode: Uint2 | undefined = GRADIENT_SPREAD_TO_CODE.get(value.spread);
   const colorSpaceCode: Uint2 | undefined = COLOR_SPACE_TO_CODE.get(value.colorSpace);
   if (spreadCode === undefined) {
@@ -62,11 +57,16 @@ export function emitMorphGradient(byteStream: WritableByteStream, value: MorphGr
 
   const flags: Uint8 = 0
     | ((value.colors.length & 0x0f) << 0)
-    | ((colorSpaceCode & 0x03) << 4)
-    | ((spreadCode & 0x03) << 6);
+    | ((colorSpaceCode & 0b11) << 4)
+    | ((spreadCode & 0b11) << 6);
   byteStream.writeUint8(flags);
 
   for (const colorStop of value.colors) {
-    emitMorphColorStop(byteStream, colorStop, withAlpha);
+    emitMorphColorStop(byteStream, colorStop);
   }
+}
+
+export function emitMorphColorStop(byteStream: WritableByteStream, value: MorphColorStop): void {
+  emitColorStop(byteStream, {ratio: value.ratio, color: value.color}, true);
+  emitColorStop(byteStream, {ratio: value.morphRatio, color: value.morphColor}, true);
 }

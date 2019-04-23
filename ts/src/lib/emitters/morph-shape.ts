@@ -8,6 +8,7 @@ import { MorphFillStyle } from "swf-tree/morph-fill-style";
 import { MorphLineStyle } from "swf-tree/morph-line-style";
 import { MorphShape } from "swf-tree/morph-shape";
 import { MorphShapeRecord } from "swf-tree/morph-shape-record";
+import { MorphShapeStyles } from "swf-tree/morph-shape-styles";
 import { MorphStyleChange } from "swf-tree/shape-records";
 import { ShapeRecordType } from "swf-tree/shape-records/_type";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
@@ -51,19 +52,13 @@ export function emitMorphShapeBits(
   const result: UintSize = bitStream.bytePos;
 
   // TODO: We should be able to skip these bits (no styles used for the endRecords)
-  fillBits = 0b1111;
-  lineBits = 0b1111;
+  // We copy the bits from the start shape to match the behavior in `morph-rotating-square`.
   bitStream.writeUint32Bits(4, fillBits);
   bitStream.writeUint32Bits(4, lineBits);
   emitMorphShapeEndRecordStringBits(bitStream, value.records);
   bitStream.align();
 
   return result;
-}
-
-export interface MorphShapeStyles {
-  fill: MorphFillStyle[];
-  line: MorphLineStyle[];
 }
 
 /**
@@ -115,7 +110,7 @@ export function emitMorphShapeEndRecordStringBits(
         continue;
       }
       bitStream.writeBoolBits(false); // isEdge
-      const flags: Uint5 = 0b00001; // Simple `moveTo`
+      const flags: Uint5 = 0b00001; // Pure `moveTo`
       bitStream.writeUint16Bits(5, flags);
       if (record.morphMoveTo === undefined) {
         throw new Incident("UndefinedEndMoveTo");
@@ -147,17 +142,20 @@ export function emitMorphStyleChangeBits(
   lineBits: UintSize,
   morphShapeVersion: MorphShapeVersion,
 ): [UintSize, UintSize] {
-  const hasNewStyles: boolean = value.newStyles !== undefined;
-  const changeLineStyle: boolean = value.lineStyle !== undefined;
-  const changeRightFill: boolean = value.rightFill !== undefined;
-  const changeLeftFill: boolean = value.leftFill !== undefined;
   const hasMoveTo: boolean = value.moveTo !== undefined;
+  const hasNewLeftFill: boolean = value.leftFill !== undefined;
+  const hasNewRightFill: boolean = value.rightFill !== undefined;
+  const hasNewLineStyle: boolean = value.lineStyle !== undefined;
+  const hasNewStyles: boolean = value.newStyles !== undefined;
 
-  bitStream.writeBoolBits(hasNewStyles);
-  bitStream.writeBoolBits(changeLineStyle);
-  bitStream.writeBoolBits(changeRightFill);
-  bitStream.writeBoolBits(changeLeftFill);
-  bitStream.writeBoolBits(hasMoveTo);
+  const flags: Uint5 = 0
+    | (hasMoveTo ? 1 << 0 : 0)
+    | (hasNewLeftFill ? 1 << 1 : 0)
+    | (hasNewRightFill ? 1 << 2 : 0)
+    | (hasNewLineStyle ? 1 << 3 : 0)
+    | (hasNewStyles ? 1 << 4 : 0);
+
+  bitStream.writeUint32Bits(5, flags);
 
   if (hasMoveTo) {
     const bitCount: UintSize = getSintMinBitCount(value.moveTo!.x, value.moveTo!.y);
@@ -166,13 +164,13 @@ export function emitMorphStyleChangeBits(
     bitStream.writeSint32Bits(bitCount, value.moveTo!.y);
   }
 
-  if (changeLeftFill) {
+  if (hasNewLeftFill) {
     bitStream.writeUint16Bits(fillBits, value.leftFill!);
   }
-  if (changeRightFill) {
+  if (hasNewRightFill) {
     bitStream.writeUint16Bits(fillBits, value.rightFill!);
   }
-  if (changeLineStyle) {
+  if (hasNewLineStyle) {
     bitStream.writeUint16Bits(lineBits, value.lineStyle!);
   }
 
@@ -230,7 +228,7 @@ export function emitMorphBitmapFill(byteStream: WritableByteStream, value: fillS
 export function emitMorphFocalGradientFill(byteStream: WritableByteStream, value: fillStyles.MorphFocalGradient): void {
   emitMatrix(byteStream, value.matrix);
   emitMatrix(byteStream, value.morphMatrix);
-  emitMorphGradient(byteStream, value.gradient, true);
+  emitMorphGradient(byteStream, value.gradient);
   byteStream.writeSint16LE(value.focalPoint.epsilons);
   byteStream.writeSint16LE(value.morphFocalPoint.epsilons);
 }
@@ -241,7 +239,7 @@ export function emitMorphLinearGradientFill(
 ): void {
   emitMatrix(byteStream, value.matrix);
   emitMatrix(byteStream, value.morphMatrix);
-  emitMorphGradient(byteStream, value.gradient, true);
+  emitMorphGradient(byteStream, value.gradient);
 }
 
 export function emitMorphRadialGradientFill(
@@ -250,7 +248,7 @@ export function emitMorphRadialGradientFill(
 ): void {
   emitMatrix(byteStream, value.matrix);
   emitMatrix(byteStream, value.morphMatrix);
-  emitMorphGradient(byteStream, value.gradient, true);
+  emitMorphGradient(byteStream, value.gradient);
 }
 
 export function emitMorphSolidFill(byteStream: WritableByteStream, value: fillStyles.MorphSolid): void {
@@ -279,8 +277,7 @@ export function emitMorphLineStyle1(byteStream: WritableByteStream, value: Morph
   }
   byteStream.writeUint16LE(value.width);
   byteStream.writeUint16LE(value.morphWidth);
-  emitStraightSRgba8(byteStream, value.fill.color);
-  emitStraightSRgba8(byteStream, value.fill.morphColor);
+  emitMorphSolidFill(byteStream, value.fill);
 }
 
 export function emitMorphLineStyle2(byteStream: WritableByteStream, value: MorphLineStyle): void {
@@ -301,7 +298,7 @@ export function emitMorphLineStyle2(byteStream: WritableByteStream, value: Morph
     | ((startCapStyleCode & 0b11) << 6)
     | ((endCapStyleCode & 0b11) << 8)
     | (value.noClose ? 1 << 10 : 0);
-  // (Skip 5 bits)
+  // Skip bits [11, 15]
   byteStream.writeUint16LE(flags);
 
   if (value.join.type === JoinStyleType.Miter) {
@@ -311,7 +308,6 @@ export function emitMorphLineStyle2(byteStream: WritableByteStream, value: Morph
   if (hasFill) {
     emitMorphFillStyle(byteStream, value.fill);
   } else {
-    emitStraightSRgba8(byteStream, (value.fill as fillStyles.MorphSolid).color);
-    emitStraightSRgba8(byteStream, (value.fill as fillStyles.MorphSolid).morphColor);
+    emitMorphSolidFill(byteStream, value.fill as fillStyles.MorphSolid);
   }
 }

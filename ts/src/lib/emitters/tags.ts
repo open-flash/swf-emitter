@@ -369,7 +369,8 @@ export function emitDefineMorphShapeAny(
     emitRect(byteStream, value.morphEdgeBounds);
     const flags: Uint8 = 0
       | (value.hasScalingStrokes ? 1 << 0 : 0)
-      | (value.hasNonScalingStrokes ? 1 << 0 : 0);
+      | (value.hasNonScalingStrokes ? 1 << 1 : 0);
+    // Skip bits [2, 7]
     byteStream.writeUint8(flags);
   } else {
     version = MorphShapeVersion.MorphShape1;

@@ -4,11 +4,12 @@ use std::io;
 use swf_fixed::Sfixed8P8;
 use swf_tree as ast;
 
-use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_matrix, emit_s_rgb8, emit_straight_s_rgba8, emit_leb128_u32, emit_rect};
+use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
+use crate::morph_shape::{MorphShapeVersion, emit_morph_shape};
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
+use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
 use crate::text::emit_font_alignment_zone;
-use crate::shape::{ShapeVersion, get_min_shape_version, emit_shape};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -48,6 +49,12 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::DefineFontAlignZones(ref tag) => {
       emit_define_font_align_zones(&mut tag_writer, tag)?;
       73
+    }
+    ast::Tag::DefineMorphShape(ref tag) => {
+      match emit_define_morph_shape_any(&mut tag_writer, tag)? {
+        MorphShapeVersion::MorphShape1 => 46,
+        MorphShapeVersion::MorphShape2 => 84,
+      }
     }
     ast::Tag::DefineSceneAndFrameLabelData(ref tag) => {
       emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
@@ -124,6 +131,28 @@ pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::t
   Ok(())
 }
 
+pub fn emit_define_morph_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineMorphShape) -> io::Result<MorphShapeVersion> {
+  emit_le_u16(writer, value.id)?;
+  emit_rect(writer, &value.bounds)?;
+  emit_rect(writer, &value.morph_bounds)?;
+
+  let version = if let Some(ref edge_bounds) = &value.edge_bounds {
+    let morph_edge_bounds = &value.morph_edge_bounds.unwrap();
+    emit_rect(writer, &edge_bounds)?;
+    emit_rect(writer, &morph_edge_bounds)?;
+    let flags: u8 = 0
+      | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
+      | (if value.has_non_scaling_strokes { 1 << 1 } else { 0 });
+    // Skip bits [2, 7]
+    emit_u8(writer, flags)?;
+    MorphShapeVersion::MorphShape2
+  } else {
+    MorphShapeVersion::MorphShape1
+  };
+  emit_morph_shape(writer, &value.shape, version)?;
+  Ok(version)
+}
+
 pub fn emit_define_scene_and_frame_label_data<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSceneAndFrameLabelData) -> io::Result<()> {
   emit_leb128_u32(writer, value.scenes.len().try_into().unwrap())?;
   for scene in &value.scenes {
@@ -141,7 +170,7 @@ pub fn emit_define_scene_and_frame_label_data<W: io::Write>(writer: &mut W, valu
 pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineShape) -> io::Result<ShapeVersion> {
   emit_le_u16(writer, value.id)?;
   emit_rect(writer, &value.bounds)?;
-  let shape_version = if let Some(ref edge_bounds) = &value.edge_bounds {
+  let version = if let Some(ref edge_bounds) = &value.edge_bounds {
     emit_rect(writer, &edge_bounds)?;
     let flags: u8 = 0
       | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
@@ -153,8 +182,8 @@ pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::De
   } else {
     get_min_shape_version(&value.shape)
   };
-  emit_shape(writer, &value.shape, shape_version)?;
-  Ok(shape_version)
+  emit_shape(writer, &value.shape, version)?;
+  Ok(version)
 }
 
 pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSprite, swf_version: u8) -> io::Result<()> {
