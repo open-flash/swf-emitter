@@ -1,6 +1,6 @@
 import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import { Incident } from "incident";
-import { Uint16, Uint2, Uint8, UintSize } from "semantic-types";
+import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
 import {
   CapStyle, ColorStop,
   FillStyle,
@@ -15,6 +15,7 @@ import {
   shapeRecords,
   ShapeRecordType,
 } from "swf-tree";
+import { ShapeStyles } from "swf-tree/shape-styles";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGradient } from "./gradient";
@@ -55,11 +56,6 @@ export function emitShapeBits(bitStream: WritableBitStream, value: Shape, shapeV
   emitShapeRecordStringBits(bitStream, value.records, fillBits, lineBits, shapeVersion);
 }
 
-export interface ShapeStyles {
-  fill: FillStyle[];
-  line: LineStyle[];
-}
-
 /**
  *
  * @param bitStream
@@ -75,8 +71,12 @@ export function emitShapeStylesBits(
   const byteStream: WritableByteStream = bitStream.asByteStream();
   emitFillStyleList(byteStream, value.fill, shapeVersion);
   emitLineStyleList(byteStream, value.line, shapeVersion);
-  const fillBits: UintSize = getUintBitCount(value.fill.length + 1); // `+ 1` because of empty style
-  const lineBits: UintSize = getUintBitCount(value.line.length + 1); // `+ 1` because of empty style
+  // The max style `id` is `.length` (and not `.length - 1`) because `0` always
+  // represents the empty style and custom styles are 1-indexed.
+  const maxFillId: UintSize = value.fill.length;
+  const maxLineId: UintSize = value.line.length;
+  const fillBits: UintSize = getUintBitCount(maxFillId);
+  const lineBits: UintSize = getUintBitCount(maxLineId);
   bitStream.writeUint32Bits(4, fillBits);
   bitStream.writeUint32Bits(4, lineBits);
   return [fillBits, lineBits];
@@ -119,7 +119,7 @@ export function emitCurvedEdgeBits(bitStream: WritableBitStream, value: shapeRec
     value.anchorDelta.x,
     value.anchorDelta.y,
   );
-  const bitCount: UintSize = Math.max(0, valuesBitCount - 2) + 2;
+  const bitCount: UintSize = 2 + Math.max(0, valuesBitCount - 2);
   bitStream.writeUint16Bits(4, bitCount - 2);
   bitStream.writeSint32Bits(bitCount, value.controlDelta.x);
   bitStream.writeSint32Bits(bitCount, value.controlDelta.y);
@@ -128,7 +128,7 @@ export function emitCurvedEdgeBits(bitStream: WritableBitStream, value: shapeRec
 }
 
 export function emitStraightEdgeBits(bitStream: WritableBitStream, value: shapeRecords.StraightEdge): void {
-  const bitCount: UintSize = Math.max(0, getSintMinBitCount(value.delta.x, value.delta.y) - 2) + 2;
+  const bitCount: UintSize = 2 + Math.max(0, getSintMinBitCount(value.delta.x, value.delta.y) - 2);
   bitStream.writeUint16Bits(4, bitCount - 2);
   const isDiagonal: boolean = value.delta.x !== 0 && value.delta.y !== 0;
   bitStream.writeBoolBits(isDiagonal);
@@ -153,17 +153,20 @@ export function emitStyleChangeBits(
   lineBits: UintSize,
   shapeVersion: ShapeVersion,
 ): [UintSize, UintSize] {
-  const hasNewStyles: boolean = value.newStyles !== undefined;
-  const changeLineStyle: boolean = value.lineStyle !== undefined;
-  const changeRightFill: boolean = value.rightFill !== undefined;
-  const changeLeftFill: boolean = value.leftFill !== undefined;
   const hasMoveTo: boolean = value.moveTo !== undefined;
+  const hasNewLeftFill: boolean = value.leftFill !== undefined;
+  const hasNewRightFill: boolean = value.rightFill !== undefined;
+  const hasNewLineStyle: boolean = value.lineStyle !== undefined;
+  const hasNewStyles: boolean = value.newStyles !== undefined;
 
-  bitStream.writeBoolBits(hasNewStyles);
-  bitStream.writeBoolBits(changeLineStyle);
-  bitStream.writeBoolBits(changeRightFill);
-  bitStream.writeBoolBits(changeLeftFill);
-  bitStream.writeBoolBits(hasMoveTo);
+  const flags: Uint5 = 0
+    | (hasMoveTo ? 1 << 0 : 0)
+    | (hasNewLeftFill ? 1 << 1 : 0)
+    | (hasNewRightFill ? 1 << 2 : 0)
+    | (hasNewLineStyle ? 1 << 3 : 0)
+    | (hasNewStyles ? 1 << 4 : 0);
+
+  bitStream.writeUint32Bits(5, flags);
 
   if (hasMoveTo) {
     const bitCount: UintSize = getSintMinBitCount(value.moveTo!.x, value.moveTo!.y);
@@ -172,13 +175,13 @@ export function emitStyleChangeBits(
     bitStream.writeSint32Bits(bitCount, value.moveTo!.y);
   }
 
-  if (changeLeftFill) {
+  if (hasNewLeftFill) {
     bitStream.writeUint16Bits(fillBits, value.leftFill!);
   }
-  if (changeRightFill) {
+  if (hasNewRightFill) {
     bitStream.writeUint16Bits(fillBits, value.rightFill!);
   }
-  if (changeLineStyle) {
+  if (hasNewLineStyle) {
     bitStream.writeUint16Bits(lineBits, value.lineStyle!);
   }
 
@@ -301,20 +304,16 @@ export function emitLineStyle1(byteStream: WritableByteStream, value: LineStyle,
     throw new Incident("ExpectedSolidFill");
   }
   byteStream.writeUint16LE(value.width);
-  if (withAlpha) {
-    emitStraightSRgba8(byteStream, value.fill.color);
-  } else {
-    emitSRgb8(byteStream, value.fill.color);
-  }
+  emitSolidFill(byteStream, value.fill, withAlpha);
 }
 
 export function emitLineStyle2(byteStream: WritableByteStream, value: LineStyle): void {
   byteStream.writeUint16LE(value.width);
 
   const hasFill: boolean = value.fill.type !== FillStyleType.Solid;
-  const joinStyleCode: Uint2 = getJoinStyleCode(value.join.type);
-  const startCapStyleCode: Uint2 = getCapStyleCode(value.startCap);
-  const endCapStyleCode: Uint2 = getCapStyleCode(value.endCap);
+  const joinStyleCode: Uint2 = joinStyleToCode(value.join.type);
+  const startCapStyleCode: Uint2 = capStyleToCode(value.startCap);
+  const endCapStyleCode: Uint2 = capStyleToCode(value.endCap);
 
   const flags: Uint16 = 0
     | (value.pixelHinting ? 1 << 0 : 0)
@@ -325,6 +324,7 @@ export function emitLineStyle2(byteStream: WritableByteStream, value: LineStyle)
     | ((startCapStyleCode & 0b11) << 6)
     | ((endCapStyleCode & 0b11) << 8)
     | (value.noClose ? 1 << 10 : 0);
+  // Skip bits [11, 15]
   byteStream.writeUint16LE(flags);
 
   if (value.join.type === JoinStyleType.Miter) {
@@ -338,20 +338,7 @@ export function emitLineStyle2(byteStream: WritableByteStream, value: LineStyle)
   }
 }
 
-export function getCapStyleCode(capStyle: CapStyle): Uint2 {
-  switch (capStyle) {
-    case CapStyle.None:
-      return 1 as Uint2;
-    case CapStyle.Round:
-      return 0 as Uint2;
-    case CapStyle.Square:
-      return 2 as Uint2;
-    default:
-      throw new Incident("UnexpectedCapStyle");
-  }
-}
-
-export function getJoinStyleCode(joinStyleType: JoinStyleType): Uint2 {
+export function joinStyleToCode(joinStyleType: JoinStyleType): Uint2 {
   switch (joinStyleType) {
     case JoinStyleType.Bevel:
       return 1 as Uint2;
@@ -364,67 +351,27 @@ export function getJoinStyleCode(joinStyleType: JoinStyleType): Uint2 {
   }
 }
 
-function isLineStyle2(style: LineStyle): boolean {
-  // Check if one of the values is different than the default used for lineStyle1
-  return style.startCap !== CapStyle.Round
-    || style.endCap !== CapStyle.Round
-    || style.join.type !== JoinStyleType.Round
-    || style.noHScale
-    || style.noVScale
-    || style.noClose
-    || style.pixelHinting
-    || style.fill.type !== FillStyleType.Solid;
-}
-
-function getLineStyleMinShapeVersion(style: LineStyle): ShapeVersion {
-  if (isLineStyle2(style)) {
-    return ShapeVersion.Shape4;
-  } else if ((style.fill as fillStyles.Solid).color.a !== 0xff) {
-    return ShapeVersion.Shape3;
-  } else {
-    return ShapeVersion.Shape1;
-  }
-}
-
-function getFillStyleMinShapeVersion(style: FillStyle): ShapeVersion {
-  // Check if alpha channel is used
-  switch (style.type) {
-    case FillStyleType.Solid:
-      if (style.color.a !== 0xff) {
-        return ShapeVersion.Shape3;
-      }
-      break;
-    case FillStyleType.LinearGradient:
-    case FillStyleType.RadialGradient:
-    case FillStyleType.FocalGradient:
-      if (style.gradient.colors.some((cs: ColorStop): boolean => cs.color.a !== 0xff)) {
-        return ShapeVersion.Shape3;
-      }
-      break;
+export function capStyleToCode(capStyle: CapStyle): Uint2 {
+  switch (capStyle) {
+    case CapStyle.None:
+      return 1 as Uint2;
+    case CapStyle.Round:
+      return 0 as Uint2;
+    case CapStyle.Square:
+      return 2 as Uint2;
     default:
-      // Bitmap
-      break;
+      throw new Incident("UnexpectedCapStyle");
   }
-  return ShapeVersion.Shape1;
 }
 
-function getFillStyleListMinShapeVersion(styles: FillStyle[]): ShapeVersion {
-  let minVersion: ShapeVersion = styles.length < 0xff ? ShapeVersion.Shape1 : ShapeVersion.Shape2;
-  for (const style of styles) {
-    const styleMinVersion: ShapeVersion = getFillStyleMinShapeVersion(style);
-    if (styleMinVersion > minVersion) {
-      minVersion = styleMinVersion;
-    }
-  }
-  return minVersion;
-}
-
-function getLineStyleListMinShapeVersion(styles: LineStyle[]): ShapeVersion {
-  let minVersion: ShapeVersion = styles.length < 0xff ? ShapeVersion.Shape1 : ShapeVersion.Shape2;
-  for (const style of styles) {
-    const styleMinVersion: ShapeVersion = getLineStyleMinShapeVersion(style);
-    if (styleMinVersion > minVersion) {
-      minVersion = styleMinVersion;
+export function getMinShapeVersion(shape: Shape): ShapeVersion {
+  let minVersion: ShapeVersion = getShapeStylesMinShapeVersion(shape.initialStyles);
+  for (const record of shape.records) {
+    if (record.type === ShapeRecordType.StyleChange && record.newStyles !== undefined) {
+      const stylesMinVersion: ShapeVersion = getShapeStylesMinShapeVersion(record.newStyles);
+      if (stylesMinVersion > minVersion) {
+        minVersion = stylesMinVersion;
+      }
     }
   }
   return minVersion;
@@ -447,15 +394,68 @@ function getShapeStylesMinShapeVersion(shapeStyles: ShapeStyles): ShapeVersion {
   return minVersion;
 }
 
-export function getMinShapeVersion(shape: Shape): ShapeVersion {
-  let minVersion: ShapeVersion = getShapeStylesMinShapeVersion(shape.initialStyles);
-  for (const record of shape.records) {
-    if (record.type === ShapeRecordType.StyleChange && record.newStyles !== undefined) {
-      const stylesMinVersion: ShapeVersion = getShapeStylesMinShapeVersion(record.newStyles);
-      if (stylesMinVersion > minVersion) {
-        minVersion = stylesMinVersion;
-      }
+function getFillStyleListMinShapeVersion(styles: FillStyle[]): ShapeVersion {
+  let minVersion: ShapeVersion = styles.length < 0xff ? ShapeVersion.Shape1 : ShapeVersion.Shape2;
+  for (const style of styles) {
+    const styleMinVersion: ShapeVersion = getFillStyleMinShapeVersion(style);
+    if (styleMinVersion > minVersion) {
+      minVersion = styleMinVersion;
     }
   }
   return minVersion;
+}
+
+function getFillStyleMinShapeVersion(style: FillStyle): ShapeVersion {
+  // Check if alpha channel is used
+  switch (style.type) {
+    case FillStyleType.Solid:
+      if (style.color.a !== 0xff) {
+        return ShapeVersion.Shape3;
+      }
+      break;
+    case FillStyleType.FocalGradient:
+    case FillStyleType.LinearGradient:
+    case FillStyleType.RadialGradient:
+      if (style.gradient.colors.some((cs: ColorStop): boolean => cs.color.a !== 0xff)) {
+        return ShapeVersion.Shape3;
+      }
+      break;
+    default:
+      // Bitmap
+      break;
+  }
+  return ShapeVersion.Shape1;
+}
+
+function getLineStyleListMinShapeVersion(styles: LineStyle[]): ShapeVersion {
+  let minVersion: ShapeVersion = styles.length < 0xff ? ShapeVersion.Shape1 : ShapeVersion.Shape2;
+  for (const style of styles) {
+    const styleMinVersion: ShapeVersion = getLineStyleMinShapeVersion(style);
+    if (styleMinVersion > minVersion) {
+      minVersion = styleMinVersion;
+    }
+  }
+  return minVersion;
+}
+
+function getLineStyleMinShapeVersion(style: LineStyle): ShapeVersion {
+  if (isLineStyle2(style)) {
+    return ShapeVersion.Shape4;
+  } else if ((style.fill as fillStyles.Solid).color.a !== 0xff) {
+    return ShapeVersion.Shape3;
+  } else {
+    return ShapeVersion.Shape1;
+  }
+}
+
+function isLineStyle2(style: LineStyle): boolean {
+  // Check if one of the values is different than the default used for lineStyle1
+  return style.startCap !== CapStyle.Round
+    || style.endCap !== CapStyle.Round
+    || style.join.type !== JoinStyleType.Round
+    || style.noHScale
+    || style.noVScale
+    || style.noClose
+    || style.pixelHinting
+    || style.fill.type !== FillStyleType.Solid;
 }

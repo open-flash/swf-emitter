@@ -407,6 +407,7 @@ function emitDefineShapeAny(byteStream: WritableByteStream, value: tags.DefineSh
       | (value.hasScalingStrokes ? 1 << 0 : 0)
       | (value.hasNonScalingStrokes ? 1 << 1 : 0)
       | (value.hasFillWinding ? 1 << 2 : 0);
+    // Skip bits [3, 7]
     byteStream.writeUint8(flags);
   } else {
     shapeVersion = getMinShapeVersion(value.shape);

@@ -4,21 +4,28 @@ extern crate swf_tree;
 pub mod basic_data_types;
 pub mod bit_count;
 pub mod display;
+pub mod gradient;
 pub mod io_bits;
 pub mod movie;
 pub mod primitives;
+pub mod shape;
 pub mod tags;
 pub mod text;
 
 #[cfg(test)]
-mod lib_tests {
+mod tests {
   use std::path::Path;
 
   use swf_parser;
   use swf_tree::{CompressionMethod, Movie, Tag};
+  use swf_tree::Matrix;
+  use swf_tree::Rect;
 
   use ::test_generator::test_expand_paths;
 
+  use crate::basic_data_types::emit_leb128_u32;
+  use crate::basic_data_types::emit_matrix;
+  use crate::basic_data_types::emit_rect;
   use crate::movie::emit_movie;
   use crate::tags::emit_tag;
 
@@ -27,7 +34,7 @@ mod lib_tests {
     let path: &Path = Path::new(path);
     let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
 
-    if _name != "blank" {
+    if _name != "blank" && _name != "squares" {
       return;
     }
 
@@ -38,6 +45,9 @@ mod lib_tests {
 
     let mut actual_bytes = Vec::new();
     emit_movie(&mut actual_bytes, &value, CompressionMethod::None).unwrap();
+
+    let actual_movie_path = path.join("local-main.rs.swf");
+    ::std::fs::write(actual_movie_path, &actual_bytes).expect("Failed to write actual SWF");
 
     let (_, actual_movie): (_, Movie) = swf_parser::parsers::movie::parse_movie(&actual_bytes)
       .expect("Failed to parse movie");
@@ -62,7 +72,7 @@ mod lib_tests {
       match ::std::fs::read(path.join("output.bytes")) {
         Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => {
           ::std::fs::read(path.join("input.bytes")).expect("Failed to read expected output (input.bytes)")
-        },
+        }
         r => r.expect("Failed to read expected output (output.bytes)")
       }
     };
@@ -130,14 +140,9 @@ mod lib_tests {
     }
   }
 
-  use crate::basic_data_types::emit_matrix;
-  use swf_tree::Matrix;
   test_various_ref_emitter_impl!(test_emit_matrix, "../tests/various/matrix/*/", emit_matrix, Matrix);
 
-  use crate::basic_data_types::emit_rect;
-  use swf_tree::Rect;
   test_various_ref_emitter_impl!(test_emit_rect, "../tests/various/rect/*/", emit_rect, Rect);
 
-  use crate::basic_data_types::emit_leb128_u32;
   test_various_copy_emitter_impl!(test_emit_leb128_u32, "../tests/various/uint32-leb128/*/", emit_leb128_u32, u32);
 }

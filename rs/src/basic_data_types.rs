@@ -49,20 +49,20 @@ pub fn emit_rect_bits<W: WriteBits>(writer: &mut W, value: &ast::Rect) -> io::Re
   writer.write_i32_bits(bits, value.y_max)
 }
 
-pub fn emit_s_rgb8<W: io::Write>(writer: &mut W, value: ast::SRgb8) -> io::Result<()> {
+pub fn emit_s_rgb8<W: io::Write + ?Sized>(writer: &mut W, value: ast::SRgb8) -> io::Result<()> {
   emit_u8(writer, value.r)?;
   emit_u8(writer, value.g)?;
   emit_u8(writer, value.b)
 }
 
-pub fn emit_straight_s_rgba8<W: io::Write>(writer: &mut W, value: ast::StraightSRgba8) -> io::Result<()> {
+pub fn emit_straight_s_rgba8<W: io::Write + ?Sized>(writer: &mut W, value: ast::StraightSRgba8) -> io::Result<()> {
   emit_u8(writer, value.r)?;
   emit_u8(writer, value.g)?;
   emit_u8(writer, value.b)?;
   emit_u8(writer, value.a)
 }
 
-pub fn emit_matrix<W: io::Write>(writer: &mut W, value: &ast::Matrix) -> io::Result<()> {
+pub fn emit_matrix<W: io::Write + ?Sized>(writer: &mut W, value: &ast::Matrix) -> io::Result<()> {
   let mut bits_writer = BitsWriter::new(Vec::new());
   emit_matrix_bits(&mut bits_writer, value)?;
   writer.write_all(&bits_writer.into_inner()?)

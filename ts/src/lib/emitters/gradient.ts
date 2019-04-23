@@ -36,8 +36,8 @@ export function emitGradient(byteStream: WritableByteStream, value: Gradient, wi
 
   const flags: Uint8 = 0
     | ((value.colors.length & 0x0f) << 0)
-    | ((colorSpaceCode & 0x03) << 4)
-    | ((spreadCode & 0x03) << 6);
+    | ((colorSpaceCode & 0b11) << 4)
+    | ((spreadCode & 0b11) << 6);
   byteStream.writeUint8(flags);
 
   for (const colorStop of value.colors) {

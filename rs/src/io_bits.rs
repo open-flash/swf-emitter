@@ -9,6 +9,9 @@ pub trait WriteBits {
   fn write_i32_bits(&mut self, bits: u32, value: i32) -> io::Result<()>;
 
   fn write_u32_bits(&mut self, bits: u32, value: u32) -> io::Result<()>;
+
+  /// Align the writer and return a byte writer
+  fn write_bytes(&mut self) -> io::Result<&mut dyn io::Write>;
 }
 
 pub struct BitsWriter<W: io::Write> {
@@ -87,5 +90,10 @@ impl<W: io::Write> WriteBits for BitsWriter<W> {
     }
 
     Ok(())
+  }
+
+  fn write_bytes(&mut self) -> io::Result<&mut dyn io::Write> {
+    self.align()?;
+    Ok(&mut self.inner)
   }
 }

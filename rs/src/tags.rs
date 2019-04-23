@@ -4,10 +4,11 @@ use std::io;
 use swf_fixed::Sfixed8P8;
 use swf_tree as ast;
 
-use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_matrix, emit_s_rgb8, emit_straight_s_rgba8, emit_leb128_u32};
+use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_matrix, emit_s_rgb8, emit_straight_s_rgba8, emit_leb128_u32, emit_rect};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::text::emit_font_alignment_zone;
+use crate::shape::{ShapeVersion, get_min_shape_version, emit_shape};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -52,6 +53,14 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
       86
     }
+    ast::Tag::DefineShape(ref tag) => {
+      match emit_define_shape_any(&mut tag_writer, tag)? {
+        ShapeVersion::Shape1 => 2,
+        ShapeVersion::Shape2 => 22,
+        ShapeVersion::Shape3 => 32,
+        ShapeVersion::Shape4 => 83,
+      }
+    }
     ast::Tag::DefineSprite(ref tag) => {
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
@@ -63,6 +72,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::FileAttributes(ref tag) => {
       emit_file_attributes(&mut tag_writer, tag)?;
       69
+    }
+    ast::Tag::Metadata(ref tag) => {
+      emit_metadata(&mut tag_writer, tag)?;
+      77
     }
     ast::Tag::PlaceObject(ref tag) => {
       match emit_place_object_any(&mut tag_writer, tag, swf_version)? {
@@ -125,6 +138,25 @@ pub fn emit_define_scene_and_frame_label_data<W: io::Write>(writer: &mut W, valu
   Ok(())
 }
 
+pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineShape) -> io::Result<ShapeVersion> {
+  emit_le_u16(writer, value.id)?;
+  emit_rect(writer, &value.bounds)?;
+  let shape_version = if let Some(ref edge_bounds) = &value.edge_bounds {
+    emit_rect(writer, &edge_bounds)?;
+    let flags: u8 = 0
+      | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
+      | (if value.has_non_scaling_strokes { 1 << 1 } else { 0 })
+      | (if value.has_fill_winding { 1 << 2 } else { 0 });
+    // Skip bits [3, 7]
+    emit_u8(writer, flags)?;
+    ShapeVersion::Shape4
+  } else {
+    get_min_shape_version(&value.shape)
+  };
+  emit_shape(writer, &value.shape, shape_version)?;
+  Ok(shape_version)
+}
+
 pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSprite, swf_version: u8) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
   emit_le_u16(writer, value.frame_count.try_into().unwrap())?;
@@ -147,6 +179,10 @@ pub fn emit_file_attributes<W: io::Write>(writer: &mut W, value: &ast::tags::Fil
   // Skip bits [7, 31]
 
   emit_le_u32(writer, flags)
+}
+
+pub fn emit_metadata<W: io::Write>(writer: &mut W, value: &ast::tags::Metadata) -> io::Result<()> {
+  emit_c_string(writer, &value.metadata)
 }
 
 pub enum PlaceObjectVersion {

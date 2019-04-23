@@ -12,6 +12,10 @@ import { prettyPrintBytes, readFile, readTextFile } from "./utils";
 
 const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..", "..", "..");
 const TAG_SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "tags");
+// `BLACKLIST` can be used to forcefully skip some tests.
+const BLACKLIST: ReadonlySet<string> = new Set([
+  "define-shape/shape1-squares",
+]);
 // `WHITELIST` can be used to only enable a few tests.
 const WHITELIST: ReadonlySet<string> = new Set([
   // "place-object2/place-id-1",
@@ -78,7 +82,9 @@ function* getSamplesFromGroup(group: string): IterableIterator<Sample> {
     const testName: string = dirEnt.name;
     const testPath: string = sysPath.join(groupPath, testName);
 
-    if (WHITELIST.size > 0 && !WHITELIST.has(`${group}/${testName}`)) {
+    if (BLACKLIST.has(`${group}/${testName}`)) {
+      continue;
+    } else if (WHITELIST.size > 0 && !WHITELIST.has(`${group}/${testName}`)) {
       continue;
     }
 

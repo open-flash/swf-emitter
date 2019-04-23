@@ -13,7 +13,7 @@ import { ShapeRecordType } from "swf-tree/shape-records/_type";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types";
 import { emitMorphGradient } from "./gradient";
-import { emitCurvedEdgeBits, emitListLength, emitStraightEdgeBits, getCapStyleCode, getJoinStyleCode } from "./shape";
+import { capStyleToCode, emitCurvedEdgeBits, emitListLength, emitStraightEdgeBits, joinStyleToCode } from "./shape";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,
@@ -78,8 +78,8 @@ export function emitMorphShapeStylesBits(
   const byteStream: WritableByteStream = bitStream.asByteStream();
   emitMorphFillStyleList(byteStream, value.fill);
   emitMorphLineStyleList(byteStream, value.line, morphShapeVersion);
-  const fillBits: UintSize = getUintBitCount(value.fill.length + 1); // `+ 1` because of empty style
-  const lineBits: UintSize = getUintBitCount(value.line.length + 1); // `+ 1` because of empty style
+  const fillBits: UintSize = getUintBitCount(value.fill.length);
+  const lineBits: UintSize = getUintBitCount(value.line.length);
   bitStream.writeUint32Bits(4, fillBits);
   bitStream.writeUint32Bits(4, lineBits);
   return [fillBits, lineBits];
@@ -344,9 +344,9 @@ export function emitMorphLineStyle2(byteStream: WritableByteStream, value: Morph
   byteStream.writeUint16LE(value.morphWidth);
 
   const hasFill: boolean = value.fill.type !== FillStyleType.Solid;
-  const joinStyleCode: Uint2 = getJoinStyleCode(value.join.type);
-  const startCapStyleCode: Uint2 = getCapStyleCode(value.startCap);
-  const endCapStyleCode: Uint2 = getCapStyleCode(value.endCap);
+  const joinStyleCode: Uint2 = joinStyleToCode(value.join.type);
+  const startCapStyleCode: Uint2 = capStyleToCode(value.startCap);
+  const endCapStyleCode: Uint2 = capStyleToCode(value.endCap);
 
   const flags: Uint16 = 0
     | (value.pixelHinting ? 1 << 0 : 0)
