@@ -2,7 +2,7 @@ import { WritableStream } from "@open-flash/stream";
 import chai from "chai";
 import { Float16, Uint8 } from "semantic-types";
 
-describe("Stream", function () {
+describe("stream", function () {
   describe("writeFloat16BE", function () {
     interface TestItem {
       input: Float16;

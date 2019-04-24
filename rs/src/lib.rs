@@ -35,10 +35,6 @@ mod tests {
     let path: &Path = Path::new(path);
     let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
 
-    if _name != "blank" && _name != "squares" && _name != "morph-rotating-square" {
-      return;
-    }
-
     let ast_path = path.join("ast.json");
     let ast_file = ::std::fs::File::open(ast_path).expect("Failed to open AST file");
     let ast_reader = ::std::io::BufReader::new(ast_file);

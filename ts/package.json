@@ -35,7 +35,7 @@
     "gulp-cli": "^2.2.0",
     "kryo": "^0.8.1",
     "minimist": "^1.2.0",
-    "swf-parser": "^0.5.0",
+    "swf-parser": "^0.5.1",
     "ts-node": "^8.1.0",
     "tslint": "^5.16.0",
     "turbo-gulp": "^0.18.0",
