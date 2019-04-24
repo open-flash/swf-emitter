@@ -1,3 +1,47 @@
+<a href="https://github.com/open-flash/open-flash">
+    <img src="https://raw.githubusercontent.com/open-flash/open-flash/master/logo.png"
+    alt="Open Flash logo" title="Open Flash" align="right" width="64" height="64" />
+</a>
+
 # SWF Emitter
 
-**TODO**
+[![crates.io](https://img.shields.io/crates/v/swf-emitter.svg)](https://crates.io/crates/swf-emitter)
+[![GitHub repository](https://img.shields.io/badge/Github-open--flash%2Fswf--emitter-blue.svg)](https://github.com/open-flash/swf-emitter)
+[![Build status](https://img.shields.io/travis/com/open-flash/swf-emitter/master.svg)](https://travis-ci.com/open-flash/swf-emitter)
+
+SWF emitter implemented in Rust.
+Converts [`swf-tree` movies][swf-tree] to bytes.
+
+## Usage
+
+```rust
+use swf_emitter;
+use swf_tree::{CompressionMethod, Movie};
+
+fn main() {
+  let movie: Movie = ...;
+  let mut bytes = Vec::new();
+  emit_movie(&mut bytes, &movie, CompressionMethod::None)
+    .expect("Failed to emit movie");
+}
+```
+
+## Contributing
+
+This repo uses Git submodules for its test samples:
+
+```sh
+# Clone with submodules
+git clone --recurse-submodules git://github.com/open-flash/swf-emitter.git
+# Update submodules for an already-cloned repo
+git submodule update --init --recursive --remote
+```
+
+This library is a standard Cargo project. You can test your changes with
+`cargo test`.
+
+Prefer non-`master` branches when sending a PR so your changes can be rebased if
+needed. All the commits must be made on top of `master` (fast-forward merge).
+CI must pass for changes to be accepted.
+
+[swf-tree]: https://github.com/open-flash/swf-tree
