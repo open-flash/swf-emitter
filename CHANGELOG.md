@@ -2,7 +2,7 @@
 
 ### Rust
 
-- **[Feature]** Implement emitters for the following tags: `DefineFont`, `DefineFontAlignZones`, `DefineMorphShape`, `DefineSceneAndFrameLabelData`, `DefineShape`, `DefineSprite`, `DoAction`, `FileAttributes`, `Metadata`, `PlaceObject`, `RemoveObject`, `SetBackgroundColor`, `ShowFrame`.
+- **[Feature]** Implement emitters for the following tags: `DefineFont`, `DefineFontAlignZones`, `DefineFontName`, `DefineMorphShape`, `DefineSceneAndFrameLabelData`, `DefineShape`, `DefineSprite`, `DoAction`, `FileAttributes`, `Metadata`, `PlaceObject`, `RemoveObject`, `SetBackgroundColor`, `ShowFrame`.
 - **[Feature]** Implement `emit_movie`.
 
 ### Typescript
