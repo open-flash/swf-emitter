@@ -49,12 +49,12 @@ export function emitTextRendererBits(bitStream: WritableBitStream, value: text.T
 export function emitTextRecordString(
   byteStream: WritableByteStream,
   value: ReadonlyArray<text.TextRecord>,
-  hasAlpha: boolean,
   indexBits: UintSize,
   advanceBits: UintSize,
+  withAlpha: boolean,
 ): void {
-  for (const textRecord of value) {
-    emitTextRecord(byteStream, textRecord, hasAlpha, indexBits, advanceBits);
+  for (const record of value) {
+    emitTextRecord(byteStream, record, indexBits, advanceBits, withAlpha);
   }
   byteStream.writeUint8(0);
 }
@@ -62,27 +62,29 @@ export function emitTextRecordString(
 export function emitTextRecord(
   byteStream: WritableByteStream,
   value: text.TextRecord,
-  hasAlpha: boolean,
   indexBits: UintSize,
   advanceBits: UintSize,
+  withAlpha: boolean,
 ): void {
-  const hasFont: boolean = value.fontId !== undefined && value.fontSize !== undefined;
-  const hasColor: boolean = value.color !== undefined;
   const hasOffsetX: boolean = value.offsetX !== 0;
   const hasOffsetY: boolean = value.offsetY !== 0;
+  const hasColor: boolean = value.color !== undefined;
+  const hasFont: boolean = value.fontId !== undefined && value.fontSize !== undefined;
 
   const flags: Uint8 = 0
-    | (hasFont ? 1 << 3 : 0)
+    | (hasOffsetX ? 1 << 0 : 0)
+    | (hasOffsetY ? 1 << 1 : 0)
     | (hasColor ? 1 << 2 : 0)
-    | (hasOffsetX ? 1 << 1 : 0)
-    | (hasOffsetY ? 1 << 0 : 0);
+    | (hasFont ? 1 << 3 : 0)
+    // Skip bits [4, 6]
+    | (1 << 7); // Bit 7 must be set (TextRecordType)
   byteStream.writeUint8(flags);
 
   if (hasFont) {
     byteStream.writeUint16LE(value.fontId!);
   }
   if (hasColor) {
-    if (hasAlpha) {
+    if (withAlpha) {
       emitStraightSRgba8(byteStream, value.color!);
     } else {
       emitSRgb8(byteStream, value.color!);
@@ -101,7 +103,7 @@ export function emitTextRecord(
   const bitStream: WritableBitStream = byteStream.asBitStream();
   for (const entry of value.entries) {
     bitStream.writeUint32Bits(indexBits, entry.index);
-    bitStream.writeUint32Bits(advanceBits, entry.advance);
+    bitStream.writeSint32Bits(advanceBits, entry.advance);
   }
   bitStream.align();
 }

@@ -3,7 +3,8 @@ use std::io;
 
 use swf_tree as ast;
 
-use crate::basic_data_types::emit_rect;
+use crate::basic_data_types::{emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
+use crate::io_bits::{BitsWriter, WriteBits};
 use crate::primitives::{emit_le_f16, emit_le_i16, emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::emit_glyph;
 
@@ -15,6 +16,12 @@ pub(crate) enum DefineFontVersion {
   Font2,
   Font3,
   Font4,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub(crate) enum DefineTextVersion {
+  Text1,
+  Text2,
 }
 
 pub(crate) fn csm_table_hint_to_code(value: ast::text::CsmTableHint) -> u8 {
@@ -35,6 +42,59 @@ pub(crate) fn emit_language_code<W: io::Write>(writer: &mut W, value: ast::Langu
     ast::LanguageCode::TraditionalChinese => 5,
   };
   emit_u8(writer, code)
+}
+
+pub(crate) fn emit_text_record_string<W: io::Write>(writer: &mut W, value: &[ast::text::TextRecord], index_bits: u32, advance_bits: u32, with_alpha: bool) -> io::Result<()> {
+  for record in value {
+    emit_text_record(writer, record, index_bits, advance_bits, with_alpha)?;
+  }
+  emit_u8(writer, 0)
+}
+
+pub(crate) fn emit_text_record<W: io::Write>(writer: &mut W, value: &ast::text::TextRecord, index_bits: u32, advance_bits: u32, with_alpha: bool) -> io::Result<()> {
+  let has_offset_x = value.offset_x != 0;
+  let has_offset_y = value.offset_y != 0;
+  let has_color = value.color.is_some();
+  let has_font = value.font_id.is_some() && value.font_size.is_some();
+
+  let flags: u8 = 0
+    | (if has_offset_x { 1 << 0 } else { 0 })
+    | (if has_offset_y { 1 << 1 } else { 0 })
+    | (if has_color { 1 << 2 } else { 0 })
+    | (if has_font { 1 << 3 } else { 0 })
+    // Skip bits [4, 6]
+    | (1 << 7); // Bit 7 must be set (TextRecordType)
+  emit_u8(writer, flags)?;
+
+  if let Some(font_id) = value.font_id {
+    assert!(has_font);
+    emit_le_u16(writer, font_id)?;
+  }
+  if let Some(color) = value.color {
+    if with_alpha {
+      emit_straight_s_rgba8(writer, color)?;
+    } else {
+      assert!(color.a == u8::max_value());
+      emit_s_rgb8(writer, ast::SRgb8 { r: color.r, g: color.g, b: color.b })?;
+    }
+  }
+  if has_offset_x {
+    emit_le_i16(writer, value.offset_x)?;
+  }
+  if has_offset_y {
+    emit_le_i16(writer, value.offset_y)?;
+  }
+  if let Some(font_size) = value.font_size {
+    assert!(has_font);
+    emit_le_u16(writer, font_size)?;
+  }
+  emit_u8(writer, value.entries.len().try_into().unwrap())?;
+  let mut bits_writer = BitsWriter::new(Vec::new());
+  for entry in &value.entries {
+    bits_writer.write_u32_bits(index_bits, entry.index.try_into().unwrap())?;
+    bits_writer.write_i32_bits(advance_bits, entry.advance)?;
+  }
+  writer.write_all(&bits_writer.into_inner()?)
 }
 
 pub(crate) fn emit_font_alignment_zone<W: io::Write>(writer: &mut W, value: &ast::text::FontAlignmentZone) -> io::Result<()> {

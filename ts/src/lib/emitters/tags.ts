@@ -141,6 +141,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
         emitDefineTextAny,
         new Map([
           [DefineTextVersion.DefineText1, 11],
+          [DefineTextVersion.DefineText2, 33],
         ]),
       ],
     ],
@@ -534,7 +535,7 @@ export function emitDefineTextAny(byteStream: WritableByteStream, value: tags.De
   }
   byteStream.writeUint8(indexBits);
   byteStream.writeUint8(advanceBits);
-  emitTextRecordString(byteStream, value.records, hasAlpha, indexBits, advanceBits);
+  emitTextRecordString(byteStream, value.records, indexBits, advanceBits, hasAlpha);
   return hasAlpha ? DefineTextVersion.DefineText2 : DefineTextVersion.DefineText1;
 }
 

@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::convert::TryInto;
 use std::io;
 
@@ -5,11 +6,12 @@ use swf_fixed::Sfixed8P8;
 use swf_tree as ast;
 
 use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
+use crate::bit_count::{get_u32_bit_count, get_i32_bit_count};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
-use crate::text::{csm_table_hint_to_code, DefineFontVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs};
+use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_record_string};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -83,6 +85,12 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::DefineSprite(ref tag) => {
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
+    }
+    ast::Tag::DefineText(ref tag) => {
+      match emit_define_text_any(&mut tag_writer, tag)? {
+        DefineTextVersion::Text1 => 11,
+        DefineTextVersion::Text2 => 33,
+      }
     }
     ast::Tag::DoAction(ref tag) => {
       emit_do_action(&mut tag_writer, tag)?;
@@ -252,6 +260,31 @@ pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::Defin
   emit_le_u16(writer, value.id)?;
   emit_le_u16(writer, value.frame_count.try_into().unwrap())?;
   emit_tag_string(writer, &value.tags, swf_version)
+}
+
+pub(crate) fn emit_define_text_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineText) -> io::Result<DefineTextVersion> {
+  emit_le_u16(writer, value.id)?;
+  emit_rect(writer, &value.bounds)?;
+  emit_matrix(writer, &value.matrix)?;
+  let mut index_bits: u32 = 0;
+  let mut advance_bits: u32 = 0;
+  let mut has_alpha = false;
+  for record in &value.records {
+    if let Some(color) = record.color {
+      if color.a != u8::max_value() {
+        has_alpha = true;
+      }
+    }
+    for entry in &record.entries {
+      index_bits = max(index_bits, get_u32_bit_count(entry.index.try_into().unwrap()));
+      advance_bits = max(advance_bits, get_i32_bit_count(entry.advance.try_into().unwrap()));
+    }
+  }
+  emit_u8(writer, index_bits.try_into().unwrap())?;
+  emit_u8(writer, advance_bits.try_into().unwrap())?;
+  emit_text_record_string(writer, &value.records, index_bits, advance_bits, has_alpha)?;
+
+  Ok(if has_alpha { DefineTextVersion::Text2 } else { DefineTextVersion::Text1 })
 }
 
 pub fn emit_do_action<W: io::Write>(writer: &mut W, value: &ast::tags::DoAction) -> io::Result<()> {
