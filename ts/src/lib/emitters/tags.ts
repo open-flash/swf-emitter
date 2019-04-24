@@ -98,7 +98,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
     [
       TagType.DefineFont,
       <TagEmitter> [
-        emitDefineFont,
+        emitDefineFontAny,
         new Map([
           [DefineFontVersion.Font1, 10],
           [DefineFontVersion.Font2, 48],
@@ -107,8 +107,8 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
         ]),
       ],
     ],
-    [TagType.DefineFontName, <TagEmitter> [emitDefineFontName, 88]],
     [TagType.DefineFontAlignZones, <TagEmitter> [emitDefineFontAlignZones, 73]],
+    [TagType.DefineFontName, <TagEmitter> [emitDefineFontName, 88]],
     [TagType.DefineJpegTables, <TagEmitter> [emitDefineJpegTables, 8]],
     [
       TagType.DefineMorphShape,
@@ -286,7 +286,7 @@ export enum DefineFontVersion {
   Font4,
 }
 
-export function emitDefineFont(byteStream: WritableByteStream, value: tags.DefineFont): DefineFontVersion {
+export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.DefineFont): DefineFontVersion {
   byteStream.writeUint16LE(value.id);
 
   const useWideCodes: boolean = true; // `false` is deprecated since SWF6
@@ -305,18 +305,20 @@ export function emitDefineFont(byteStream: WritableByteStream, value: tags.Defin
     | (value.isSmall ? 1 << 5 : 0)
     | (value.isShiftJis ? 1 << 6 : 0)
     | (hasLayout ? 1 << 7 : 0);
-
   byteStream.writeUint8(flags);
+
   emitLanguageCode(byteStream, value.language);
 
   const fontNameStream: WritableStream = new WritableStream();
-  fontNameStream.writeString(value.fontName); // TODO: See DefineFontInfo for encoding
+  // TODO: Check if it should be `.writeCString` or `.writeString`
+  fontNameStream.writeCString(value.fontName); // TODO: See DefineFontInfo for encoding
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
 
   if (value.glyphs === undefined) {
     // According to Shumway:
-    // > The SWF format docs doesn't say that, but the DefineFont{2,3} tag ends here for device fonts.
+    // > The SWF format docs doesn't say that, but the DefineFont{2,3} tag ends
+    // > here for device fonts.
     byteStream.writeUint16LE(0);
     return DefineFontVersion.Font3;
   }
@@ -325,7 +327,7 @@ export function emitDefineFont(byteStream: WritableByteStream, value: tags.Defin
   byteStream.write(offsetGlyphStream);
   // TODO: Assert codeUnits is defined (should be defined because of .glyphs)
   for (const codeUnit of value.codeUnits!) {
-    // We force `useWideCodes` to `true`
+    // Using `.writeUint16LE` since `useWideCodes` is always `true`
     byteStream.writeUint16LE(codeUnit);
   }
   if (hasLayout) {
@@ -344,14 +346,14 @@ export function emitDefineFontAlignZones(byteStream: WritableByteStream, value: 
   }
 }
 
-export function emitDefineJpegTables(byteStream: WritableByteStream, value: tags.DefineJpegTables): void {
-  byteStream.writeBytes(value.data);
-}
-
 export function emitDefineFontName(byteStream: WritableByteStream, value: tags.DefineFontName): void {
   byteStream.writeUint16LE(value.fontId);
   byteStream.writeCString(value.name);
   byteStream.writeCString(value.copyright);
+}
+
+export function emitDefineJpegTables(byteStream: WritableByteStream, value: tags.DefineJpegTables): void {
+  byteStream.writeBytes(value.data);
 }
 
 export function emitDefineMorphShapeAny(

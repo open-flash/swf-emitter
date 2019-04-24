@@ -36,9 +36,9 @@ export function emitGlyph(byteStream: WritableByteStream, value: Glyph): void {
 }
 
 export function emitGlyphBits(bitStream: WritableBitStream, value: Glyph): void {
-  // TODO: We use the maximum at the moment, but we should check how to determine the bit count
-  const fillBits: UintSize = 0b1111;
-  const lineBits: UintSize = 0b1111;
+  // TODO: Check how to determine the bit count (scan records?)
+  const fillBits: UintSize = 0b0001; // 2 styles (empty and filled) -> 1 bit
+  const lineBits: UintSize = 0b0000; // no line styles
   bitStream.writeUint32Bits(4, fillBits);
   bitStream.writeUint32Bits(4, lineBits);
   // TODO: Check which shape version to use

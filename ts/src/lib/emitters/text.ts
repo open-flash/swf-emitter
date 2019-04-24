@@ -145,30 +145,36 @@ export function emitOffsetGlyphs(
   byteStream: WritableByteStream,
   value: ReadonlyArray<Glyph>,
 ): boolean {
-  let useWideOffset: boolean = false;
   const endOffsets: UintSize[] = new Array(value.length);
   const glyphStream: WritableStream = new WritableStream();
   for (let i: UintSize = 0; i < value.length; i++) {
     emitGlyph(glyphStream, value[i]);
     endOffsets[i] = glyphStream.bytePos;
   }
-  if ((endOffsets.length + 1) * 2 + glyphStream.bytePos > 0xff) {
-    useWideOffset = true;
-  }
-  const offsetsSize: UintSize = (endOffsets.length + 1) * (useWideOffset ? 4 : 2);
-  if (useWideOffset) {
-    byteStream.writeUint32LE(offsetsSize);
+
+  const offsetTableLength: UintSize = endOffsets.length + 1;
+  const shortOffsetTableSize: UintSize = offsetTableLength * 2; // 2 bytes per offset
+  const maxOffsetWithShortTable: UintSize = shortOffsetTableSize + glyphStream.bytePos;
+
+  const useWideOffsets: boolean = maxOffsetWithShortTable > 0xffff;
+
+  if (useWideOffsets) {
+    const wideOffsetTableSize: UintSize = offsetTableLength * 4; // 4 bytes per offset
+
+    byteStream.writeUint32LE(wideOffsetTableSize);
     for (const endOffset of endOffsets) {
-      byteStream.writeUint32LE(offsetsSize + endOffset);
+      byteStream.writeUint32LE(wideOffsetTableSize + endOffset);
     }
   } else {
-    byteStream.writeUint16LE(offsetsSize);
+    byteStream.writeUint16LE(shortOffsetTableSize);
     for (const endOffset of endOffsets) {
-      byteStream.writeUint16LE(offsetsSize + endOffset);
+      byteStream.writeUint16LE(shortOffsetTableSize + endOffset);
     }
   }
+
   byteStream.write(glyphStream);
-  return useWideOffset;
+
+  return useWideOffsets;
 }
 
 export function emitFontLayout(byteStream: WritableByteStream, value: text.FontLayout): void {

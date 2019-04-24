@@ -18,6 +18,22 @@ pub enum ShapeVersion {
   Shape4,
 }
 
+pub(crate) fn emit_glyph<W: io::Write>(writer: &mut W, value: &ast::Glyph) -> io::Result<()> {
+  let mut bits_writer = BitsWriter::new(Vec::new());
+  emit_glyph_bits(&mut bits_writer, value)?;
+  writer.write_all(&bits_writer.into_inner()?)
+}
+
+pub(crate) fn emit_glyph_bits<W: WriteBits>(writer: &mut W, value: &ast::Glyph) -> io::Result<()> {
+  // TODO: Check how to determine the bit count (scan records?)
+  let fill_bits: u32 = 1; // 2 styles (empty and filled) -> 1 bit
+  let line_bits: u32 = 0; // no line styles
+  writer.write_u32_bits(4, fill_bits)?;
+  writer.write_u32_bits(4, line_bits)?;
+  // TODO: Check which shape version to use
+  emit_shape_record_string_bits(writer, &value.records, fill_bits, line_bits, ShapeVersion::Shape1)
+}
+
 pub(crate) fn emit_shape<W: io::Write>(writer: &mut W, value: &ast::Shape, version: ShapeVersion) -> io::Result<()> {
   let mut bits_writer = BitsWriter::new(Vec::new());
   emit_shape_bits(&mut bits_writer, value, version)?;

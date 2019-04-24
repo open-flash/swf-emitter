@@ -6,10 +6,10 @@ use swf_tree as ast;
 
 use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
-use crate::morph_shape::{MorphShapeVersion, emit_morph_shape};
+use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
-use crate::text::emit_font_alignment_zone;
+use crate::text::{csm_table_hint_to_code, DefineFontVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -46,6 +46,14 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
   let mut tag_writer = Vec::new();
 
   let code: u16 = match value {
+    ast::Tag::DefineFont(ref tag) => {
+      match emit_define_font_any(&mut tag_writer, tag)? {
+        DefineFontVersion::Font1 => 10,
+        DefineFontVersion::Font2 => 48,
+        DefineFontVersion::Font3 => 75,
+        DefineFontVersion::Font4 => 91,
+      }
+    }
     ast::Tag::DefineFontAlignZones(ref tag) => {
       emit_define_font_align_zones(&mut tag_writer, tag)?;
       73
@@ -111,12 +119,56 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
   writer.write_all(&tag_writer)
 }
 
-fn csm_table_hint_to_code(value: ast::text::CsmTableHint) -> u8 {
-  match value {
-    ast::text::CsmTableHint::Thin => 0,
-    ast::text::CsmTableHint::Medium => 1,
-    ast::text::CsmTableHint::Thick => 2,
+pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFont) -> io::Result<DefineFontVersion> {
+  emit_le_u16(writer, value.id)?;
+
+  let use_wide_codes = true; // `false` is deprecated since SWF6
+  let mut offset_glyph_writer = Vec::new();
+  let use_wide_offsets = if let Some(ref glyphs) = &value.glyphs {
+    emit_offset_glyphs(&mut offset_glyph_writer, glyphs)?
+  } else {
+    false
+  };
+  let has_layout = value.layout.is_some();
+
+  let flags: u8 = 0
+    | (if value.is_bold { 1 << 0 } else { 0 })
+    | (if value.is_italic { 1 << 1 } else { 0 })
+    | (if use_wide_codes { 1 << 2 } else { 0 })
+    | (if use_wide_offsets { 1 << 3 } else { 0 })
+    | (if value.is_ansi { 1 << 4 } else { 0 })
+    | (if value.is_small { 1 << 5 } else { 0 })
+    | (if value.is_shift_jis { 1 << 6 } else { 0 })
+    | (if has_layout { 1 << 7 } else { 0 });
+  emit_u8(writer, flags)?;
+
+  emit_language_code(writer, value.language)?;
+
+  let font_name_c_string = std::ffi::CString::new(value.font_name.clone()).unwrap();
+  let font_name_bytes = font_name_c_string.as_bytes_with_nul();
+  emit_u8(writer, font_name_bytes.len().try_into().unwrap())?;
+  writer.write_all(font_name_bytes)?;
+
+  if let Some(ref glyphs) = &value.glyphs {
+    emit_le_u16(writer, glyphs.len().try_into().unwrap())?;
+    writer.write_all(&offset_glyph_writer)?;
+    // TODO: Assert codeUnits is defined (should be defined because of .glyphs)
+    for code_unit in value.code_units.as_ref().unwrap() {
+      debug_assert!(use_wide_codes);
+      emit_le_u16(writer, *code_unit)?;
+    }
+
+    if let Some(ref layout) = &value.layout {
+      emit_font_layout(writer, layout)?;
+    }
+  } else {
+    // According to Shumway:
+    // > The SWF format docs doesn't say that, but the DefineFont{2,3} tag ends
+    // > here for device fonts.
+    emit_le_u16(writer, 0)?;
   }
+
+  Ok(DefineFontVersion::Font3)
 }
 
 pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontAlignZones) -> io::Result<()> {
