@@ -5,19 +5,6 @@ import { Glyph, LanguageCode, text } from "swf-tree";
 import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGlyph } from "./shape";
 
-export function emitGridFittingBits(bitStream: WritableBitStream, value: text.GridFitting): void {
-  const VALUE_TO_CODE: Map<text.GridFitting, Uint3> = new Map([
-    [text.GridFitting.None, 0 as Uint3],
-    [text.GridFitting.Pixel, 1 as Uint3],
-    [text.GridFitting.SubPixel, 2 as Uint3],
-  ]);
-  const code: Uint3 | undefined = VALUE_TO_CODE.get(value);
-  if (code === undefined) {
-    throw new Incident("Unexpected value");
-  }
-  bitStream.writeUint32Bits(3, code);
-}
-
 export function emitLanguageCode(byteStream: WritableByteStream, value: LanguageCode): void {
   const VALUE_TO_CODE: Map<LanguageCode, Uint8> = new Map([
     [LanguageCode.Auto, 0],
@@ -34,16 +21,29 @@ export function emitLanguageCode(byteStream: WritableByteStream, value: Language
   byteStream.writeUint8(code);
 }
 
-export function emitTextRendererBits(bitStream: WritableBitStream, value: text.TextRenderer): void {
+export function gridFittingToCode(value: text.GridFitting): Uint3 {
+  const VALUE_TO_CODE: Map<text.GridFitting, Uint3> = new Map([
+    [text.GridFitting.None, 0 as Uint3],
+    [text.GridFitting.Pixel, 1 as Uint3],
+    [text.GridFitting.SubPixel, 2 as Uint3],
+  ]);
+  const code: Uint3 | undefined = VALUE_TO_CODE.get(value);
+  if (code === undefined) {
+    throw new Incident("Unexpected value");
+  }
+  return code;
+}
+
+export function textRendererToCode(value: text.TextRenderer): Uint2 {
   const VALUE_TO_CODE: Map<text.TextRenderer, Uint2> = new Map([
-    [text.TextRenderer.Normal, 0 as Uint2],
     [text.TextRenderer.Advanced, 1 as Uint2],
+    [text.TextRenderer.Normal, 0 as Uint2],
   ]);
   const code: Uint2 | undefined = VALUE_TO_CODE.get(value);
   if (code === undefined) {
     throw new Incident("Unexpected value");
   }
-  bitStream.writeUint32Bits(2, code);
+  return code;
 }
 
 export function emitTextRecordString(

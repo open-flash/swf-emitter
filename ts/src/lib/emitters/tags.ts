@@ -1,6 +1,6 @@
 import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
-import { Uint16, Uint2, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
+import { Uint16, Uint2, Uint3, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
 import { Tag, tags, TagType } from "swf-tree";
 import { SoundType } from "swf-tree/sound/sound-type";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
@@ -21,12 +21,12 @@ import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
   emitFontLayout,
-  emitGridFittingBits,
   emitLanguageCode,
   emitOffsetGlyphs,
   emitTextAlignment,
   emitTextRecordString,
-  emitTextRendererBits,
+  gridFittingToCode,
+  textRendererToCode,
 } from "./text";
 
 /**
@@ -271,13 +271,18 @@ export function emitDefineButton(byteStream: WritableByteStream, value: tags.Def
 
 export function emitCsmTextSettings(byteStream: WritableByteStream, value: tags.CsmTextSettings): void {
   byteStream.writeUint16LE(value.textId);
-  const bitStream: WritableBitStream = byteStream.asBitStream();
-  emitTextRendererBits(bitStream, value.renderer);
-  emitGridFittingBits(bitStream, value.fitting);
-  bitStream.align();
+
+  const textRendererCode: Uint2 = textRendererToCode(value.renderer);
+  const gridFittingCode: Uint3 = gridFittingToCode(value.fitting);
+  const flags: Uint8 = 0
+    // Skip bits [0, 2]
+    | ((gridFittingCode & 0b111) << 3)
+    | ((textRendererCode & 0b11) << 6);
+  byteStream.writeUint8(flags);
+
   byteStream.writeFloat32LE(value.thickness);
   byteStream.writeFloat32LE(value.sharpness);
-  byteStream.writeUint8(0);
+  byteStream.writeUint8(0); // Reserved
 }
 
 export enum DefineFontVersion {

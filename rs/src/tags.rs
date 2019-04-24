@@ -9,9 +9,9 @@ use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_tr
 use crate::bit_count::{get_u32_bit_count, get_i32_bit_count};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
-use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
+use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8, emit_le_f32};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
-use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_record_string};
+use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -48,6 +48,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
   let mut tag_writer = Vec::new();
 
   let code: u16 = match value {
+    ast::Tag::CsmTextSettings(ref tag) => {
+      emit_csm_text_settings(&mut tag_writer, tag)?;
+      74
+    }
     ast::Tag::DefineFont(ref tag) => {
       match emit_define_font_any(&mut tag_writer, tag)? {
         DefineFontVersion::Font1 => 10,
@@ -129,6 +133,20 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
 
   emit_tag_header(writer, TagHeader { code, length: tag_writer.len().try_into().unwrap() })?;
   writer.write_all(&tag_writer)
+}
+
+pub fn emit_csm_text_settings<W: io::Write>(writer: &mut W, value: &ast::tags::CsmTextSettings) -> io::Result<()> {
+  emit_le_u16(writer, value.text_id)?;
+
+  let flags: u8 = 0
+    // Skip bits [0, 2]
+    | (grid_fitting_to_code(value.fitting) << 3)
+    | (text_renderer_to_code(value.renderer) << 6);
+  emit_u8(writer, flags)?;
+
+  emit_le_f32(writer, value.thickness)?;
+  emit_le_f32(writer, value.sharpness)?;
+  emit_u8(writer, 0) // Reserved
 }
 
 pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFont) -> io::Result<DefineFontVersion> {

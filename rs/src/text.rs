@@ -44,6 +44,21 @@ pub(crate) fn emit_language_code<W: io::Write>(writer: &mut W, value: ast::Langu
   emit_u8(writer, code)
 }
 
+pub(crate) fn grid_fitting_to_code(value: ast::text::GridFitting) -> u8 {
+  match value {
+    ast::text::GridFitting::None => 0,
+    ast::text::GridFitting::Pixel => 1,
+    ast::text::GridFitting::SubPixel => 2,
+  }
+}
+
+pub(crate) fn text_renderer_to_code(value: ast::text::TextRenderer) -> u8 {
+  match value {
+    ast::text::TextRenderer::Advanced => 1,
+    ast::text::TextRenderer::Normal => 0,
+  }
+}
+
 pub(crate) fn emit_text_record_string<W: io::Write>(writer: &mut W, value: &[ast::text::TextRecord], index_bits: u32, advance_bits: u32, with_alpha: bool) -> io::Result<()> {
   for record in value {
     emit_text_record(writer, record, index_bits, advance_bits, with_alpha)?;
