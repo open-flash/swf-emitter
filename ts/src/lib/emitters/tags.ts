@@ -3,6 +3,7 @@ import { Incident } from "incident";
 import { Uint16, Uint2, Uint3, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
 import { Tag, tags, TagType } from "swf-tree";
 import { SoundType } from "swf-tree/sound/sound-type";
+import { TextAlignment } from "swf-tree/text";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
 import {
   emitColorTransform,
@@ -95,7 +96,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
         ]),
       ],
     ],
-    [TagType.DefineDynamicText, <TagEmitter> [emitDefineEditText, 37]],
+    [TagType.DefineDynamicText, <TagEmitter> [emitDefineDynamicText, 37]],
     [
       TagType.DefineFont,
       <TagEmitter> [
@@ -430,43 +431,39 @@ function emitDefineShapeAny(byteStream: WritableByteStream, value: tags.DefineSh
   return shapeVersion;
 }
 
-export function emitDefineEditText(byteStream: WritableByteStream, value: tags.DefineDynamicText): void {
+// tslint:disable-next-line:cyclomatic-complexity
+export function emitDefineDynamicText(byteStream: WritableByteStream, value: tags.DefineDynamicText): void {
   byteStream.writeUint16LE(value.id);
   emitRect(byteStream, value.bounds);
 
   const hasFont: boolean = value.fontId !== undefined && value.fontSize !== undefined;
   const hasMaxLength: boolean = value.maxLength !== undefined;
   const hasColor: boolean = value.color !== undefined;
-  const readonly: boolean = value.readonly;
-  const password: boolean = value.password;
-  const multiline: boolean = value.multiline;
-  const wordWrap: boolean = value.wordWrap;
   const hasText: boolean = value.text !== undefined;
-  const useGlyphFont: boolean = value.useGlyphFont;
-  const html: boolean = value.html;
-  const wasStatic: boolean = value.wasStatic;
-  const border: boolean = value.border;
-  const noSelect: boolean = value.noSelect;
-  const hasLayout: boolean = value.align !== undefined;
-  const autoSize: boolean = value.autoSize;
+  // TODO: Replace with `value.align !== TextAlignment.Left`
+  const hasLayout: boolean = value.align !== undefined
+    || value.marginLeft !== 0
+    || value.marginRight !== 0
+    || value.indent !== 0
+    || value.leading !== 0;
   const hasFontClass: boolean = value.fontClass !== undefined && value.fontSize !== undefined;
 
   const flags: Uint16 = 0
     | (hasFont ? 1 << 0 : 0)
     | (hasMaxLength ? 1 << 1 : 0)
     | (hasColor ? 1 << 2 : 0)
-    | (readonly ? 1 << 3 : 0)
-    | (password ? 1 << 4 : 0)
-    | (multiline ? 1 << 5 : 0)
-    | (wordWrap ? 1 << 6 : 0)
+    | (value.readonly ? 1 << 3 : 0)
+    | (value.password ? 1 << 4 : 0)
+    | (value.multiline ? 1 << 5 : 0)
+    | (value.wordWrap ? 1 << 6 : 0)
     | (hasText ? 1 << 7 : 0)
-    | (useGlyphFont ? 1 << 8 : 0)
-    | (html ? 1 << 9 : 0)
-    | (wasStatic ? 1 << 10 : 0)
-    | (border ? 1 << 11 : 0)
-    | (noSelect ? 1 << 12 : 0)
+    | (value.useGlyphFont ? 1 << 8 : 0)
+    | (value.html ? 1 << 9 : 0)
+    | (value.wasStatic ? 1 << 10 : 0)
+    | (value.border ? 1 << 11 : 0)
+    | (value.noSelect ? 1 << 12 : 0)
     | (hasLayout ? 1 << 13 : 0)
-    | (autoSize ? 1 << 14 : 0)
+    | (value.autoSize ? 1 << 14 : 0)
     | (hasFontClass ? 1 << 15 : 0);
   byteStream.writeUint16LE(flags);
 
@@ -486,11 +483,11 @@ export function emitDefineEditText(byteStream: WritableByteStream, value: tags.D
     byteStream.writeUint16LE(value.maxLength!);
   }
   if (hasLayout) {
-    emitTextAlignment(byteStream, value.align!);
+    emitTextAlignment(byteStream, value.align !== undefined ? value.align : TextAlignment.Left);
     byteStream.writeUint16LE(value.marginLeft);
     byteStream.writeUint16LE(value.marginRight);
     byteStream.writeUint16LE(value.indent);
-    byteStream.writeUint16LE(value.leading);
+    byteStream.writeSint16LE(value.leading);
   }
   byteStream.writeCString(value.variableName !== undefined ? value.variableName : "");
   if (hasText) {

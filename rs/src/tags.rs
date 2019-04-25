@@ -7,13 +7,13 @@ use swf_tree as ast;
 
 use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
 use crate::bit_count::{get_i32_bit_count, get_u32_bit_count};
-use crate::button::{ButtonVersion, emit_button_record_string, emit_button2_cond_action_string};
+use crate::button::{ButtonVersion, emit_button2_cond_action_string, emit_button_record_string};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
-use crate::primitives::{emit_le_f32, emit_le_u16, emit_le_u32, emit_u8};
+use crate::primitives::{emit_le_f32, emit_le_i16, emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
 use crate::sound::{audio_coding_format_to_code, sound_rate_to_code};
-use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
+use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_alignment, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -72,7 +72,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       }
     }
     ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
-    ast::Tag::DefineDynamicText(ref _tag) => unimplemented!(),
+    ast::Tag::DefineDynamicText(ref tag) => {
+      emit_define_dynamic_text(&mut tag_writer, tag)?;
+      37
+    }
     ast::Tag::DefineFont(ref tag) => {
       match emit_define_font_any(&mut tag_writer, tag)? {
         DefineFontVersion::Font1 => 10,
@@ -244,6 +247,79 @@ pub(crate) fn emit_define_button_any<W: io::Write>(writer: &mut W, value: &ast::
     emit_button2_cond_action_string(writer, &value.actions)?;
   }
   Ok(version)
+}
+
+pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast::tags::DefineDynamicText) -> io::Result<()> {
+  emit_le_u16(writer, value.id)?;
+  emit_rect(writer, &value.bounds)?;
+
+  let has_font = value.font_id.is_some() && value.font_size.is_some();
+  let has_max_length = value.max_length.is_some();
+  let has_color = value.color.is_some();
+  let has_text = value.text.is_some();
+  let has_layout = value.align.is_some()
+    || value.margin_left != 0
+    || value.margin_right != 0
+    || value.indent != 0
+    || value.leading != 0;
+  let has_font_class = value.font_class.is_some() && value.font_size.is_some();
+
+  let flags: u16 = 0
+    | (if has_font { 1 << 0 } else { 0 })
+    | (if has_max_length { 1 << 1 } else { 0 })
+    | (if has_color { 1 << 2 } else { 0 })
+    | (if value.readonly { 1 << 3 } else { 0 })
+    | (if value.password { 1 << 4 } else { 0 })
+    | (if value.multiline { 1 << 5 } else { 0 })
+    | (if value.word_wrap { 1 << 6 } else { 0 })
+    | (if has_text { 1 << 7 } else { 0 })
+    | (if value.use_glyph_font { 1 << 8 } else { 0 })
+    | (if value.html { 1 << 9 } else { 0 })
+    | (if value.was_static { 1 << 10 } else { 0 })
+    | (if value.border { 1 << 11 } else { 0 })
+    | (if value.no_select { 1 << 12 } else { 0 })
+    | (if has_layout { 1 << 13 } else { 0 })
+    | (if value.auto_size { 1 << 14 } else { 0 })
+    | (if has_font_class { 1 << 15 } else { 0 });
+  emit_le_u16(writer, flags)?;
+
+  if let Some(font_id) = value.font_id {
+    assert!(has_font);
+    emit_le_u16(writer, font_id)?;
+  }
+  if let Some(ref font_class) = &value.font_class {
+    assert!(has_font_class);
+    emit_c_string(writer, font_class)?;
+  }
+  if let Some(font_size) = value.font_size {
+    assert!(has_font || has_font_class);
+    emit_le_u16(writer, font_size)?;
+  }
+  if let Some(color) = value.color {
+    emit_straight_s_rgba8(writer, color)?;
+  }
+  if let Some(max_length) = value.max_length {
+    emit_le_u16(writer, max_length.try_into().unwrap())?;
+  }
+  if has_layout {
+    emit_text_alignment(writer, match value.align {
+      Some(align) => align,
+      None => ast::text::TextAlignment::Left
+    })?;
+    emit_le_u16(writer, value.margin_left)?;
+    emit_le_u16(writer, value.margin_right)?;
+    emit_le_u16(writer, value.indent)?;
+    emit_le_i16(writer, value.leading)?;
+  }
+  emit_c_string(writer, match &value.variable_name {
+    Some(ref v) => v,
+    None => ""
+  })?;
+  if let Some(ref text) = &value.text {
+    emit_c_string(writer, text)?;
+  }
+
+  Ok(())
 }
 
 pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFont) -> io::Result<DefineFontVersion> {

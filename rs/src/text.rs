@@ -182,3 +182,13 @@ pub(crate) fn emit_kerning_record<W: io::Write>(writer: &mut W, value: &ast::tex
   emit_le_u16(writer, value.right)?;
   emit_le_i16(writer, value.adjustment)
 }
+
+pub(crate) fn emit_text_alignment<W: io::Write>(writer: &mut W, value: ast::text::TextAlignment) -> io::Result<()> {
+  let code: u8 = match value {
+    ast::text::TextAlignment::Center => 2,
+    ast::text::TextAlignment::Justify => 3,
+    ast::text::TextAlignment::Left => 0,
+    ast::text::TextAlignment::Right => 1,
+  };
+  emit_u8(writer, code)
+}
