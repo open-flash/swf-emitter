@@ -53,7 +53,16 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       74
     }
     ast::Tag::DefineBinaryData(ref _tag) => unimplemented!(),
-    ast::Tag::DefineBitmap(ref _tag) => unimplemented!(),
+    ast::Tag::DefineBitmap(ref tag) => {
+      match emit_define_bitmap_any(&mut tag_writer, tag)? {
+        DefineBitmapVersion::DefineBitsJpeg1 => 6,
+        DefineBitmapVersion::DefineBitsLossless1 => 20,
+        DefineBitmapVersion::DefineBitsJpeg2 => 21,
+        DefineBitmapVersion::DefineBitsJpeg3 => 35,
+        DefineBitmapVersion::DefineBitsLossless2 => 36,
+        DefineBitmapVersion::DefineBitsJpeg4 => 90,
+      }
+    }
     ast::Tag::DefineButton(ref _tag) => unimplemented!(),
     ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineDynamicText(ref _tag) => unimplemented!(),
@@ -175,6 +184,31 @@ pub fn emit_csm_text_settings<W: io::Write>(writer: &mut W, value: &ast::tags::C
   emit_le_f32(writer, value.thickness)?;
   emit_le_f32(writer, value.sharpness)?;
   emit_u8(writer, 0) // Reserved
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum DefineBitmapVersion {
+  DefineBitsJpeg1,
+  DefineBitsJpeg2,
+  DefineBitsJpeg3,
+  DefineBitsJpeg4,
+  DefineBitsLossless1,
+  DefineBitsLossless2,
+}
+
+pub fn emit_define_bitmap_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineBitmap) -> io::Result<DefineBitmapVersion> {
+  emit_le_u16(writer, value.id)?;
+  writer.write_all(&value.data)?;
+
+  let version = match value.media_type {
+    ast::ImageType::SwfBmp => DefineBitmapVersion::DefineBitsLossless1,
+    ast::ImageType::SwfAbmp => DefineBitmapVersion::DefineBitsLossless2,
+    ast::ImageType::Jpeg | ast::ImageType::Gif | ast::ImageType::Png => DefineBitmapVersion::DefineBitsJpeg2,
+    ast::ImageType::Ajpeg => DefineBitmapVersion::DefineBitsJpeg3,
+    ast::ImageType::PartialJpeg => DefineBitmapVersion::DefineBitsJpeg1,
+  };
+
+  Ok(version)
 }
 
 pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFont) -> io::Result<DefineFontVersion> {
