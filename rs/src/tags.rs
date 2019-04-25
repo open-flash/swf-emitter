@@ -52,6 +52,11 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_csm_text_settings(&mut tag_writer, tag)?;
       74
     }
+    ast::Tag::DefineBinaryData(ref _tag) => unimplemented!(),
+    ast::Tag::DefineBitmap(ref _tag) => unimplemented!(),
+    ast::Tag::DefineButton(ref _tag) => unimplemented!(),
+    ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
+    ast::Tag::DefineDynamicText(ref _tag) => unimplemented!(),
     ast::Tag::DefineFont(ref tag) => {
       match emit_define_font_any(&mut tag_writer, tag)? {
         DefineFontVersion::Font1 => 10,
@@ -64,16 +69,19 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_font_align_zones(&mut tag_writer, tag)?;
       73
     }
+    ast::Tag::DefineFontInfo(ref _tag) => unimplemented!(),
     ast::Tag::DefineFontName(ref tag) => {
       emit_define_font_name(&mut tag_writer, tag)?;
       88
     }
+    ast::Tag::DefineJpegTables(ref _tag) => unimplemented!(),
     ast::Tag::DefineMorphShape(ref tag) => {
       match emit_define_morph_shape_any(&mut tag_writer, tag)? {
         MorphShapeVersion::MorphShape1 => 46,
         MorphShapeVersion::MorphShape2 => 84,
       }
     }
+    ast::Tag::DefinePartialFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineSceneAndFrameLabelData(ref tag) => {
       emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
       86
@@ -86,6 +94,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         ShapeVersion::Shape4 => 83,
       }
     }
+    ast::Tag::DefineSound(ref _tag) => unimplemented!(),
     ast::Tag::DefineSprite(ref tag) => {
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
@@ -96,14 +105,20 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         DefineTextVersion::Text2 => 33,
       }
     }
+    ast::Tag::DoAbc(ref _tag) => unimplemented!(),
     ast::Tag::DoAction(ref tag) => {
       emit_do_action(&mut tag_writer, tag)?;
       12
     }
+    ast::Tag::DoInitAction(ref _tag) => unimplemented!(),
+    ast::Tag::EnableDebugger(ref _tag) => unimplemented!(),
+    ast::Tag::ExportAssets(ref _tag) => unimplemented!(),
     ast::Tag::FileAttributes(ref tag) => {
       emit_file_attributes(&mut tag_writer, tag)?;
       69
     }
+    ast::Tag::FrameLabel(ref _tag) => unimplemented!(),
+    ast::Tag::ImportAssets(ref _tag) => unimplemented!(),
     ast::Tag::Metadata(ref tag) => {
       emit_metadata(&mut tag_writer, tag)?;
       77
@@ -121,6 +136,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         RemoveObjectVersion::RemoveObject2 => 28,
       }
     }
+    ast::Tag::ScriptLimits(ref _tag) => unimplemented!(),
     ast::Tag::SetBackgroundColor(ref tag) => {
       emit_set_background_color(&mut tag_writer, tag)?;
       9
@@ -128,7 +144,13 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::ShowFrame => {
       1
     }
-    _ => unimplemented!(),
+    ast::Tag::SoundStreamBlock(ref _tag) => unimplemented!(),
+    ast::Tag::SoundStreamHead(ref _tag) => unimplemented!(),
+    ast::Tag::StartSound(ref _tag) => unimplemented!(),
+    ast::Tag::StartSound2(ref _tag) => unimplemented!(),
+    ast::Tag::SymbolClass(ref _tag) => unimplemented!(),
+    ast::Tag::Telemetry(ref _tag) => unimplemented!(),
+    ast::Tag::Unknown(ref _tag) => unimplemented!(),
   };
 
   emit_tag_header(writer, TagHeader { code, length: tag_writer.len().try_into().unwrap() })?;

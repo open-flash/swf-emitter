@@ -1,3 +1,9 @@
+# Next
+
+### Rust
+
+- **[Internal]** Use exhaustive match in `emit_tag`.
+
 # 0.3.0 (2019-04-24)
 
 ### Rust
