@@ -2,6 +2,7 @@
 
 ### Rust
 
+- **[Feature]** Implement emitter for `ExportAssets` tags.
 - **[Internal]** Use exhaustive match in `emit_tag`.
 
 # 0.3.0 (2019-04-24)

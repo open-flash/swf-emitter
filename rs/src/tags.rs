@@ -6,10 +6,10 @@ use swf_fixed::Sfixed8P8;
 use swf_tree as ast;
 
 use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
-use crate::bit_count::{get_u32_bit_count, get_i32_bit_count};
+use crate::bit_count::{get_i32_bit_count, get_u32_bit_count};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
-use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8, emit_le_f32};
+use crate::primitives::{emit_le_f32, emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
 use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
 
@@ -112,7 +112,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     }
     ast::Tag::DoInitAction(ref _tag) => unimplemented!(),
     ast::Tag::EnableDebugger(ref _tag) => unimplemented!(),
-    ast::Tag::ExportAssets(ref _tag) => unimplemented!(),
+    ast::Tag::ExportAssets(ref tag) => {
+      emit_export_assets(&mut tag_writer, tag)?;
+      56
+    }
     ast::Tag::FileAttributes(ref tag) => {
       emit_file_attributes(&mut tag_writer, tag)?;
       69
@@ -329,6 +332,15 @@ pub(crate) fn emit_define_text_any<W: io::Write>(writer: &mut W, value: &ast::ta
 
 pub fn emit_do_action<W: io::Write>(writer: &mut W, value: &ast::tags::DoAction) -> io::Result<()> {
   writer.write_all(&value.actions)
+}
+
+pub fn emit_export_assets<W: io::Write>(writer: &mut W, value: &ast::tags::ExportAssets) -> io::Result<()> {
+  emit_le_u16(writer, value.assets.len().try_into().unwrap())?;
+  for asset in &value.assets {
+    emit_le_u16(writer, asset.id)?;
+    emit_c_string(writer, &asset.name)?;
+  }
+  Ok(())
 }
 
 pub fn emit_file_attributes<W: io::Write>(writer: &mut W, value: &ast::tags::FileAttributes) -> io::Result<()> {
