@@ -2,7 +2,7 @@
 
 ### Rust
 
-- **[Feature]** Implement emitters for the following tags: `DefineBitmap`, `DefineButton`, `DefineDynamicText`, `DefineSound`, `ExportAssets`, `FrameLabel`.
+- **[Feature]** Implement emitters for the following tags: `DefineBitmap`, `DefineButton`, `DefineDynamicText`, `DefineJpegTables`, `DefineSound`, `ExportAssets`, `FrameLabel`.
 - **[Internal]** Use exhaustive match in `emit_tag`.
 
 ### Typescript

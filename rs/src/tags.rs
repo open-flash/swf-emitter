@@ -93,7 +93,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_font_name(&mut tag_writer, tag)?;
       88
     }
-    ast::Tag::DefineJpegTables(ref _tag) => unimplemented!(),
+    ast::Tag::DefineJpegTables(ref tag) => {
+      emit_define_jpeg_tables(&mut tag_writer, tag)?;
+      8
+    }
     ast::Tag::DefineMorphShape(ref tag) => {
       match emit_define_morph_shape_any(&mut tag_writer, tag)? {
         MorphShapeVersion::MorphShape1 => 46,
@@ -390,6 +393,10 @@ pub fn emit_define_font_name<W: io::Write>(writer: &mut W, value: &ast::tags::De
   emit_le_u16(writer, value.font_id)?;
   emit_c_string(writer, &value.name)?;
   emit_c_string(writer, &value.copyright)
+}
+
+pub fn emit_define_jpeg_tables<W: io::Write>(writer: &mut W, value: &ast::tags::DefineJpegTables) -> io::Result<()> {
+  writer.write_all(&value.data)
 }
 
 pub fn emit_define_morph_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineMorphShape) -> io::Result<MorphShapeVersion> {
