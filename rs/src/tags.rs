@@ -120,7 +120,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_file_attributes(&mut tag_writer, tag)?;
       69
     }
-    ast::Tag::FrameLabel(ref _tag) => unimplemented!(),
+    ast::Tag::FrameLabel(ref tag) => {
+      emit_frame_label(&mut tag_writer, tag)?;
+      43
+    }
     ast::Tag::ImportAssets(ref _tag) => unimplemented!(),
     ast::Tag::Metadata(ref tag) => {
       emit_metadata(&mut tag_writer, tag)?;
@@ -355,6 +358,14 @@ pub fn emit_file_attributes<W: io::Write>(writer: &mut W, value: &ast::tags::Fil
   // Skip bits [7, 31]
 
   emit_le_u32(writer, flags)
+}
+
+pub fn emit_frame_label<W: io::Write>(writer: &mut W, value: &ast::tags::FrameLabel) -> io::Result<()> {
+  emit_c_string(writer, &value.name)?;
+  if value.is_anchor {
+    emit_u8(writer, 1)?;
+  }
+  Ok(())
 }
 
 pub fn emit_metadata<W: io::Write>(writer: &mut W, value: &ast::tags::Metadata) -> io::Result<()> {
