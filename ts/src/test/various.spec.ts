@@ -7,11 +7,12 @@ import { JsonReader } from "kryo/readers/json";
 import { Float64Type } from "kryo/types/float64";
 import sysPath from "path";
 import { Float32, Uint32 } from "semantic-types";
+import { $ColorTransformWithAlpha } from "swf-tree/color-transform-with-alpha";
 import { $Header } from "swf-tree/header";
 import { $Matrix } from "swf-tree/matrix";
 import { $Rect } from "swf-tree/rect";
 import { $SwfSignature } from "swf-tree/swf-signature";
-import { emitMatrix, emitRect } from "../lib/emitters/basic-data-types";
+import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types";
 import { emitHeader, emitSwfSignature } from "../lib/emitters/movie";
 import meta from "./meta.js";
 import { prettyPrintBytes, readFile, readTextFile } from "./utils";
@@ -58,6 +59,10 @@ function* getSampleGroups(): IterableIterator<SampleGroup<any>> {
     }
     const name: string = dirEnt.name;
     switch (name) {
+      case "color-transform-with-alpha": {
+        yield {name, emitter: emitColorTransformWithAlpha, type: $ColorTransformWithAlpha};
+        break;
+      }
       case "float16-le": {
         yield {
           name,

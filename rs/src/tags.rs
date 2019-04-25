@@ -7,6 +7,7 @@ use swf_tree as ast;
 
 use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
 use crate::bit_count::{get_i32_bit_count, get_u32_bit_count};
+use crate::button::{ButtonVersion, emit_button_record_string, emit_button2_cond_action_string};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_f32, emit_le_u16, emit_le_u32, emit_u8};
@@ -64,7 +65,12 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         DefineBitmapVersion::DefineBitsJpeg4 => 90,
       }
     }
-    ast::Tag::DefineButton(ref _tag) => unimplemented!(),
+    ast::Tag::DefineButton(ref tag) => {
+      match emit_define_button_any(&mut tag_writer, tag)? {
+        ButtonVersion::Button1 => 7,
+        ButtonVersion::Button2 => 34,
+      }
+    }
     ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineDynamicText(ref _tag) => unimplemented!(),
     ast::Tag::DefineFont(ref tag) => {
@@ -212,6 +218,31 @@ pub fn emit_define_bitmap_any<W: io::Write>(writer: &mut W, value: &ast::tags::D
     ast::ImageType::PartialJpeg => DefineBitmapVersion::DefineBitsJpeg1,
   };
 
+  Ok(version)
+}
+
+pub(crate) fn emit_define_button_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineButton) -> io::Result<ButtonVersion> {
+  emit_le_u16(writer, value.id)?;
+
+  let flags: u8 = 0
+    | (if value.track_as_menu { 1 << 0 } else { 0 });
+  emit_u8(writer, flags)?;
+
+  // TODO: Select the lowest compatible `ButtonVersion`
+  let version: ButtonVersion = ButtonVersion::Button2;
+
+  let mut record_writer: Vec<u8> = Vec::new();
+  emit_button_record_string(&mut record_writer, &value.characters, version)?;
+  if value.actions.len() == 0 {
+    emit_le_u16(writer, 0)?;
+    writer.write_all(&record_writer)?;
+  } else {
+    // Add the size of the offset field itself
+    let action_offset = record_writer.len() + std::mem::size_of::<u16>();
+    emit_le_u16(writer, action_offset.try_into().unwrap())?;
+    writer.write_all(&record_writer)?;
+    emit_button2_cond_action_string(writer, &value.actions)?;
+  }
   Ok(version)
 }
 

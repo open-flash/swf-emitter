@@ -1,5 +1,5 @@
 import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
-import { UintSize } from "semantic-types";
+import { Uint16, UintSize } from "semantic-types";
 import { ColorTransform, ColorTransformWithAlpha, Matrix, Rect, SRgb8, StraightSRgba8 } from "swf-tree";
 import { getSintMinBitCount } from "../get-bit-count";
 
@@ -75,28 +75,26 @@ export function emitColorTransformBits(bitStream: WritableBitStream, value: Colo
   const hasMult: boolean = value.redMult.valueOf() !== 1
     || value.greenMult.valueOf() !== 1
     || value.blueMult.valueOf() !== 1;
-  const nBits: UintSize = getSintMinBitCount(
-    value.redAdd,
-    value.greenAdd,
-    value.blueAdd,
-    value.redMult.epsilons,
-    value.greenMult.epsilons,
-    value.blueMult.epsilons,
-  );
+
+  const toWrite: Uint16[] = [];
+  if (hasMult) {
+    toWrite.push(value.redMult.epsilons);
+    toWrite.push(value.greenMult.epsilons);
+    toWrite.push(value.blueMult.epsilons);
+  }
+  if (hasAdd) {
+    toWrite.push(value.redAdd);
+    toWrite.push(value.greenAdd);
+    toWrite.push(value.blueAdd);
+  }
+
+  const bits: UintSize = getSintMinBitCount(...toWrite);
 
   bitStream.writeBoolBits(hasAdd);
   bitStream.writeBoolBits(hasMult);
-  bitStream.writeUint16Bits(4, nBits);
-
-  if (hasMult) {
-    bitStream.writeSint16Bits(nBits, value.redMult.epsilons);
-    bitStream.writeSint16Bits(nBits, value.greenMult.epsilons);
-    bitStream.writeSint16Bits(nBits, value.blueMult.epsilons);
-  }
-  if (hasAdd) {
-    bitStream.writeSint16Bits(nBits, value.redAdd);
-    bitStream.writeSint16Bits(nBits, value.greenAdd);
-    bitStream.writeSint16Bits(nBits, value.blueAdd);
+  bitStream.writeUint16Bits(4, bits);
+  for (const value of toWrite) {
+    bitStream.writeSint16Bits(bits, value);
   }
 }
 
@@ -112,31 +110,27 @@ export function emitColorTransformWithAlphaBits(bitStream: WritableBitStream, va
     || value.greenMult.valueOf() !== 1
     || value.blueMult.valueOf() !== 1
     || value.alphaMult.valueOf() !== 1;
-  const nBits: UintSize = getSintMinBitCount(
-    value.redAdd,
-    value.greenAdd,
-    value.blueAdd,
-    value.alphaAdd,
-    value.redMult.epsilons,
-    value.greenMult.epsilons,
-    value.blueMult.epsilons,
-    value.alphaMult.epsilons,
-  );
+
+  const toWrite: Uint16[] = [];
+  if (hasMult) {
+    toWrite.push(value.redMult.epsilons);
+    toWrite.push(value.greenMult.epsilons);
+    toWrite.push(value.blueMult.epsilons);
+    toWrite.push(value.alphaMult.epsilons);
+  }
+  if (hasAdd) {
+    toWrite.push(value.redAdd);
+    toWrite.push(value.greenAdd);
+    toWrite.push(value.blueAdd);
+    toWrite.push(value.alphaAdd);
+  }
+
+  const bits: UintSize = getSintMinBitCount(...toWrite);
 
   bitStream.writeBoolBits(hasAdd);
   bitStream.writeBoolBits(hasMult);
-  bitStream.writeUint16Bits(4, nBits);
-
-  if (hasMult) {
-    bitStream.writeSint16Bits(nBits, value.redMult.epsilons);
-    bitStream.writeSint16Bits(nBits, value.greenMult.epsilons);
-    bitStream.writeSint16Bits(nBits, value.blueMult.epsilons);
-    bitStream.writeSint16Bits(nBits, value.alphaMult.epsilons);
-  }
-  if (hasAdd) {
-    bitStream.writeSint16Bits(nBits, value.redAdd);
-    bitStream.writeSint16Bits(nBits, value.greenAdd);
-    bitStream.writeSint16Bits(nBits, value.blueAdd);
-    bitStream.writeSint16Bits(nBits, value.alphaAdd);
+  bitStream.writeUint16Bits(4, bits);
+  for (const value of toWrite) {
+    bitStream.writeSint16Bits(bits, value);
   }
 }

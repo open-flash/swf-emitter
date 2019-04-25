@@ -88,8 +88,9 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
     [
       TagType.DefineButton,
       <TagEmitter> [
-        emitDefineButton,
+        emitDefineButtonAny,
         new Map([
+          [ButtonVersion.Button1, 7],
           [ButtonVersion.Button2, 34],
         ]),
       ],
@@ -251,22 +252,25 @@ export function emitDefineBitmapAny(byteStream: WritableByteStream, value: tags.
   }
 }
 
-export function emitDefineButton(byteStream: WritableByteStream, value: tags.DefineButton): ButtonVersion {
+export function emitDefineButtonAny(byteStream: WritableByteStream, value: tags.DefineButton): ButtonVersion {
   byteStream.writeUint16LE(value.id);
   const flags: Uint8 = 0
     | (value.trackAsMenu ? 1 << 0 : 0);
   byteStream.writeUint8(flags);
   const buttonRecordStream: WritableStream = new WritableStream();
-  emitButtonRecordString(buttonRecordStream, value.characters, ButtonVersion.Button2);
+  // TODO: Select the lowest compatible `ButtonVersion`
+  const version: ButtonVersion = ButtonVersion.Button2;
+  emitButtonRecordString(buttonRecordStream, value.characters, version);
   if (value.actions.length === 0) {
     byteStream.writeUint16LE(0);
     byteStream.write(buttonRecordStream);
   } else {
-    byteStream.writeUint16LE(buttonRecordStream.bytePos + 2); // `+ 2` for Uint16
+    // `+ 2` for the offset field itself
+    byteStream.writeUint16LE(buttonRecordStream.bytePos + 2);
     byteStream.write(buttonRecordStream);
     emitButton2CondActionString(byteStream, value.actions);
   }
-  return ButtonVersion.Button2;
+  return version;
 }
 
 export function emitCsmTextSettings(byteStream: WritableByteStream, value: tags.CsmTextSettings): void {

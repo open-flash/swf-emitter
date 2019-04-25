@@ -69,10 +69,7 @@ pub fn emit_matrix<W: io::Write + ?Sized>(writer: &mut W, value: &ast::Matrix) -
 }
 
 pub fn emit_matrix_bits<W: WriteBits>(writer: &mut W, value: &ast::Matrix) -> io::Result<()> {
-  const FIXED_ONE: Sfixed16P16 = Sfixed16P16::from_epsilons(65536);
-  const FIXED_ZERO: Sfixed16P16 = Sfixed16P16::from_epsilons(0);
-
-  if value.scale_x == FIXED_ONE && value.scale_y == FIXED_ONE {
+  if value.scale_x == Sfixed16P16::ONE && value.scale_y == Sfixed16P16::ONE {
     writer.write_bool_bits(false)?;
   } else {
     writer.write_bool_bits(true)?;
@@ -82,7 +79,7 @@ pub fn emit_matrix_bits<W: WriteBits>(writer: &mut W, value: &ast::Matrix) -> io
     writer.write_i32_bits(bits, value.scale_y.epsilons)?;
   }
 
-  if value.rotate_skew0 == FIXED_ZERO && value.rotate_skew1 == FIXED_ZERO {
+  if value.rotate_skew0 == Sfixed16P16::ZERO && value.rotate_skew1 == Sfixed16P16::ZERO {
     writer.write_bool_bits(false)?;
   } else {
     writer.write_bool_bits(true)?;
@@ -109,34 +106,33 @@ pub fn emit_color_transform<W: io::Write>(writer: &mut W, value: &ast::ColorTran
 }
 
 pub fn emit_color_transform_bits<W: WriteBits>(writer: &mut W, value: &ast::ColorTransform) -> io::Result<()> {
-  const FIXED_ONE: Sfixed8P8 = Sfixed8P8::from_epsilons(256);
-
   let has_add = value.red_add != 0 || value.green_add != 0 || value.blue_add != 0;
-  let has_mult = value.red_mult != FIXED_ONE || value.green_mult != FIXED_ONE || value.blue_mult != FIXED_ONE;
-  let bits = get_i32_min_bit_count(
-    vec![
-      value.red_add,
-      value.green_add,
-      value.blue_add,
-      value.red_mult.epsilons,
-      value.green_mult.epsilons,
-      value.blue_mult.epsilons,
-    ].into_iter().map(|x| x as i32)
-  );
+  let has_mult = value.red_mult != Sfixed8P8::ONE || value.green_mult != Sfixed8P8::ONE || value.blue_mult != Sfixed8P8::ONE;
+
+  let mut to_write: Vec<i32> = Vec::new();
+  if has_mult {
+    to_write.extend_from_slice(&[
+      value.red_mult.epsilons.into(),
+      value.green_mult.epsilons.into(),
+      value.blue_mult.epsilons.into(),
+    ]);
+  }
+  if has_add {
+    to_write.extend_from_slice(&[
+      value.red_add.into(),
+      value.green_add.into(),
+      value.blue_add.into(),
+    ]);
+  }
+
+  let bits = get_i32_min_bit_count(to_write.clone().into_iter());
 
   writer.write_bool_bits(has_add)?;
   writer.write_bool_bits(has_mult)?;
   writer.write_u32_bits(4, bits)?;
 
-  if has_mult {
-    writer.write_i32_bits(bits, value.red_mult.epsilons.into())?;
-    writer.write_i32_bits(bits, value.green_mult.epsilons.into())?;
-    writer.write_i32_bits(bits, value.blue_mult.epsilons.into())?;
-  }
-  if has_add {
-    writer.write_i32_bits(bits, value.red_add.into())?;
-    writer.write_i32_bits(bits, value.green_add.into())?;
-    writer.write_i32_bits(bits, value.blue_add.into())?;
+  for value in to_write {
+    writer.write_i32_bits(bits, value)?;
   }
 
   Ok(())
@@ -149,38 +145,35 @@ pub fn emit_color_transform_with_alpha<W: io::Write>(writer: &mut W, value: &ast
 }
 
 pub fn emit_color_transform_with_alpha_bits<W: WriteBits>(writer: &mut W, value: &ast::ColorTransformWithAlpha) -> io::Result<()> {
-  const FIXED_ONE: Sfixed8P8 = Sfixed8P8::from_epsilons(256);
-
   let has_add = value.red_add != 0 || value.green_add != 0 || value.blue_add != 0 || value.alpha_add != 0;
-  let has_mult = value.red_mult != FIXED_ONE || value.green_mult != FIXED_ONE || value.blue_mult != FIXED_ONE || value.alpha_mult != FIXED_ONE;
-  let bits = get_i32_min_bit_count(
-    vec![
-      value.red_add,
-      value.green_add,
-      value.blue_add,
-      value.alpha_add,
-      value.red_mult.epsilons,
-      value.green_mult.epsilons,
-      value.blue_mult.epsilons,
-      value.alpha_mult.epsilons,
-    ].into_iter().map(|x| x as i32)
-  );
+  let has_mult = value.red_mult != Sfixed8P8::ONE || value.green_mult != Sfixed8P8::ONE || value.blue_mult != Sfixed8P8::ONE || value.alpha_mult != Sfixed8P8::ONE;
+
+  let mut to_write: Vec<i32> = Vec::new();
+  if has_mult {
+    to_write.extend_from_slice(&[
+      value.red_mult.epsilons.into(),
+      value.green_mult.epsilons.into(),
+      value.blue_mult.epsilons.into(),
+      value.alpha_mult.epsilons.into(),
+    ]);
+  }
+  if has_add {
+    to_write.extend_from_slice(&[
+      value.red_add.into(),
+      value.green_add.into(),
+      value.blue_add.into(),
+      value.alpha_add.into(),
+    ]);
+  }
+
+  let bits = get_i32_min_bit_count(to_write.clone().into_iter());
 
   writer.write_bool_bits(has_add)?;
   writer.write_bool_bits(has_mult)?;
   writer.write_u32_bits(4, bits)?;
 
-  if has_mult {
-    writer.write_i32_bits(bits, value.red_mult.epsilons.into())?;
-    writer.write_i32_bits(bits, value.green_mult.epsilons.into())?;
-    writer.write_i32_bits(bits, value.blue_mult.epsilons.into())?;
-    writer.write_i32_bits(bits, value.alpha_mult.epsilons.into())?;
-  }
-  if has_add {
-    writer.write_i32_bits(bits, value.red_add.into())?;
-    writer.write_i32_bits(bits, value.green_add.into())?;
-    writer.write_i32_bits(bits, value.blue_add.into())?;
-    writer.write_i32_bits(bits, value.alpha_add.into())?;
+  for value in to_write {
+    writer.write_i32_bits(bits, value)?;
   }
 
   Ok(())

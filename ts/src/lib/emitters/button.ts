@@ -29,6 +29,7 @@ export function emitButtonRecord(
   value: ButtonRecord,
   buttonVersion: ButtonVersion,
 ): void {
+  const hasFilters: boolean = value.filters.length > 0;
   const hasBlendMode: boolean = value.blendMode !== BlendMode.Normal;
 
   const flags: Uint8 = 0
@@ -36,8 +37,9 @@ export function emitButtonRecord(
     | (value.stateOver ? 1 << 1 : 0)
     | (value.stateDown ? 1 << 2 : 0)
     | (value.stateHitTest ? 1 << 3 : 0)
-    | (value.filters !== undefined ? 1 << 4 : 0)
+    | (hasFilters ? 1 << 4 : 0)
     | (hasBlendMode ? 1 << 5 : 0);
+  // Skip bits [6, 7]
   byteStream.writeUint8(flags);
 
   byteStream.writeUint16LE(value.characterId);
@@ -48,7 +50,7 @@ export function emitButtonRecord(
       throw new Incident("ExpectedColorTransform");
     }
     emitColorTransformWithAlpha(byteStream, value.colorTransform);
-    if (value.filters !== undefined) {
+    if (hasFilters) {
       emitFilterList(byteStream, value.filters);
     }
     if (hasBlendMode) {
@@ -61,13 +63,12 @@ export function emitButton2CondActionString(
   byteStream: WritableByteStream,
   value: ReadonlyArray<ButtonCondAction>,
 ): void {
-  const actionCount: UintSize = value.length;
-  for (let i: UintSize = 0; i < actionCount; i++) {
+  for (let i: UintSize = 0; i < value.length; i++) {
     const actionStream: WritableStream = new WritableStream();
     emitButton2CondAction(actionStream, value[i]);
-    if (i < value.length - 1) {
+    if (i < value.length - 1) { // !isLast
       byteStream.writeUint16LE(actionStream.bytePos);
-    } else {
+    } else { // isLast
       byteStream.writeUint16LE(0);
     }
     byteStream.write(actionStream);
@@ -85,16 +86,16 @@ export function emitButton2CondAction(byteStream: WritableByteStream, value: But
 export function emitButtonCond(byteStream: WritableByteStream, value: ButtonCond): void {
   const keyCode: Uint7 = value.keyPress !== undefined ? value.keyPress & 0x7f : 0;
   const flags: Uint16 = 0
-    | (keyCode << 0)
-    | (value.overDownToIdle ? 1 << 7 : 0)
-    | (value.idleToOverUp ? 1 << 8 : 0)
-    | (value.overUpToIdle ? 1 << 9 : 0)
-    | (value.overUpToOverDown ? 1 << 10 : 0)
-    | (value.overDownToOverUp ? 1 << 11 : 0)
-    | (value.overDownToOutDown ? 1 << 12 : 0)
-    | (value.outDownToOverDown ? 1 << 13 : 0)
-    | (value.outDownToIdle ? 1 << 14 : 0)
-    | (value.idleToOverDown ? 1 << 15 : 0);
+    | (value.idleToOverUp ? 1 << 0 : 0)
+    | (value.overUpToIdle ? 1 << 1 : 0)
+    | (value.overUpToOverDown ? 1 << 2 : 0)
+    | (value.overDownToOverUp ? 1 << 3 : 0)
+    | (value.overDownToOutDown ? 1 << 4 : 0)
+    | (value.outDownToOverDown ? 1 << 5 : 0)
+    | (value.outDownToIdle ? 1 << 6 : 0)
+    | (value.idleToOverDown ? 1 << 7 : 0)
+    | (value.overDownToIdle ? 1 << 8 : 0)
+    | (keyCode << 9);
 
   byteStream.writeUint16LE(flags);
 }

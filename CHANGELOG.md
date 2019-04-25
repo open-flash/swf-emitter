@@ -2,8 +2,13 @@
 
 ### Rust
 
-- **[Feature]** Implement emitters for the following tags: `DefineBitmap`, `DefineSound`, `ExportAssets`, `FrameLabel`.
+- **[Feature]** Implement emitters for the following tags: `DefineBitmap`, `DefineButton`, `DefineSound`, `ExportAssets`, `FrameLabel`.
 - **[Internal]** Use exhaustive match in `emit_tag`.
+
+### Typescript
+
+- **[Fix]** Use shorter bit count for `ColorTransform` and `ColorTransformWithAlpha`.
+- **[Fix]** Fix `ButtonCond` flags.
 
 # 0.3.0 (2019-04-24)
 
