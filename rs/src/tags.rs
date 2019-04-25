@@ -11,6 +11,7 @@ use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_f32, emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
+use crate::sound::{audio_coding_format_to_code, sound_rate_to_code};
 use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
@@ -103,7 +104,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         ShapeVersion::Shape4 => 83,
       }
     }
-    ast::Tag::DefineSound(ref _tag) => unimplemented!(),
+    ast::Tag::DefineSound(ref tag) => {
+      emit_define_sound(&mut tag_writer, tag)?;
+      14
+    }
     ast::Tag::DefineSprite(ref tag) => {
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
@@ -334,6 +338,20 @@ pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::De
   };
   emit_shape(writer, &value.shape, version)?;
   Ok(version)
+}
+
+pub fn emit_define_sound<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSound) -> io::Result<()> {
+  emit_le_u16(writer, value.id)?;
+
+  let flags: u8 = 0
+    | (if value.sound_type == ast::SoundType::Stereo { 1 << 0 } else { 0 })
+    | (if value.sound_size == ast::SoundSize::SoundSize16 { 1 << 1 } else { 0 })
+    | (sound_rate_to_code(value.sound_rate) << 2)
+    | (audio_coding_format_to_code(value.format) << 4);
+  emit_u8(writer, flags)?;
+
+  emit_le_u32(writer, value.sample_count)?;
+  writer.write_all(&value.data)
 }
 
 pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSprite, swf_version: u8) -> io::Result<()> {

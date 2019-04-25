@@ -10,6 +10,7 @@ pub mod morph_shape;
 pub mod movie;
 pub mod primitives;
 pub mod shape;
+pub mod sound;
 pub mod tags;
 pub mod text;
 

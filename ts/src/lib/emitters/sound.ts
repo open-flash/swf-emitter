@@ -3,7 +3,7 @@ import { Uint2, Uint4 } from "semantic-types";
 import { AudioCodingFormat } from "swf-tree/sound/audio-coding-format";
 import { SoundRate } from "swf-tree/sound/sound-rate";
 
-export function getAudioCodingFormatCode(value: AudioCodingFormat): Uint4 {
+export function audioCodingFormatToCode(value: AudioCodingFormat): Uint4 {
   switch (value) {
     case AudioCodingFormat.UncompressedNativeEndian:
       return 0;
@@ -22,11 +22,11 @@ export function getAudioCodingFormatCode(value: AudioCodingFormat): Uint4 {
     case AudioCodingFormat.Speex:
       return 11;
     default:
-      throw new Incident("UnexpectedJoinStyleType");
+      throw new Incident("UnexpectedAudioCodingFormat");
   }
 }
 
-export function getSoundRateCode(value: SoundRate): Uint2 {
+export function soundRateToCode(value: SoundRate): Uint2 {
   switch (value) {
     case 5500:
       return 0;
@@ -37,6 +37,6 @@ export function getSoundRateCode(value: SoundRate): Uint2 {
     case 44000:
       return 3;
     default:
-      throw new Incident("UnexpectedJoinStyleType");
+      throw new Incident("UnexpectedSoundRate");
   }
 }

@@ -16,7 +16,7 @@ import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } fr
 import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
 import { emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
-import { getAudioCodingFormatCode, getSoundRateCode } from "./sound";
+import { audioCodingFormatToCode, soundRateToCode } from "./sound";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -497,9 +497,8 @@ export function emitDefineEditText(byteStream: WritableByteStream, value: tags.D
 export function emitDefineSound(byteStream: WritableByteStream, value: tags.DefineSound): void {
   byteStream.writeUint16LE(value.id);
 
-  const soundRateCode: Uint2 = getSoundRateCode(value.soundRate);
-  const formatCode: Uint4 = getAudioCodingFormatCode(value.format);
-
+  const soundRateCode: Uint2 = soundRateToCode(value.soundRate);
+  const formatCode: Uint4 = audioCodingFormatToCode(value.format);
   const flags: Uint8 = 0
     | (value.soundType === SoundType.Stereo ? 1 << 0 : 0)
     | (value.soundSize === 16 ? 1 << 1 : 0)
