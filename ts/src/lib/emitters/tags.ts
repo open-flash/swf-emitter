@@ -45,14 +45,29 @@ interface TagHeader {
   length: Uint32;
 }
 
-function emitTagHeader(byteStream: WritableByteStream, value: TagHeader): void {
-  const LENGTH_MASK: Uint8 = 0b00111111;
+/**
+ * Set of tag codes that require a long header.
+ */
+const LONG_HEADER_REQUIRED: ReadonlySet<Uint16> = new Set([
+  6, // DefineBits
+  21, // DefineBitsJPEG2
+  35, // DefineBitsJPEG3
+  20, // DefineBitsLossless
+  36, // DefineBitsLossless2
+  90, // DefineBitsJPEG4
+  19, // SoundStreamBlock
+]);
 
-  if (value.length < LENGTH_MASK && (value.length > 0 || (value.code & 0b11) !== 0)) {
+function emitTagHeader(byteStream: WritableByteStream, value: TagHeader): void {
+  const SHORT_TAG_MAX_LENGTH: Uint8 = (1 << 6) - 1;
+  const isLongRequired: boolean = LONG_HEADER_REQUIRED.has(value.code);
+  const isLeadingByteNonZero: boolean = value.length > 0 || (value.code & 0b11) !== 0;
+
+  if (!isLongRequired && value.length < SHORT_TAG_MAX_LENGTH && isLeadingByteNonZero) {
     const codeAndLength: Uint16 = (value.code << 6) | value.length;
     byteStream.writeUint16LE(codeAndLength);
   } else {
-    const codeAndLength: Uint16 = (value.code << 6) | LENGTH_MASK;
+    const codeAndLength: Uint16 = (value.code << 6) | SHORT_TAG_MAX_LENGTH;
     byteStream.writeUint16LE(codeAndLength);
     byteStream.writeUint32LE(value.length);
   }

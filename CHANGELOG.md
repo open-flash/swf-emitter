@@ -1,6 +1,7 @@
 # Next
 
 - **[Fix]** Zero-out style bits in morph shape end state.
+- **[Fix]** Force long-form tag header for the following concrete tags: `DefineBits`, `DefineBitsJPEG2`, `DefineBitsJPEG3`, `DefineBitsLossless`, `DefineBitsLossless2`, `DefineBitsJPEG4` and `SoundStreamBlock`.
 
 ### Rust
 

@@ -30,13 +30,27 @@ pub struct TagHeader {
 fn emit_tag_header<W: io::Write>(writer: &mut W, value: TagHeader) -> io::Result<()> {
   use std::convert::TryFrom;
 
-  const LENGTH_MASK: u16 = (1 << 6) - 1;
+  const SHORT_TAG_MAX_LENGTH: u16 = (1 << 6) - 1;
 
-  if value.length < u32::from(LENGTH_MASK) && (value.length > 0 || (value.code & 0b11) != 0) {
+  // Some tags require a long header
+  let is_long_required = match value.code {
+    6 => true, // DefineBits
+    21 => true, // DefineBitsJPEG2
+    35 => true, // DefineBitsJPEG3
+    20 => true, // DefineBitsLossless
+    36 => true, // DefineBitsLossless2
+    90 => true, // DefineBitsJPEG4
+    19 => true, // SoundStreamBlock
+    _ => false,
+  };
+  let is_leading_byte_non_zero = value.length > 0 || (value.code & 0b11) != 0;
+
+  if !is_long_required && value.length < u32::from(SHORT_TAG_MAX_LENGTH) && is_leading_byte_non_zero {
     let code_and_length: u16 = (value.code << 6) | (u16::try_from(value.length).unwrap());
+    debug_assert!(code_and_length.to_le_bytes()[0] != 0);
     emit_le_u16(writer, code_and_length)
   } else {
-    let code_and_length: u16 = (value.code << 6) | LENGTH_MASK;
+    let code_and_length: u16 = (value.code << 6) | SHORT_TAG_MAX_LENGTH;
     emit_le_u16(writer, code_and_length)?;
     emit_le_u32(writer, value.length)
   }
