@@ -276,8 +276,8 @@ pub(crate) fn emit_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &as
   emit_le_u16(writer, value.width)?;
 
   let has_fill = match &value.fill {
-    ast::FillStyle::Solid(_) => true,
-    _ => false
+    ast::FillStyle::Solid(_) => false,
+    _ => true
   };
   let join_style_code = join_style_to_code(value.join);
   let start_cap_style_code = cap_style_to_code(value.start_cap);

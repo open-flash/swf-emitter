@@ -249,8 +249,8 @@ pub(crate) fn emit_morph_line_style2<W: io::Write + ?Sized>(writer: &mut W, valu
   emit_le_u16(writer, value.morph_width)?;
 
   let has_fill = match &value.fill {
-    ast::MorphFillStyle::Solid(_) => true,
-    _ => false
+    ast::MorphFillStyle::Solid(_) => false,
+    _ => true
   };
   let join_style_code = join_style_to_code(value.join);
   let start_cap_style_code = cap_style_to_code(value.start_cap);

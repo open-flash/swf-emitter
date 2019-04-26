@@ -3,6 +3,7 @@
 ### Rust
 
 - **[Feature]** Implement emitters for the following tags: `DefineBitmap`, `DefineButton`, `DefineDynamicText`, `DefineJpegTables`, `DefineSound`, `ExportAssets`, `FrameLabel`.
+- **[Fix]** Fix `LineStyle2` and `MorphLineStyle2` flags.
 - **[Internal]** Use exhaustive match in `emit_tag`.
 
 ### Typescript
