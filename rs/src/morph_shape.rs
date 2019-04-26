@@ -31,10 +31,9 @@ pub(crate) fn emit_morph_shape<W: io::Write>(writer: &mut W, value: &ast::MorphS
 
   let mut bits_writer = BitsWriter::new(inner_bits_writer);
 
-  // TODO: We should be able to skip these bits (no styles used for the endRecords)
-  // We copy the bits from the start shape to match the behavior in `morph-rotating-square`.
-  bits_writer.write_u32_bits(4, fill_bits)?;
-  bits_writer.write_u32_bits(4, line_bits)?;
+  // `0` for the style bits: there are no style changes in the end state.
+  bits_writer.write_u32_bits(4, 0)?;
+  bits_writer.write_u32_bits(4, 0)?;
   emit_morph_shape_end_record_string_bits(&mut bits_writer,&value.records)?;
 
   emit_le_u32(writer, start_size.try_into().unwrap())?;
@@ -273,7 +272,7 @@ pub(crate) fn emit_morph_line_style2<W: io::Write + ?Sized>(writer: &mut W, valu
   }
 
   match &value.fill {
-    ast::MorphFillStyle::Solid(ref style) => emit_straight_s_rgba8(writer, style.color),
+    ast::MorphFillStyle::Solid(ref style) => emit_morph_solid_fill(writer, style),
     style => emit_morph_fill_style(writer, style)
   }
 }

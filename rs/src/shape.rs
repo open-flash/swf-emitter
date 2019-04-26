@@ -300,7 +300,7 @@ pub(crate) fn emit_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &as
   }
 
   match &value.fill {
-    ast::FillStyle::Solid(ref style) => emit_straight_s_rgba8(writer, style.color),
+    ast::FillStyle::Solid(ref style) => emit_solid_fill(writer, style, true),
     style => emit_fill_style(writer, style, true)
   }
 }

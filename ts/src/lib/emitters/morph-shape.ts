@@ -51,10 +51,9 @@ export function emitMorphShapeBits(
 
   const result: UintSize = bitStream.bytePos;
 
-  // TODO: We should be able to skip these bits (no styles used for the endRecords)
-  // We copy the bits from the start shape to match the behavior in `morph-rotating-square`.
-  bitStream.writeUint32Bits(4, fillBits);
-  bitStream.writeUint32Bits(4, lineBits);
+  // `0` for style bits: there are no style changes in the end state.
+  bitStream.writeUint32Bits(4, 0);
+  bitStream.writeUint32Bits(4, 0);
   emitMorphShapeEndRecordStringBits(bitStream, value.records);
   bitStream.align();
 
