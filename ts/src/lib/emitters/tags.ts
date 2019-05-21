@@ -313,6 +313,8 @@ export enum DefineFontVersion {
 }
 
 export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.DefineFont): DefineFontVersion {
+  const version: DefineFontVersion = value.emSquareSize === 20480 ? DefineFontVersion.Font3 : DefineFontVersion.Font2;
+
   byteStream.writeUint16LE(value.id);
 
   const useWideCodes: boolean = true; // `false` is deprecated since SWF6
@@ -346,7 +348,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
     // > The SWF format docs doesn't say that, but the DefineFont{2,3} tag ends
     // > here for device fonts.
     byteStream.writeUint16LE(0);
-    return DefineFontVersion.Font3;
+    return version;
   }
 
   byteStream.writeUint16LE(value.glyphs.length);
@@ -359,7 +361,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
   if (hasLayout) {
     emitFontLayout(byteStream, value.layout!);
   }
-  return DefineFontVersion.Font3;
+  return version;
 }
 
 export function emitDefineFontAlignZones(byteStream: WritableByteStream, value: tags.DefineFontAlignZones): void {
@@ -456,7 +458,7 @@ export function emitDefineDynamicText(byteStream: WritableByteStream, value: tag
   const hasColor: boolean = value.color !== undefined;
   const hasText: boolean = value.text !== undefined;
   // TODO: Replace with `value.align !== TextAlignment.Left`
-  const hasLayout: boolean = value.align !== undefined
+  const hasLayout: boolean = value.align !== TextAlignment.Left
     || value.marginLeft !== 0
     || value.marginRight !== 0
     || value.indent !== 0
@@ -498,7 +500,7 @@ export function emitDefineDynamicText(byteStream: WritableByteStream, value: tag
     byteStream.writeUint16LE(value.maxLength!);
   }
   if (hasLayout) {
-    emitTextAlignment(byteStream, value.align !== undefined ? value.align : TextAlignment.Left);
+    emitTextAlignment(byteStream, value.align);
     byteStream.writeUint16LE(value.marginLeft);
     byteStream.writeUint16LE(value.marginRight);
     byteStream.writeUint16LE(value.indent);

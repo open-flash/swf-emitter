@@ -1,3 +1,11 @@
+# Next
+
+- **[Breaking change]** Update to `swf-tree@0.7`.
+
+### Typescript
+
+- **[Internal]** Update build tools.
+
 # 0.3.1 (2019-04-26)
 
 - **[Fix]** Zero-out style bits in morph shape end state.

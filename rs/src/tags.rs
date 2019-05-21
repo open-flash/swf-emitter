@@ -274,7 +274,7 @@ pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast
   let has_max_length = value.max_length.is_some();
   let has_color = value.color.is_some();
   let has_text = value.text.is_some();
-  let has_layout = value.align.is_some()
+  let has_layout = value.align != ast::text::TextAlignment::Left
     || value.margin_left != 0
     || value.margin_right != 0
     || value.indent != 0
@@ -319,10 +319,7 @@ pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast
     emit_le_u16(writer, max_length.try_into().unwrap())?;
   }
   if has_layout {
-    emit_text_alignment(writer, match value.align {
-      Some(align) => align,
-      None => ast::text::TextAlignment::Left
-    })?;
+    emit_text_alignment(writer, value.align)?;
     emit_le_u16(writer, value.margin_left)?;
     emit_le_u16(writer, value.margin_right)?;
     emit_le_u16(writer, value.indent)?;
@@ -340,6 +337,11 @@ pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast
 }
 
 pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFont) -> io::Result<DefineFontVersion> {
+  let version = match value.em_square_size {
+    ast::text::EmSquareSize::EmSquareSize1024 => DefineFontVersion::Font2,
+    ast::text::EmSquareSize::EmSquareSize20480 => DefineFontVersion::Font3,
+  };
+
   emit_le_u16(writer, value.id)?;
 
   let use_wide_codes = true; // `false` is deprecated since SWF6
@@ -388,7 +390,7 @@ pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::ta
     emit_le_u16(writer, 0)?;
   }
 
-  Ok(DefineFontVersion::Font3)
+  Ok(version)
 }
 
 pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontAlignZones) -> io::Result<()> {

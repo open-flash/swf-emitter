@@ -16,18 +16,24 @@
     }
   ],
   "scripts": {
-    "prepare": "gulp all:tsconfig.json && gulp :tslint.json && gulp dist",
-    "test": "gulp :lint && gulp test",
+    "build": "gulp lib:build",
+    "watch": "gulp lib:watch",
+    "test": "gulp test",
+    "lint": "gulp lint",
+    "format": "gulp format",
+    "typedoc": "gulp lib:typedoc",
+    "dist": "gulp lib:dist",
+    "prepare": "gulp all:tsconfig.json && gulp tslint.json && gulp dist",
+    "pretest": "gulp lint",
+    "prepublishOnly": "echo \"Use \\`gulp lib:publish\\`\" && exit 1",
     "prestart": "gulp main:build",
-    "start": "node build/main/main/main.js",
-    "prepublishOnly": "npm test",
-    "lint": "gulp :lint:fix"
+    "start": "node build/main/main/main.js"
   },
   "dependencies": {
     "@open-flash/stream": "^0.1.1",
     "incident": "^3.2.0",
     "semantic-types": "^0.1.1",
-    "swf-tree": "^0.6.0"
+    "swf-tree": "^0.7.0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
@@ -36,14 +42,14 @@
     "@types/mocha": "^5.2.6",
     "@types/node": "^11.13.7",
     "chai": "^4.2.0",
-    "gulp": "^4.0.1",
+    "gulp": "^4.0.2",
     "gulp-cli": "^2.2.0",
     "kryo": "^0.8.1",
     "minimist": "^1.2.0",
-    "swf-parser": "^0.5.1",
+    "swf-parser": "^0.7.0",
     "ts-node": "^8.1.0",
     "tslint": "^5.16.0",
-    "turbo-gulp": "^0.18.0",
+    "turbo-gulp": "^0.20.1",
     "typescript": "^3.4.5"
   },
   "c88": {
