@@ -1,4 +1,4 @@
-# Next
+# 0.8.0 (2019-07-08)
 
 - **[Breaking change]** Update to `swf-tree@0.8`.
 - **[Feature]** Implement emitters for `DefineGlyphFont`, `DefineFontInfo` and `Protect`.
