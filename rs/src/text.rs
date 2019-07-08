@@ -65,14 +65,26 @@ pub(crate) fn text_renderer_to_code(value: ast::text::TextRenderer) -> u8 {
   }
 }
 
-pub(crate) fn emit_text_record_string<W: io::Write>(writer: &mut W, value: &[ast::text::TextRecord], index_bits: u32, advance_bits: u32, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_text_record_string<W: io::Write>(
+  writer: &mut W,
+  value: &[ast::text::TextRecord],
+  index_bits: u32,
+  advance_bits: u32,
+  with_alpha: bool,
+) -> io::Result<()> {
   for record in value {
     emit_text_record(writer, record, index_bits, advance_bits, with_alpha)?;
   }
   emit_u8(writer, 0)
 }
 
-pub(crate) fn emit_text_record<W: io::Write>(writer: &mut W, value: &ast::text::TextRecord, index_bits: u32, advance_bits: u32, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_text_record<W: io::Write>(
+  writer: &mut W,
+  value: &ast::text::TextRecord,
+  index_bits: u32,
+  advance_bits: u32,
+  with_alpha: bool,
+) -> io::Result<()> {
   let has_offset_x = value.offset_x != 0;
   let has_offset_y = value.offset_y != 0;
   let has_color = value.color.is_some();
@@ -96,7 +108,14 @@ pub(crate) fn emit_text_record<W: io::Write>(writer: &mut W, value: &ast::text::
       emit_straight_s_rgba8(writer, color)?;
     } else {
       assert!(color.a == u8::max_value());
-      emit_s_rgb8(writer, ast::SRgb8 { r: color.r, g: color.g, b: color.b })?;
+      emit_s_rgb8(
+        writer,
+        ast::SRgb8 {
+          r: color.r,
+          g: color.g,
+          b: color.b,
+        },
+      )?;
     }
   }
   if has_offset_x {
@@ -118,7 +137,10 @@ pub(crate) fn emit_text_record<W: io::Write>(writer: &mut W, value: &ast::text::
   writer.write_all(&bits_writer.into_inner()?)
 }
 
-pub(crate) fn emit_font_alignment_zone<W: io::Write>(writer: &mut W, value: &ast::text::FontAlignmentZone) -> io::Result<()> {
+pub(crate) fn emit_font_alignment_zone<W: io::Write>(
+  writer: &mut W,
+  value: &ast::text::FontAlignmentZone,
+) -> io::Result<()> {
   assert!(value.data.len() < 256);
 
   emit_u8(writer, value.data.len().try_into().unwrap())?;
@@ -126,9 +148,7 @@ pub(crate) fn emit_font_alignment_zone<W: io::Write>(writer: &mut W, value: &ast
     emit_le_f16(writer, zone_data.origin)?;
     emit_le_f16(writer, zone_data.size)?;
   }
-  let flags: u8 = 0
-    | (if value.has_x { 1 << 0 } else { 0 })
-    | (if value.has_y { 1 << 1 } else { 0 });
+  let flags: u8 = 0 | (if value.has_x { 1 << 0 } else { 0 }) | (if value.has_y { 1 << 1 } else { 0 });
   // Skip bits [2, 7]
   emit_u8(writer, flags)
 }

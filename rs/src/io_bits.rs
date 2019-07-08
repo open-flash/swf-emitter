@@ -22,7 +22,11 @@ pub struct BitsWriter<W: io::Write> {
 
 impl<W: io::Write> BitsWriter<W> {
   pub fn new(inner: W) -> BitsWriter<W> {
-    BitsWriter { bit: 0, buffer: 0, inner }
+    BitsWriter {
+      bit: 0,
+      buffer: 0,
+      inner,
+    }
   }
 
   pub fn into_inner(mut self) -> io::Result<W> {

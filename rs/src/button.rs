@@ -15,14 +15,22 @@ pub(crate) enum ButtonVersion {
   Button2,
 }
 
-pub(crate) fn emit_button_record_string<W: io::Write>(writer: &mut W, value: &[ast::ButtonRecord], version: ButtonVersion) -> io::Result<()> {
+pub(crate) fn emit_button_record_string<W: io::Write>(
+  writer: &mut W,
+  value: &[ast::ButtonRecord],
+  version: ButtonVersion,
+) -> io::Result<()> {
   for record in value {
     emit_button_record(writer, record, version)?;
   }
   emit_u8(writer, 0)
 }
 
-pub(crate) fn emit_button_record<W: io::Write>(writer: &mut W, value: &ast::ButtonRecord, version: ButtonVersion) -> io::Result<()> {
+pub(crate) fn emit_button_record<W: io::Write>(
+  writer: &mut W,
+  value: &ast::ButtonRecord,
+  version: ButtonVersion,
+) -> io::Result<()> {
   let has_filters = value.filters.len() != 0;
   let has_blend_mode = value.blend_mode != ast::BlendMode::Normal;
 
@@ -51,13 +59,18 @@ pub(crate) fn emit_button_record<W: io::Write>(writer: &mut W, value: &ast::Butt
   Ok(())
 }
 
-pub(crate) fn emit_button2_cond_action_string<W: io::Write>(writer: &mut W, value: &[ast::ButtonCondAction]) -> io::Result<()> {
+pub(crate) fn emit_button2_cond_action_string<W: io::Write>(
+  writer: &mut W,
+  value: &[ast::ButtonCondAction],
+) -> io::Result<()> {
   for (index, action) in value.iter().enumerate() {
     let mut action_writer = Vec::new();
     emit_button2_cond_action(&mut action_writer, action)?;
-    if index == value.len() - 1 { // !is_last
+    if index == value.len() - 1 {
+      // !is_last
       emit_le_u16(writer, action_writer.len().try_into().unwrap())?;
-    } else { // is_last
+    } else {
+      // is_last
       emit_le_u16(writer, 0)?;
     }
     writer.write_all(&action_writer)?;
@@ -73,7 +86,7 @@ pub(crate) fn emit_button2_cond_action<W: io::Write>(writer: &mut W, value: &ast
 pub(crate) fn emit_button_cond<W: io::Write>(writer: &mut W, value: &ast::ButtonCond) -> io::Result<()> {
   let key_code: u16 = match value.key_press {
     Some(key_code) => u16::try_from(key_code).unwrap() & 0x7f,
-    None => 0
+    None => 0,
   };
   let flags: u16 = 0
     | (if value.idle_to_over_up { 1 << 0 } else { 0 })

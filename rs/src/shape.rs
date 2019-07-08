@@ -40,12 +40,20 @@ pub(crate) fn emit_shape<W: io::Write>(writer: &mut W, value: &ast::Shape, versi
   writer.write_all(&bits_writer.into_inner()?)
 }
 
-pub(crate) fn emit_shape_bits<W: WriteBits>(writer: &mut W, value: &ast::Shape, version: ShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_shape_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &ast::Shape,
+  version: ShapeVersion,
+) -> io::Result<()> {
   let (fill_bits, line_bits) = emit_shape_styles_bits(writer, &value.initial_styles, version)?;
   emit_shape_record_string_bits(writer, &value.records, fill_bits, line_bits, version)
 }
 
-pub(crate) fn emit_shape_styles_bits<W: WriteBits>(writer: &mut W, value: &ast::ShapeStyles, version: ShapeVersion) -> io::Result<(u32, u32)> {
+pub(crate) fn emit_shape_styles_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &ast::ShapeStyles,
+  version: ShapeVersion,
+) -> io::Result<(u32, u32)> {
   let bytes_writer = writer.write_bytes()?;
   emit_fill_style_list(bytes_writer, &value.fill, version)?;
   emit_line_style_list(bytes_writer, &value.line, version)?;
@@ -60,7 +68,13 @@ pub(crate) fn emit_shape_styles_bits<W: WriteBits>(writer: &mut W, value: &ast::
   Ok((fill_bits, line_bits))
 }
 
-pub(crate) fn emit_shape_record_string_bits<W: WriteBits>(writer: &mut W, value: &[ast::ShapeRecord], mut fill_bits: u32, mut line_bits: u32, version: ShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_shape_record_string_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &[ast::ShapeRecord],
+  mut fill_bits: u32,
+  mut line_bits: u32,
+  version: ShapeVersion,
+) -> io::Result<()> {
   for record in value {
     match record {
       ast::ShapeRecord::Edge(ref record) => {
@@ -85,12 +99,8 @@ pub(crate) fn emit_edge_bits<W: WriteBits>(writer: &mut W, value: &ast::shape_re
       x: value.delta.x - control_delta.x,
       y: value.delta.y - control_delta.y,
     };
-    let bits = get_i32_min_bit_count(vec![
-      control_delta.x,
-      control_delta.y,
-      anchor_delta.x,
-      anchor_delta.y,
-    ].into_iter());
+    let bits =
+      get_i32_min_bit_count(vec![control_delta.x, control_delta.y, anchor_delta.x, anchor_delta.y].into_iter());
     let bits = 2 + bits.saturating_sub(2);
     writer.write_u32_bits(4, bits - 2)?;
     writer.write_i32_bits(bits, control_delta.x)?;
@@ -168,7 +178,11 @@ pub(crate) fn emit_style_change_bits<W: WriteBits>(
   }
 }
 
-pub(crate) fn emit_list_length<W: io::Write + ?Sized>(writer: &mut W, value: usize, support_extended: bool) -> io::Result<()> {
+pub(crate) fn emit_list_length<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: usize,
+  support_extended: bool,
+) -> io::Result<()> {
   if !support_extended {
     assert!(value <= 0xff);
     emit_u8(writer, value.try_into().unwrap())
@@ -183,7 +197,11 @@ pub(crate) fn emit_list_length<W: io::Write + ?Sized>(writer: &mut W, value: usi
   }
 }
 
-pub(crate) fn emit_fill_style_list<W: io::Write + ?Sized>(writer: &mut W, value: &[ast::FillStyle], version: ShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_fill_style_list<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &[ast::FillStyle],
+  version: ShapeVersion,
+) -> io::Result<()> {
   emit_list_length(writer, value.len(), version >= ShapeVersion::Shape2)?;
   for fill_style in value {
     emit_fill_style(writer, fill_style, version >= ShapeVersion::Shape3)?;
@@ -191,13 +209,15 @@ pub(crate) fn emit_fill_style_list<W: io::Write + ?Sized>(writer: &mut W, value:
   Ok(())
 }
 
-pub(crate) fn emit_fill_style<W: io::Write + ?Sized>(writer: &mut W, value: &ast::FillStyle, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_fill_style<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::FillStyle,
+  with_alpha: bool,
+) -> io::Result<()> {
   match value {
     ast::FillStyle::Bitmap(ref style) => {
-      let code: u8 = 0
-        | (if !style.repeating { 1 << 0 } else { 0 })
-        | (if !style.smoothed { 1 << 1 } else { 0 })
-        | 0x40;
+      let code: u8 =
+        0 | (if !style.repeating { 1 << 0 } else { 0 }) | (if !style.smoothed { 1 << 1 } else { 0 }) | 0x40;
       emit_u8(writer, code)?;
       emit_bitmap_fill(writer, style)
     }
@@ -220,37 +240,67 @@ pub(crate) fn emit_fill_style<W: io::Write + ?Sized>(writer: &mut W, value: &ast
   }
 }
 
-pub(crate) fn emit_bitmap_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::Bitmap) -> io::Result<()> {
+pub(crate) fn emit_bitmap_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::Bitmap,
+) -> io::Result<()> {
   emit_le_u16(writer, value.bitmap_id)?;
   emit_matrix(writer, &value.matrix)
 }
 
-pub(crate) fn emit_focal_gradient_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::FocalGradient, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_focal_gradient_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::FocalGradient,
+  with_alpha: bool,
+) -> io::Result<()> {
   emit_matrix(writer, &value.matrix)?;
   emit_gradient(writer, &value.gradient, with_alpha)?;
   emit_le_i16(writer, value.focal_point.epsilons)
 }
 
-pub(crate) fn emit_linear_gradient_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::LinearGradient, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_linear_gradient_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::LinearGradient,
+  with_alpha: bool,
+) -> io::Result<()> {
   emit_matrix(writer, &value.matrix)?;
   emit_gradient(writer, &value.gradient, with_alpha)
 }
 
-pub(crate) fn emit_radial_gradient_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::RadialGradient, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_radial_gradient_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::RadialGradient,
+  with_alpha: bool,
+) -> io::Result<()> {
   emit_matrix(writer, &value.matrix)?;
   emit_gradient(writer, &value.gradient, with_alpha)
 }
 
-pub(crate) fn emit_solid_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::Solid, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_solid_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::Solid,
+  with_alpha: bool,
+) -> io::Result<()> {
   if with_alpha {
     emit_straight_s_rgba8(writer, value.color)
   } else {
     assert!(value.color.a == u8::max_value());
-    emit_s_rgb8(writer, ast::SRgb8 { r: value.color.r, g: value.color.g, b: value.color.b })
+    emit_s_rgb8(
+      writer,
+      ast::SRgb8 {
+        r: value.color.r,
+        g: value.color.g,
+        b: value.color.b,
+      },
+    )
   }
 }
 
-pub(crate) fn emit_line_style_list<W: io::Write + ?Sized>(writer: &mut W, value: &[ast::LineStyle], version: ShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_line_style_list<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &[ast::LineStyle],
+  version: ShapeVersion,
+) -> io::Result<()> {
   emit_list_length(writer, value.len(), version >= ShapeVersion::Shape2)?;
   for line_style in value {
     if version < ShapeVersion::Shape4 {
@@ -262,13 +312,17 @@ pub(crate) fn emit_line_style_list<W: io::Write + ?Sized>(writer: &mut W, value:
   Ok(())
 }
 
-pub(crate) fn emit_line_style1<W: io::Write + ?Sized>(writer: &mut W, value: &ast::LineStyle, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_line_style1<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::LineStyle,
+  with_alpha: bool,
+) -> io::Result<()> {
   match value.fill {
     ast::FillStyle::Solid(ref style) => {
       emit_le_u16(writer, value.width)?;
       emit_solid_fill(writer, style, with_alpha)
     }
-    _ => panic!("InvalidLineStyle1Fill")
+    _ => panic!("InvalidLineStyle1Fill"),
   }
 }
 
@@ -277,7 +331,7 @@ pub(crate) fn emit_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &as
 
   let has_fill = match &value.fill {
     ast::FillStyle::Solid(_) => false,
-    _ => true
+    _ => true,
   };
   let join_style_code = join_style_to_code(value.join);
   let start_cap_style_code = cap_style_to_code(value.start_cap);
@@ -301,7 +355,7 @@ pub(crate) fn emit_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &as
 
   match &value.fill {
     ast::FillStyle::Solid(ref style) => emit_solid_fill(writer, style, true),
-    style => emit_fill_style(writer, style, true)
+    style => emit_fill_style(writer, style, true),
   }
 }
 
@@ -322,20 +376,16 @@ pub(crate) fn cap_style_to_code(value: ast::CapStyle) -> u8 {
 }
 
 pub(crate) fn get_min_shape_version(value: &ast::Shape) -> ShapeVersion {
-  value.records
-    .iter()
-    .fold(
-      get_shape_styles_min_shape_version(&value.initial_styles),
-      |acc, record| match record {
-        ast::ShapeRecord::StyleChange(ref record) => {
-          match &record.new_styles {
-            Some(ref styles) => max(acc, get_shape_styles_min_shape_version(styles)),
-            _ => acc
-          }
-        }
-        _ => acc
+  value.records.iter().fold(
+    get_shape_styles_min_shape_version(&value.initial_styles),
+    |acc, record| match record {
+      ast::ShapeRecord::StyleChange(ref record) => match &record.new_styles {
+        Some(ref styles) => max(acc, get_shape_styles_min_shape_version(styles)),
+        _ => acc,
       },
-    )
+      _ => acc,
+    },
+  )
 }
 
 pub(crate) fn get_shape_styles_min_shape_version(value: &ast::ShapeStyles) -> ShapeVersion {
@@ -345,15 +395,15 @@ pub(crate) fn get_shape_styles_min_shape_version(value: &ast::ShapeStyles) -> Sh
   )
 }
 
-
 pub(crate) fn get_fill_style_list_min_shape_version(value: &[ast::FillStyle]) -> ShapeVersion {
-  value
-    .iter()
-    .map(get_fill_style_min_shape_version)
-    .fold(
-      if value.len() < 0xff { ShapeVersion::Shape1 } else { ShapeVersion::Shape2 },
-      max,
-    )
+  value.iter().map(get_fill_style_min_shape_version).fold(
+    if value.len() < 0xff {
+      ShapeVersion::Shape1
+    } else {
+      ShapeVersion::Shape2
+    },
+    max,
+  )
 }
 
 pub(crate) fn get_fill_style_min_shape_version(value: &ast::FillStyle) -> ShapeVersion {
@@ -365,23 +415,28 @@ pub(crate) fn get_fill_style_min_shape_version(value: &ast::FillStyle) -> ShapeV
     _ => false,
   };
 
-  if has_alpha { ShapeVersion::Shape3 } else { ShapeVersion::Shape1 }
+  if has_alpha {
+    ShapeVersion::Shape3
+  } else {
+    ShapeVersion::Shape1
+  }
 }
 
 pub(crate) fn get_line_style_list_min_shape_version(value: &[ast::LineStyle]) -> ShapeVersion {
-  value
-    .iter()
-    .map(get_line_style_min_shape_version)
-    .fold(
-      if value.len() < 0xff { ShapeVersion::Shape1 } else { ShapeVersion::Shape2 },
-      max,
-    )
+  value.iter().map(get_line_style_min_shape_version).fold(
+    if value.len() < 0xff {
+      ShapeVersion::Shape1
+    } else {
+      ShapeVersion::Shape2
+    },
+    max,
+  )
 }
 
 pub(crate) fn get_line_style_min_shape_version(value: &ast::LineStyle) -> ShapeVersion {
   let is_solid_fill = match &value.fill {
     ast::FillStyle::Solid(_) => true,
-    _ => false
+    _ => false,
   };
   let is_line_style2 = value.start_cap != ast::CapStyle::Round
     || value.end_cap != ast::CapStyle::Round

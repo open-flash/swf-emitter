@@ -243,9 +243,7 @@ pub fn emit_convolution_filter<W: io::Write>(writer: &mut W, value: &ast::filter
   }
   emit_straight_s_rgba8(writer, value.default_color)?;
 
-  let flags: u8 = 0
-    | (if value.preserve_alpha { 1 << 0 } else { 0 })
-    | (if value.clamp { 1 << 1 } else { 0 });
+  let flags: u8 = 0 | (if value.preserve_alpha { 1 << 0 } else { 0 }) | (if value.clamp { 1 << 1 } else { 0 });
   emit_u8(writer, flags)
 }
 

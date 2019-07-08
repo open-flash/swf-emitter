@@ -16,16 +16,14 @@ pub enum MorphShapeVersion {
   MorphShape2,
 }
 
-pub(crate) fn emit_morph_shape<W: io::Write>(writer: &mut W, value: &ast::MorphShape, version: MorphShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_morph_shape<W: io::Write>(
+  writer: &mut W,
+  value: &ast::MorphShape,
+  version: MorphShapeVersion,
+) -> io::Result<()> {
   let mut bits_writer = BitsWriter::new(Vec::new());
   let (fill_bits, line_bits) = emit_morph_shape_styles_bits(&mut bits_writer, &value.initial_styles, version)?;
-  emit_morph_shape_start_record_string_bits(
-    &mut bits_writer,
-    &value.records,
-    fill_bits,
-    line_bits,
-    version,
-  )?;
+  emit_morph_shape_start_record_string_bits(&mut bits_writer, &value.records, fill_bits, line_bits, version)?;
   let inner_bits_writer = bits_writer.into_inner()?;
   let start_size = inner_bits_writer.len();
 
@@ -34,13 +32,17 @@ pub(crate) fn emit_morph_shape<W: io::Write>(writer: &mut W, value: &ast::MorphS
   // `0` for the style bits: there are no style changes in the end state.
   bits_writer.write_u32_bits(4, 0)?;
   bits_writer.write_u32_bits(4, 0)?;
-  emit_morph_shape_end_record_string_bits(&mut bits_writer,&value.records)?;
+  emit_morph_shape_end_record_string_bits(&mut bits_writer, &value.records)?;
 
   emit_le_u32(writer, start_size.try_into().unwrap())?;
   writer.write_all(&bits_writer.into_inner()?)
 }
 
-pub(crate) fn emit_morph_shape_styles_bits<W: WriteBits>(writer: &mut W, value: &ast::MorphShapeStyles, version: MorphShapeVersion) -> io::Result<(u32, u32)> {
+pub(crate) fn emit_morph_shape_styles_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &ast::MorphShapeStyles,
+  version: MorphShapeVersion,
+) -> io::Result<(u32, u32)> {
   let bytes_writer = writer.write_bytes()?;
   emit_morph_fill_style_list(bytes_writer, &value.fill)?;
   emit_morph_line_style_list(bytes_writer, &value.line, version)?;
@@ -55,19 +57,29 @@ pub(crate) fn emit_morph_shape_styles_bits<W: WriteBits>(writer: &mut W, value: 
   Ok((fill_bits, line_bits))
 }
 
-pub(crate) fn emit_morph_shape_start_record_string_bits<W: WriteBits>(writer: &mut W, value: &[ast::MorphShapeRecord], mut fill_bits: u32, mut line_bits: u32, version: MorphShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_morph_shape_start_record_string_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &[ast::MorphShapeRecord],
+  mut fill_bits: u32,
+  mut line_bits: u32,
+  version: MorphShapeVersion,
+) -> io::Result<()> {
   for record in value {
     match record {
       ast::MorphShapeRecord::Edge(ref record) => {
         writer.write_bool_bits(true)?; // is_edge
         emit_edge_bits(
           writer,
-          &ast::shape_records::Edge { delta: record.delta, control_delta: record.control_delta },
+          &ast::shape_records::Edge {
+            delta: record.delta,
+            control_delta: record.control_delta,
+          },
         )?;
       }
       ast::MorphShapeRecord::StyleChange(ref record) => {
         writer.write_bool_bits(false)?; // is_edge
-        let (next_fill_bits, next_line_bits) = emit_morph_style_change_bits(writer, record, fill_bits, line_bits, version)?;
+        let (next_fill_bits, next_line_bits) =
+          emit_morph_style_change_bits(writer, record, fill_bits, line_bits, version)?;
         fill_bits = next_fill_bits;
         line_bits = next_line_bits;
       }
@@ -76,14 +88,20 @@ pub(crate) fn emit_morph_shape_start_record_string_bits<W: WriteBits>(writer: &m
   writer.write_u32_bits(6, 0)
 }
 
-pub(crate) fn emit_morph_shape_end_record_string_bits<W: WriteBits>(writer: &mut W, value: &[ast::MorphShapeRecord]) -> io::Result<()> {
+pub(crate) fn emit_morph_shape_end_record_string_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &[ast::MorphShapeRecord],
+) -> io::Result<()> {
   for record in value {
     match record {
       ast::MorphShapeRecord::Edge(ref record) => {
         writer.write_bool_bits(true)?; // is_edge
         emit_edge_bits(
           writer,
-          &ast::shape_records::Edge { delta: record.morph_delta, control_delta: record.morph_control_delta },
+          &ast::shape_records::Edge {
+            delta: record.morph_delta,
+            control_delta: record.morph_control_delta,
+          },
         )?;
       }
       ast::MorphShapeRecord::StyleChange(ref record) => {
@@ -152,7 +170,10 @@ pub(crate) fn emit_morph_style_change_bits<W: WriteBits>(
   }
 }
 
-pub(crate) fn emit_morph_fill_style_list<W: io::Write + ?Sized>(writer: &mut W, value: &[ast::MorphFillStyle]) -> io::Result<()> {
+pub(crate) fn emit_morph_fill_style_list<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &[ast::MorphFillStyle],
+) -> io::Result<()> {
   emit_list_length(writer, value.len(), true)?;
   for fill_style in value {
     emit_morph_fill_style(writer, fill_style)?;
@@ -160,13 +181,14 @@ pub(crate) fn emit_morph_fill_style_list<W: io::Write + ?Sized>(writer: &mut W, 
   Ok(())
 }
 
-pub(crate) fn emit_morph_fill_style<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphFillStyle) -> io::Result<()> {
+pub(crate) fn emit_morph_fill_style<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::MorphFillStyle,
+) -> io::Result<()> {
   match value {
     ast::MorphFillStyle::Bitmap(ref style) => {
-      let code: u8 = 0
-        | (if !style.repeating { 1 << 0 } else { 0 })
-        | (if !style.smoothed { 1 << 1 } else { 0 })
-        | 0x40;
+      let code: u8 =
+        0 | (if !style.repeating { 1 << 0 } else { 0 }) | (if !style.smoothed { 1 << 1 } else { 0 }) | 0x40;
       emit_u8(writer, code)?;
       emit_morph_bitmap_fill(writer, style)
     }
@@ -189,13 +211,19 @@ pub(crate) fn emit_morph_fill_style<W: io::Write + ?Sized>(writer: &mut W, value
   }
 }
 
-pub(crate) fn emit_morph_bitmap_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::MorphBitmap) -> io::Result<()> {
+pub(crate) fn emit_morph_bitmap_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::MorphBitmap,
+) -> io::Result<()> {
   emit_le_u16(writer, value.bitmap_id)?;
   emit_matrix(writer, &value.matrix)?;
   emit_matrix(writer, &value.morph_matrix)
 }
 
-pub(crate) fn emit_morph_focal_gradient_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::MorphFocalGradient) -> io::Result<()> {
+pub(crate) fn emit_morph_focal_gradient_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::MorphFocalGradient,
+) -> io::Result<()> {
   emit_matrix(writer, &value.matrix)?;
   emit_matrix(writer, &value.morph_matrix)?;
   emit_morph_gradient(writer, &value.gradient)?;
@@ -203,24 +231,37 @@ pub(crate) fn emit_morph_focal_gradient_fill<W: io::Write + ?Sized>(writer: &mut
   emit_le_i16(writer, value.morph_focal_point.epsilons)
 }
 
-pub(crate) fn emit_morph_linear_gradient_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::MorphLinearGradient) -> io::Result<()> {
+pub(crate) fn emit_morph_linear_gradient_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::MorphLinearGradient,
+) -> io::Result<()> {
   emit_matrix(writer, &value.matrix)?;
   emit_matrix(writer, &value.morph_matrix)?;
   emit_morph_gradient(writer, &value.gradient)
 }
 
-pub(crate) fn emit_morph_radial_gradient_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::MorphRadialGradient) -> io::Result<()> {
+pub(crate) fn emit_morph_radial_gradient_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::MorphRadialGradient,
+) -> io::Result<()> {
   emit_matrix(writer, &value.matrix)?;
   emit_matrix(writer, &value.morph_matrix)?;
   emit_morph_gradient(writer, &value.gradient)
 }
 
-pub(crate) fn emit_morph_solid_fill<W: io::Write + ?Sized>(writer: &mut W, value: &ast::fill_styles::MorphSolid) -> io::Result<()> {
+pub(crate) fn emit_morph_solid_fill<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::fill_styles::MorphSolid,
+) -> io::Result<()> {
   emit_straight_s_rgba8(writer, value.color)?;
   emit_straight_s_rgba8(writer, value.morph_color)
 }
 
-pub(crate) fn emit_morph_line_style_list<W: io::Write + ?Sized>(writer: &mut W, value: &[ast::MorphLineStyle], version: MorphShapeVersion) -> io::Result<()> {
+pub(crate) fn emit_morph_line_style_list<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &[ast::MorphLineStyle],
+  version: MorphShapeVersion,
+) -> io::Result<()> {
   emit_list_length(writer, value.len(), true)?;
   for line_style in value {
     if version < MorphShapeVersion::MorphShape2 {
@@ -232,24 +273,30 @@ pub(crate) fn emit_morph_line_style_list<W: io::Write + ?Sized>(writer: &mut W, 
   Ok(())
 }
 
-pub(crate) fn emit_morph_line_style1<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphLineStyle) -> io::Result<()> {
+pub(crate) fn emit_morph_line_style1<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::MorphLineStyle,
+) -> io::Result<()> {
   match value.fill {
     ast::MorphFillStyle::Solid(ref style) => {
       emit_le_u16(writer, value.width)?;
       emit_le_u16(writer, value.morph_width)?;
       emit_morph_solid_fill(writer, style)
     }
-    _ => panic!("InvalidMorphLineStyle1Fill")
+    _ => panic!("InvalidMorphLineStyle1Fill"),
   }
 }
 
-pub(crate) fn emit_morph_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphLineStyle) -> io::Result<()> {
+pub(crate) fn emit_morph_line_style2<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::MorphLineStyle,
+) -> io::Result<()> {
   emit_le_u16(writer, value.width)?;
   emit_le_u16(writer, value.morph_width)?;
 
   let has_fill = match &value.fill {
     ast::MorphFillStyle::Solid(_) => false,
-    _ => true
+    _ => true,
   };
   let join_style_code = join_style_to_code(value.join);
   let start_cap_style_code = cap_style_to_code(value.start_cap);
@@ -273,6 +320,6 @@ pub(crate) fn emit_morph_line_style2<W: io::Write + ?Sized>(writer: &mut W, valu
 
   match &value.fill {
     ast::MorphFillStyle::Solid(ref style) => emit_morph_solid_fill(writer, style),
-    style => emit_morph_fill_style(writer, style)
+    style => emit_morph_fill_style(writer, style),
   }
 }

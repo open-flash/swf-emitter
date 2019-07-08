@@ -21,7 +21,11 @@ fn color_space_to_code(value: ast::ColorSpace) -> u8 {
   }
 }
 
-pub(crate) fn emit_gradient<W: io::Write + ?Sized>(writer: &mut W, value: &ast::Gradient, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_gradient<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::Gradient,
+  with_alpha: bool,
+) -> io::Result<()> {
   assert!(value.colors.len() <= 0x0f);
   let flags: u8 = 0
     | ((u8::try_from(value.colors.len()).unwrap() & 0x0f) << 0)
@@ -36,13 +40,24 @@ pub(crate) fn emit_gradient<W: io::Write + ?Sized>(writer: &mut W, value: &ast::
   Ok(())
 }
 
-pub(crate) fn emit_color_stop<W: io::Write + ?Sized>(writer: &mut W, value: &ast::ColorStop, with_alpha: bool) -> io::Result<()> {
+pub(crate) fn emit_color_stop<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::ColorStop,
+  with_alpha: bool,
+) -> io::Result<()> {
   emit_u8(writer, value.ratio)?;
   if with_alpha {
     emit_straight_s_rgba8(writer, value.color)
   } else {
     assert!(value.color.a == u8::max_value());
-    emit_s_rgb8(writer, ast::SRgb8 { r: value.color.r, g: value.color.g, b: value.color.b })
+    emit_s_rgb8(
+      writer,
+      ast::SRgb8 {
+        r: value.color.r,
+        g: value.color.g,
+        b: value.color.b,
+      },
+    )
   }
 }
 
@@ -61,7 +76,24 @@ pub(crate) fn emit_morph_gradient<W: io::Write + ?Sized>(writer: &mut W, value: 
   Ok(())
 }
 
-pub(crate) fn emit_morph_color_stop<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphColorStop) -> io::Result<()> {
-  emit_color_stop(writer, &ast::ColorStop { ratio: value.ratio, color: value.color }, true)?;
-  emit_color_stop(writer, &ast::ColorStop { ratio: value.morph_ratio, color: value.morph_color }, true)
+pub(crate) fn emit_morph_color_stop<W: io::Write + ?Sized>(
+  writer: &mut W,
+  value: &ast::MorphColorStop,
+) -> io::Result<()> {
+  emit_color_stop(
+    writer,
+    &ast::ColorStop {
+      ratio: value.ratio,
+      color: value.color,
+    },
+    true,
+  )?;
+  emit_color_stop(
+    writer,
+    &ast::ColorStop {
+      ratio: value.morph_ratio,
+      color: value.morph_color,
+    },
+    true,
+  )
 }

@@ -5,16 +5,23 @@ use std::io;
 use swf_fixed::Sfixed8P8;
 use swf_tree as ast;
 
-use crate::basic_data_types::{emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect, emit_s_rgb8, emit_straight_s_rgba8};
+use crate::basic_data_types::{
+  emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect,
+  emit_s_rgb8, emit_straight_s_rgba8,
+};
 use crate::bit_count::{get_i32_bit_count, get_u32_bit_count};
-use crate::button::{ButtonVersion, emit_button2_cond_action_string, emit_button_record_string};
+use crate::button::{emit_button2_cond_action_string, emit_button_record_string, ButtonVersion};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_f32, emit_le_i16, emit_le_u16, emit_le_u32, emit_u8};
+use crate::shape::emit_glyph;
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
 use crate::sound::{audio_coding_format_to_code, sound_rate_to_code};
-use crate::shape::emit_glyph;
-use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineFontInfoVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_alignment, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
+use crate::text::{
+  csm_table_hint_to_code, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs,
+  emit_text_alignment, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code, DefineFontInfoVersion,
+  DefineFontVersion, DefineTextVersion,
+};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -35,7 +42,7 @@ fn emit_tag_header<W: io::Write>(writer: &mut W, value: TagHeader) -> io::Result
 
   // Some tags require a long header
   let is_long_required = match value.code {
-    6 => true, // DefineBits
+    6 => true,  // DefineBits
     21 => true, // DefineBitsJPEG2
     35 => true, // DefineBitsJPEG3
     20 => true, // DefineBitsLossless
@@ -70,22 +77,18 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       74
     }
     ast::Tag::DefineBinaryData(ref _tag) => unimplemented!(),
-    ast::Tag::DefineBitmap(ref tag) => {
-      match emit_define_bitmap_any(&mut tag_writer, tag)? {
-        DefineBitmapVersion::DefineBitsJpeg1 => 6,
-        DefineBitmapVersion::DefineBitsLossless1 => 20,
-        DefineBitmapVersion::DefineBitsJpeg2 => 21,
-        DefineBitmapVersion::DefineBitsJpeg3 => 35,
-        DefineBitmapVersion::DefineBitsLossless2 => 36,
-        DefineBitmapVersion::DefineBitsJpeg4 => 90,
-      }
-    }
-    ast::Tag::DefineButton(ref tag) => {
-      match emit_define_button_any(&mut tag_writer, tag)? {
-        ButtonVersion::Button1 => 7,
-        ButtonVersion::Button2 => 34,
-      }
-    }
+    ast::Tag::DefineBitmap(ref tag) => match emit_define_bitmap_any(&mut tag_writer, tag)? {
+      DefineBitmapVersion::DefineBitsJpeg1 => 6,
+      DefineBitmapVersion::DefineBitsLossless1 => 20,
+      DefineBitmapVersion::DefineBitsJpeg2 => 21,
+      DefineBitmapVersion::DefineBitsJpeg3 => 35,
+      DefineBitmapVersion::DefineBitsLossless2 => 36,
+      DefineBitmapVersion::DefineBitsJpeg4 => 90,
+    },
+    ast::Tag::DefineButton(ref tag) => match emit_define_button_any(&mut tag_writer, tag)? {
+      ButtonVersion::Button1 => 7,
+      ButtonVersion::Button2 => 34,
+    },
     ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineDynamicText(ref tag) => {
       emit_define_dynamic_text(&mut tag_writer, tag)?;
@@ -103,12 +106,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_font_align_zones(&mut tag_writer, tag)?;
       73
     }
-    ast::Tag::DefineFontInfo(ref tag) => {
-      match emit_define_font_info_any(&mut tag_writer, tag)? {
-        DefineFontInfoVersion::FontInfo1 => 13,
-        DefineFontInfoVersion::FontInfo2 => 62,
-      }
-    }
+    ast::Tag::DefineFontInfo(ref tag) => match emit_define_font_info_any(&mut tag_writer, tag)? {
+      DefineFontInfoVersion::FontInfo1 => 13,
+      DefineFontInfoVersion::FontInfo2 => 62,
+    },
     ast::Tag::DefineFontName(ref tag) => {
       emit_define_font_name(&mut tag_writer, tag)?;
       88
@@ -121,24 +122,20 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_jpeg_tables(&mut tag_writer, tag)?;
       8
     }
-    ast::Tag::DefineMorphShape(ref tag) => {
-      match emit_define_morph_shape_any(&mut tag_writer, tag)? {
-        MorphShapeVersion::MorphShape1 => 46,
-        MorphShapeVersion::MorphShape2 => 84,
-      }
-    }
+    ast::Tag::DefineMorphShape(ref tag) => match emit_define_morph_shape_any(&mut tag_writer, tag)? {
+      MorphShapeVersion::MorphShape1 => 46,
+      MorphShapeVersion::MorphShape2 => 84,
+    },
     ast::Tag::DefineSceneAndFrameLabelData(ref tag) => {
       emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
       86
     }
-    ast::Tag::DefineShape(ref tag) => {
-      match emit_define_shape_any(&mut tag_writer, tag)? {
-        ShapeVersion::Shape1 => 2,
-        ShapeVersion::Shape2 => 22,
-        ShapeVersion::Shape3 => 32,
-        ShapeVersion::Shape4 => 83,
-      }
-    }
+    ast::Tag::DefineShape(ref tag) => match emit_define_shape_any(&mut tag_writer, tag)? {
+      ShapeVersion::Shape1 => 2,
+      ShapeVersion::Shape2 => 22,
+      ShapeVersion::Shape3 => 32,
+      ShapeVersion::Shape4 => 83,
+    },
     ast::Tag::DefineSound(ref tag) => {
       emit_define_sound(&mut tag_writer, tag)?;
       14
@@ -147,12 +144,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_sprite(&mut tag_writer, tag, swf_version)?;
       39
     }
-    ast::Tag::DefineText(ref tag) => {
-      match emit_define_text_any(&mut tag_writer, tag)? {
-        DefineTextVersion::Text1 => 11,
-        DefineTextVersion::Text2 => 33,
-      }
-    }
+    ast::Tag::DefineText(ref tag) => match emit_define_text_any(&mut tag_writer, tag)? {
+      DefineTextVersion::Text1 => 11,
+      DefineTextVersion::Text2 => 33,
+    },
     ast::Tag::DoAbc(ref _tag) => unimplemented!(),
     ast::Tag::DoAction(ref tag) => {
       emit_do_action(&mut tag_writer, tag)?;
@@ -177,31 +172,25 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_metadata(&mut tag_writer, tag)?;
       77
     }
-    ast::Tag::PlaceObject(ref tag) => {
-      match emit_place_object_any(&mut tag_writer, tag, swf_version)? {
-        PlaceObjectVersion::PlaceObject1 => 4,
-        PlaceObjectVersion::PlaceObject2 => 26,
-        PlaceObjectVersion::PlaceObject3 => 70,
-      }
-    }
+    ast::Tag::PlaceObject(ref tag) => match emit_place_object_any(&mut tag_writer, tag, swf_version)? {
+      PlaceObjectVersion::PlaceObject1 => 4,
+      PlaceObjectVersion::PlaceObject2 => 26,
+      PlaceObjectVersion::PlaceObject3 => 70,
+    },
     ast::Tag::Protect(ref tag) => {
       emit_protect(&mut tag_writer, tag)?;
       24
     }
-    ast::Tag::RemoveObject(ref tag) => {
-      match emit_remove_object_any(&mut tag_writer, tag)? {
-        RemoveObjectVersion::RemoveObject1 => 5,
-        RemoveObjectVersion::RemoveObject2 => 28,
-      }
-    }
+    ast::Tag::RemoveObject(ref tag) => match emit_remove_object_any(&mut tag_writer, tag)? {
+      RemoveObjectVersion::RemoveObject1 => 5,
+      RemoveObjectVersion::RemoveObject2 => 28,
+    },
     ast::Tag::ScriptLimits(ref _tag) => unimplemented!(),
     ast::Tag::SetBackgroundColor(ref tag) => {
       emit_set_background_color(&mut tag_writer, tag)?;
       9
     }
-    ast::Tag::ShowFrame => {
-      1
-    }
+    ast::Tag::ShowFrame => 1,
     ast::Tag::SoundStreamBlock(ref _tag) => unimplemented!(),
     ast::Tag::SoundStreamHead(ref _tag) => unimplemented!(),
     ast::Tag::StartSound(ref _tag) => unimplemented!(),
@@ -211,7 +200,13 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::Unknown(ref _tag) => unimplemented!(),
   };
 
-  emit_tag_header(writer, TagHeader { code, length: tag_writer.len().try_into().unwrap() })?;
+  emit_tag_header(
+    writer,
+    TagHeader {
+      code,
+      length: tag_writer.len().try_into().unwrap(),
+    },
+  )?;
   writer.write_all(&tag_writer)
 }
 
@@ -239,7 +234,10 @@ pub enum DefineBitmapVersion {
   DefineBitsLossless2,
 }
 
-pub fn emit_define_bitmap_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineBitmap) -> io::Result<DefineBitmapVersion> {
+pub fn emit_define_bitmap_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineBitmap,
+) -> io::Result<DefineBitmapVersion> {
   emit_le_u16(writer, value.id)?;
   writer.write_all(&value.data)?;
 
@@ -254,11 +252,13 @@ pub fn emit_define_bitmap_any<W: io::Write>(writer: &mut W, value: &ast::tags::D
   Ok(version)
 }
 
-pub(crate) fn emit_define_button_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineButton) -> io::Result<ButtonVersion> {
+pub(crate) fn emit_define_button_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineButton,
+) -> io::Result<ButtonVersion> {
   emit_le_u16(writer, value.id)?;
 
-  let flags: u8 = 0
-    | (if value.track_as_menu { 1 << 0 } else { 0 });
+  let flags: u8 = 0 | (if value.track_as_menu { 1 << 0 } else { 0 });
   emit_u8(writer, flags)?;
 
   // TODO: Select the lowest compatible `ButtonVersion`
@@ -279,7 +279,10 @@ pub(crate) fn emit_define_button_any<W: io::Write>(writer: &mut W, value: &ast::
   Ok(version)
 }
 
-pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast::tags::DefineDynamicText) -> io::Result<()> {
+pub(crate) fn emit_define_dynamic_text<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineDynamicText,
+) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
   emit_rect(writer, &value.bounds)?;
 
@@ -338,10 +341,13 @@ pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast
     emit_le_u16(writer, value.indent)?;
     emit_le_i16(writer, value.leading)?;
   }
-  emit_c_string(writer, match &value.variable_name {
-    Some(ref v) => v,
-    None => ""
-  })?;
+  emit_c_string(
+    writer,
+    match &value.variable_name {
+      Some(ref v) => v,
+      None => "",
+    },
+  )?;
   if let Some(ref text) = &value.text {
     emit_c_string(writer, text)?;
   }
@@ -349,7 +355,10 @@ pub(crate) fn emit_define_dynamic_text<W: io::Write>(writer: &mut W, value: &ast
   Ok(())
 }
 
-pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFont) -> io::Result<DefineFontVersion> {
+pub(crate) fn emit_define_font_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineFont,
+) -> io::Result<DefineFontVersion> {
   let version = match value.em_square_size {
     ast::text::EmSquareSize::EmSquareSize1024 => DefineFontVersion::Font2,
     ast::text::EmSquareSize::EmSquareSize20480 => DefineFontVersion::Font3,
@@ -406,7 +415,10 @@ pub(crate) fn emit_define_font_any<W: io::Write>(writer: &mut W, value: &ast::ta
   Ok(version)
 }
 
-pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontAlignZones) -> io::Result<()> {
+pub fn emit_define_font_align_zones<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineFontAlignZones,
+) -> io::Result<()> {
   emit_le_u16(writer, value.font_id)?;
   let flags: u8 = 0
     // Skip bits [0, 5]
@@ -418,7 +430,10 @@ pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::t
   Ok(())
 }
 
-pub(crate) fn emit_define_font_info_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontInfo) -> io::Result<DefineFontInfoVersion> {
+pub(crate) fn emit_define_font_info_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineFontInfo,
+) -> io::Result<DefineFontInfoVersion> {
   let version = match value.language {
     ast::LanguageCode::Auto => DefineFontInfoVersion::FontInfo1,
     _ => DefineFontInfoVersion::FontInfo2,
@@ -475,7 +490,7 @@ pub fn emit_define_font_name<W: io::Write>(writer: &mut W, value: &ast::tags::De
 pub fn emit_define_glyph_font<W: io::Write>(writer: &mut W, value: &ast::tags::DefineGlyphFont) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
   if value.glyphs.len() == 0 {
-    return Ok(())
+    return Ok(());
   }
 
   let first_offset = value.glyphs.len() * 2;
@@ -491,7 +506,10 @@ pub fn emit_define_jpeg_tables<W: io::Write>(writer: &mut W, value: &ast::tags::
   writer.write_all(&value.data)
 }
 
-pub fn emit_define_morph_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineMorphShape) -> io::Result<MorphShapeVersion> {
+pub fn emit_define_morph_shape_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineMorphShape,
+) -> io::Result<MorphShapeVersion> {
   emit_le_u16(writer, value.id)?;
   emit_rect(writer, &value.bounds)?;
   emit_rect(writer, &value.morph_bounds)?;
@@ -513,7 +531,10 @@ pub fn emit_define_morph_shape_any<W: io::Write>(writer: &mut W, value: &ast::ta
   Ok(version)
 }
 
-pub fn emit_define_scene_and_frame_label_data<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSceneAndFrameLabelData) -> io::Result<()> {
+pub fn emit_define_scene_and_frame_label_data<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineSceneAndFrameLabelData,
+) -> io::Result<()> {
   emit_leb128_u32(writer, value.scenes.len().try_into().unwrap())?;
   for scene in &value.scenes {
     emit_leb128_u32(writer, scene.offset)?;
@@ -549,24 +570,37 @@ pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::De
 pub fn emit_define_sound<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSound) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
 
-  let flags: u8 = 0
-    | (if value.sound_type == ast::SoundType::Stereo { 1 << 0 } else { 0 })
-    | (if value.sound_size == ast::SoundSize::SoundSize16 { 1 << 1 } else { 0 })
-    | (sound_rate_to_code(value.sound_rate) << 2)
-    | (audio_coding_format_to_code(value.format) << 4);
+  let flags: u8 =
+    0 | (if value.sound_type == ast::SoundType::Stereo {
+      1 << 0
+    } else {
+      0
+    }) | (if value.sound_size == ast::SoundSize::SoundSize16 {
+      1 << 1
+    } else {
+      0
+    }) | (sound_rate_to_code(value.sound_rate) << 2)
+      | (audio_coding_format_to_code(value.format) << 4);
   emit_u8(writer, flags)?;
 
   emit_le_u32(writer, value.sample_count)?;
   writer.write_all(&value.data)
 }
 
-pub fn emit_define_sprite<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSprite, swf_version: u8) -> io::Result<()> {
+pub fn emit_define_sprite<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineSprite,
+  swf_version: u8,
+) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
   emit_le_u16(writer, value.frame_count.try_into().unwrap())?;
   emit_tag_string(writer, &value.tags, swf_version)
 }
 
-pub(crate) fn emit_define_text_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineText) -> io::Result<DefineTextVersion> {
+pub(crate) fn emit_define_text_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineText,
+) -> io::Result<DefineTextVersion> {
   emit_le_u16(writer, value.id)?;
   emit_rect(writer, &value.bounds)?;
   emit_matrix(writer, &value.matrix)?;
@@ -588,7 +622,11 @@ pub(crate) fn emit_define_text_any<W: io::Write>(writer: &mut W, value: &ast::ta
   emit_u8(writer, advance_bits.try_into().unwrap())?;
   emit_text_record_string(writer, &value.records, index_bits, advance_bits, has_alpha)?;
 
-  Ok(if has_alpha { DefineTextVersion::Text2 } else { DefineTextVersion::Text1 })
+  Ok(if has_alpha {
+    DefineTextVersion::Text2
+  } else {
+    DefineTextVersion::Text1
+  })
 }
 
 pub fn emit_do_action<W: io::Write>(writer: &mut W, value: &ast::tags::DoAction) -> io::Result<()> {
@@ -636,14 +674,19 @@ pub enum PlaceObjectVersion {
   PlaceObject3,
 }
 
-pub fn emit_place_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::PlaceObject, swf_version: u8) -> io::Result<PlaceObjectVersion> {
+pub fn emit_place_object_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::PlaceObject,
+  swf_version: u8,
+) -> io::Result<PlaceObjectVersion> {
   const FIXED_ONE: Sfixed8P8 = Sfixed8P8::from_epsilons(256);
 
   let is_update = value.is_update;
   let has_character_id = value.character_id.is_some();
   let has_matrix = value.matrix.is_some();
   let has_color_transform = value.color_transform.is_some();
-  let has_color_transform_with_alpha = value.color_transform
+  let has_color_transform_with_alpha = value
+    .color_transform
     .map(|cx| cx.alpha_mult != FIXED_ONE || cx.alpha_add != 0)
     .unwrap_or(false);
   let has_ratio = value.ratio.is_some();
@@ -658,7 +701,14 @@ pub fn emit_place_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::Pl
   let has_visibility = value.visible.is_some();
   let has_background_color = value.background_color.is_some();
 
-  if has_filters || has_blend_mode || has_cache_hint || has_class_name || has_image || has_visibility || has_background_color {
+  if has_filters
+    || has_blend_mode
+    || has_cache_hint
+    || has_class_name
+    || has_image
+    || has_visibility
+    || has_background_color
+  {
     let flags: u16 = 0
       | (if is_update { 1 << 0 } else { 0 })
       | (if has_character_id { 1 << 1 } else { 0 })
@@ -717,7 +767,15 @@ pub fn emit_place_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::Pl
       emit_clip_actions_string(writer, clip_actions, swf_version >= 6)?;
     }
     Ok(PlaceObjectVersion::PlaceObject3)
-  } else if !has_character_id || !has_matrix || is_update || has_color_transform_with_alpha || has_ratio || has_name || has_clip_depth || has_clip_actions {
+  } else if !has_character_id
+    || !has_matrix
+    || is_update
+    || has_color_transform_with_alpha
+    || has_ratio
+    || has_name
+    || has_clip_depth
+    || has_clip_actions
+  {
     let flags: u8 = 0
       | (if is_update { 1 << 0 } else { 0 })
       | (if has_character_id { 1 << 1 } else { 0 })
@@ -783,7 +841,10 @@ pub enum RemoveObjectVersion {
   RemoveObject2,
 }
 
-pub fn emit_remove_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::RemoveObject) -> io::Result<RemoveObjectVersion> {
+pub fn emit_remove_object_any<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::RemoveObject,
+) -> io::Result<RemoveObjectVersion> {
   if let Some(character_id) = value.character_id {
     emit_le_u16(writer, character_id)?;
     emit_le_u16(writer, value.depth)?;
@@ -794,6 +855,9 @@ pub fn emit_remove_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::R
   }
 }
 
-pub fn emit_set_background_color<W: io::Write>(writer: &mut W, value: &ast::tags::SetBackgroundColor) -> io::Result<()> {
+pub fn emit_set_background_color<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::SetBackgroundColor,
+) -> io::Result<()> {
   emit_s_rgb8(writer, value.color)
 }

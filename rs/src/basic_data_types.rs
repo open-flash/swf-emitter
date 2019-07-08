@@ -36,12 +36,7 @@ pub fn emit_rect<W: io::Write>(writer: &mut W, value: &ast::Rect) -> io::Result<
 }
 
 pub fn emit_rect_bits<W: WriteBits>(writer: &mut W, value: &ast::Rect) -> io::Result<()> {
-  let bits = get_i32_min_bit_count(vec![
-    value.x_min,
-    value.x_max,
-    value.y_min,
-    value.y_max,
-  ].into_iter());
+  let bits = get_i32_min_bit_count(vec![value.x_min, value.x_max, value.y_min, value.y_max].into_iter());
   writer.write_u32_bits(5, bits)?;
   writer.write_i32_bits(bits, value.x_min)?;
   writer.write_i32_bits(bits, value.x_max)?;
@@ -107,7 +102,8 @@ pub fn emit_color_transform<W: io::Write>(writer: &mut W, value: &ast::ColorTran
 
 pub fn emit_color_transform_bits<W: WriteBits>(writer: &mut W, value: &ast::ColorTransform) -> io::Result<()> {
   let has_add = value.red_add != 0 || value.green_add != 0 || value.blue_add != 0;
-  let has_mult = value.red_mult != Sfixed8P8::ONE || value.green_mult != Sfixed8P8::ONE || value.blue_mult != Sfixed8P8::ONE;
+  let has_mult =
+    value.red_mult != Sfixed8P8::ONE || value.green_mult != Sfixed8P8::ONE || value.blue_mult != Sfixed8P8::ONE;
 
   let mut to_write: Vec<i32> = Vec::new();
   if has_mult {
@@ -118,11 +114,7 @@ pub fn emit_color_transform_bits<W: WriteBits>(writer: &mut W, value: &ast::Colo
     ]);
   }
   if has_add {
-    to_write.extend_from_slice(&[
-      value.red_add.into(),
-      value.green_add.into(),
-      value.blue_add.into(),
-    ]);
+    to_write.extend_from_slice(&[value.red_add.into(), value.green_add.into(), value.blue_add.into()]);
   }
 
   let bits = get_i32_min_bit_count(to_write.clone().into_iter());
@@ -138,15 +130,24 @@ pub fn emit_color_transform_bits<W: WriteBits>(writer: &mut W, value: &ast::Colo
   Ok(())
 }
 
-pub fn emit_color_transform_with_alpha<W: io::Write>(writer: &mut W, value: &ast::ColorTransformWithAlpha) -> io::Result<()> {
+pub fn emit_color_transform_with_alpha<W: io::Write>(
+  writer: &mut W,
+  value: &ast::ColorTransformWithAlpha,
+) -> io::Result<()> {
   let mut bits_writer = BitsWriter::new(Vec::new());
   emit_color_transform_with_alpha_bits(&mut bits_writer, value)?;
   writer.write_all(&bits_writer.into_inner()?)
 }
 
-pub fn emit_color_transform_with_alpha_bits<W: WriteBits>(writer: &mut W, value: &ast::ColorTransformWithAlpha) -> io::Result<()> {
+pub fn emit_color_transform_with_alpha_bits<W: WriteBits>(
+  writer: &mut W,
+  value: &ast::ColorTransformWithAlpha,
+) -> io::Result<()> {
   let has_add = value.red_add != 0 || value.green_add != 0 || value.blue_add != 0 || value.alpha_add != 0;
-  let has_mult = value.red_mult != Sfixed8P8::ONE || value.green_mult != Sfixed8P8::ONE || value.blue_mult != Sfixed8P8::ONE || value.alpha_mult != Sfixed8P8::ONE;
+  let has_mult = value.red_mult != Sfixed8P8::ONE
+    || value.green_mult != Sfixed8P8::ONE
+    || value.blue_mult != Sfixed8P8::ONE
+    || value.alpha_mult != Sfixed8P8::ONE;
 
   let mut to_write: Vec<i32> = Vec::new();
   if has_mult {

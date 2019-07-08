@@ -14,11 +14,11 @@ pub fn get_i32_bit_count(value: i32) -> u32 {
   }
 }
 
-pub fn get_u32_min_bit_count<I: Iterator<Item=u32>>(values: I) -> u32 {
+pub fn get_u32_min_bit_count<I: Iterator<Item = u32>>(values: I) -> u32 {
   values.map(get_u32_bit_count).fold(0, |acc, count| max(acc, count))
 }
 
-pub fn get_i32_min_bit_count<I: Iterator<Item=i32>>(values: I) -> u32 {
+pub fn get_i32_min_bit_count<I: Iterator<Item = i32>>(values: I) -> u32 {
   values.map(get_i32_bit_count).fold(0, |acc, count| max(acc, count))
 }
 
