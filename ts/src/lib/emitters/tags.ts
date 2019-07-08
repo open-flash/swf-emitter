@@ -427,6 +427,10 @@ export function emitDefineFontInfoAny(
     | (value.isSmall ? 1 << 5 : 0);
   byteStream.writeUint8(flags);
 
+  if (version >= DefineFontInfoVersion.FontInfo2) {
+    emitLanguageCode(byteStream, value.language);
+  }
+
   for (const codeUnit of value.codeUnits) {
     if (useWideCodes) {
       byteStream.writeUint16LE(codeUnit);

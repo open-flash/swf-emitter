@@ -33,7 +33,7 @@
     "@open-flash/stream": "^0.1.1",
     "incident": "^3.2.0",
     "semantic-types": "^0.1.1",
-    "swf-tree": "^0.7.2"
+    "swf-tree": "^0.8.0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
@@ -46,7 +46,7 @@
     "gulp-cli": "^2.2.0",
     "kryo": "^0.8.1",
     "minimist": "^1.2.0",
-    "swf-parser": "^0.7.0",
+    "swf-parser": "^0.8.0",
     "ts-node": "^8.3.0",
     "tslint": "^5.18.0",
     "turbo-gulp": "^0.20.1",

@@ -127,7 +127,6 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         MorphShapeVersion::MorphShape2 => 84,
       }
     }
-    ast::Tag::DefinePartialFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineSceneAndFrameLabelData(ref tag) => {
       emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
       86
@@ -421,7 +420,7 @@ pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::t
 
 pub(crate) fn emit_define_font_info_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontInfo) -> io::Result<DefineFontInfoVersion> {
   let version = match value.language {
-    Some(ast::LanguageCode::Auto) => DefineFontInfoVersion::FontInfo1,
+    ast::LanguageCode::Auto => DefineFontInfoVersion::FontInfo1,
     _ => DefineFontInfoVersion::FontInfo2,
   };
 
@@ -453,7 +452,7 @@ pub(crate) fn emit_define_font_info_any<W: io::Write>(writer: &mut W, value: &as
   emit_u8(writer, flags)?;
 
   if version >= DefineFontInfoVersion::FontInfo2 {
-    emit_language_code(writer, value.language.unwrap())?;
+    emit_language_code(writer, value.language)?;
   }
 
   for code_unit in value.code_units.iter() {

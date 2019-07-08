@@ -3969,22 +3969,22 @@ sver-compat@^1.5.0:
     es6-iterator "^2.0.1"
     es6-symbol "^3.1.1"
 
-swf-parser@^0.7.0:
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/swf-parser/-/swf-parser-0.7.0.tgz#3913bdc16d2718204adfee6726221943353e3d1a"
-  integrity sha512-3f9/vMuaWAt7YFRb9gCmtj2SBG5kot/+5nE6suf67oAz8aYzzpYVgv0Ip5NHeT0+y0HlueoZmvk8vOnaJ7V3JQ==
+swf-parser@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/swf-parser/-/swf-parser-0.8.0.tgz#25b260a47a9ec61f79f106dee35a6a9f22dc0307"
+  integrity sha512-YBRHwhsl9/rbdEky2AZNMfLiMoMHw1TQgESst7N9PwzntDhEVzTfsnR6+nJ1m6ek7DYiJ2Kdqrcdk2lzcYAvyw==
   dependencies:
     "@open-flash/stream" "^0.1.1"
     "@types/pako" "^1.0.1"
     incident "^3.2.0"
     pako "^1.0.10"
     semantic-types "^0.1.1"
-    swf-tree "^0.7.0"
+    swf-tree "^0.8.0"
 
-swf-tree@^0.7.0, swf-tree@^0.7.2:
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/swf-tree/-/swf-tree-0.7.2.tgz#adcc87735306b161d7a757625f10a4cb6ab21886"
-  integrity sha512-ArwilCDIiLs5Sgv8PkbbGBnzNr2Vq49FdQZKcJ6cw1PvYdsgoN9VTwTYKFv769rEOPHgfugpE+eqEEdQ2acdwg==
+swf-tree@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/swf-tree/-/swf-tree-0.8.0.tgz#7fe92d1cedeb3bb975b9d00b3e8a6711c76ea920"
+  integrity sha512-/zDh90xGy2HIDbueJ9p14fq1TC2Vq7wLMGX0/yVPQCz0Wi2bQcbkScbWN4kJEbhm/K3nLNBK7GCDoGc3o04mvQ==
   dependencies:
     incident "^3.2.0"
     kryo "^0.8.1"
