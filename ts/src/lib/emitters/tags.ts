@@ -1,7 +1,9 @@
+// tslint:disable:max-file-line-count
+
 import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint3, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
-import { Tag, tags, TagType } from "swf-tree";
+import { LanguageCode, Tag, tags, TagType } from "swf-tree";
 import { SoundType } from "swf-tree/sound/sound-type";
 import { TextAlignment } from "swf-tree/text";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
@@ -16,7 +18,7 @@ import {
 import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } from "./button";
 import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
-import { emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
+import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
 import { audioCodingFormatToCode, soundRateToCode } from "./sound";
 import {
   emitCsmTableHintBits,
@@ -117,7 +119,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
       <TagEmitter> [
         emitDefineFontAny,
         new Map([
-          [DefineFontVersion.Font1, 10],
+          // `Font1` is handled in `DefineGlyphFont`
           [DefineFontVersion.Font2, 48],
           [DefineFontVersion.Font3, 75],
           [DefineFontVersion.Font4, 91],
@@ -125,7 +127,18 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
       ],
     ],
     [TagType.DefineFontAlignZones, <TagEmitter> [emitDefineFontAlignZones, 73]],
+    [
+      TagType.DefineFontInfo,
+      <TagEmitter> [
+        emitDefineFontInfoAny,
+        new Map([
+          [DefineFontInfoVersion.FontInfo1, 13],
+          [DefineFontInfoVersion.FontInfo2, 62],
+        ]),
+      ],
+    ],
     [TagType.DefineFontName, <TagEmitter> [emitDefineFontName, 88]],
+    [TagType.DefineGlyphFont, <TagEmitter> [emitDefineGlyphFont, 10]],
     [TagType.DefineJpegTables, <TagEmitter> [emitDefineJpegTables, 8]],
     [
       TagType.DefineMorphShape,
@@ -189,6 +202,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
         ]),
       ],
     ],
+    [TagType.Protect, <TagEmitter> [emitProtect, 24]],
     [
       TagType.RemoveObject,
       <TagEmitter> [
@@ -306,7 +320,7 @@ export function emitCsmTextSettings(byteStream: WritableByteStream, value: tags.
 }
 
 export enum DefineFontVersion {
-  Font1,
+  // `Font1` corresponds to `DefineGlyphFont` and is handled separately.
   Font2,
   Font3,
   Font4,
@@ -374,10 +388,76 @@ export function emitDefineFontAlignZones(byteStream: WritableByteStream, value: 
   }
 }
 
+export enum DefineFontInfoVersion {
+  FontInfo1,
+  FontInfo2,
+}
+
+export function emitDefineFontInfoAny(
+  byteStream: WritableByteStream,
+  value: tags.DefineFontInfo,
+): DefineFontInfoVersion {
+  const version: DefineFontInfoVersion = value.language === LanguageCode.Auto
+    ? DefineFontInfoVersion.FontInfo1
+    : DefineFontInfoVersion.FontInfo2;
+
+  byteStream.writeUint16LE(value.fontId);
+
+  const fontNameStream: WritableStream = new WritableStream();
+  fontNameStream.writeCString(value.fontName);
+  byteStream.writeUint8(fontNameStream.bytePos);
+  byteStream.write(fontNameStream);
+
+  let useWideCodes: boolean = version >= DefineFontInfoVersion.FontInfo2;
+  if (!useWideCodes) {
+    for (const codeUnit of value.codeUnits) {
+      if (codeUnit >= 256) {
+        useWideCodes = true;
+        break;
+      }
+    }
+  }
+
+  const flags: Uint8 = 0
+    | (useWideCodes ? 1 << 0 : 0)
+    | (value.isBold ? 1 << 1 : 0)
+    | (value.isItalic ? 1 << 2 : 0)
+    | (value.isAnsi ? 1 << 3 : 0)
+    | (value.isShiftJis ? 1 << 4 : 0)
+    | (value.isSmall ? 1 << 5 : 0);
+  byteStream.writeUint8(flags);
+
+  for (const codeUnit of value.codeUnits) {
+    if (useWideCodes) {
+      byteStream.writeUint16LE(codeUnit);
+    } else {
+      byteStream.writeUint8(codeUnit);
+    }
+  }
+
+  return version;
+}
+
 export function emitDefineFontName(byteStream: WritableByteStream, value: tags.DefineFontName): void {
   byteStream.writeUint16LE(value.fontId);
   byteStream.writeCString(value.name);
   byteStream.writeCString(value.copyright);
+}
+
+export function emitDefineGlyphFont(byteStream: WritableByteStream, value: tags.DefineGlyphFont): void {
+  byteStream.writeUint16LE(value.id);
+  if (value.glyphs.length === 0) {
+    return;
+  }
+  const firstOffset: UintSize = value.glyphs.length * 2;
+
+  const glyphStream: WritableStream = new WritableStream();
+  for (const glyph of value.glyphs) {
+    byteStream.writeUint16LE(firstOffset + glyphStream.bytePos);
+    emitGlyph(glyphStream, glyph);
+  }
+
+  byteStream.write(glyphStream);
 }
 
 export function emitDefineJpegTables(byteStream: WritableByteStream, value: tags.DefineJpegTables): void {
@@ -765,6 +845,12 @@ export function emitPlaceObjectAny(
       emitColorTransform(byteStream, value.colorTransform!);
     }
     return PlaceObjectVersion.PlaceObject1;
+  }
+}
+
+export function emitProtect(byteStream: WritableByteStream, value: tags.Protect): void {
+  if (value.password.length > 0) {
+    byteStream.writeCString(value.password);
   }
 }
 

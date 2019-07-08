@@ -1,3 +1,7 @@
+# Next
+
+- **[Feature]** Implement emitters for `DefineGlyphFont`, `DefineFontInfo` and `Protect`.
+
 # 0.7.0 (2019-05-21)
 
 - **[Breaking change]** Update to `swf-tree@0.7`.

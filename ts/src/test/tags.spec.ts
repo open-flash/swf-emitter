@@ -32,7 +32,18 @@ describe("tags", function () {
           const valueJson: string = await readTextFile(sample.valuePath);
           const value: Tag = group.type.read(JSON_READER, valueJson);
           const stream: WritableByteStream = new WritableStream();
-          emitTag(stream, value, 10);
+
+          let swfVersion: number;
+          switch (`${group.name}/${sample.name}`) {
+            case "place-object/po2-swf5":
+              swfVersion = 5;
+              break;
+            default:
+              swfVersion = 10;
+              break;
+          }
+
+          emitTag(stream, value, swfVersion);
           const actualBytes: Uint8Array = stream.getBytes();
 
           const expectedBytes: Uint8Array = await readFile(sample.outputPath);

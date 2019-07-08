@@ -13,7 +13,8 @@ use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_f32, emit_le_i16, emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
 use crate::sound::{audio_coding_format_to_code, sound_rate_to_code};
-use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_alignment, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
+use crate::shape::emit_glyph;
+use crate::text::{csm_table_hint_to_code, DefineFontVersion, DefineFontInfoVersion, DefineTextVersion, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs, emit_text_alignment, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code};
 
 pub fn emit_tag_string<W: io::Write>(writer: &mut W, value: &[ast::Tag], swf_version: u8) -> io::Result<()> {
   for tag in value {
@@ -92,7 +93,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     }
     ast::Tag::DefineFont(ref tag) => {
       match emit_define_font_any(&mut tag_writer, tag)? {
-        DefineFontVersion::Font1 => 10,
+        // `Font1` is handled in `DefineGlyphFont`
         DefineFontVersion::Font2 => 48,
         DefineFontVersion::Font3 => 75,
         DefineFontVersion::Font4 => 91,
@@ -102,10 +103,19 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_define_font_align_zones(&mut tag_writer, tag)?;
       73
     }
-    ast::Tag::DefineFontInfo(ref _tag) => unimplemented!(),
+    ast::Tag::DefineFontInfo(ref tag) => {
+      match emit_define_font_info_any(&mut tag_writer, tag)? {
+        DefineFontInfoVersion::FontInfo1 => 13,
+        DefineFontInfoVersion::FontInfo2 => 62,
+      }
+    }
     ast::Tag::DefineFontName(ref tag) => {
       emit_define_font_name(&mut tag_writer, tag)?;
       88
+    }
+    ast::Tag::DefineGlyphFont(ref tag) => {
+      emit_define_glyph_font(&mut tag_writer, tag)?;
+      10
     }
     ast::Tag::DefineJpegTables(ref tag) => {
       emit_define_jpeg_tables(&mut tag_writer, tag)?;
@@ -174,6 +184,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
         PlaceObjectVersion::PlaceObject2 => 26,
         PlaceObjectVersion::PlaceObject3 => 70,
       }
+    }
+    ast::Tag::Protect(ref tag) => {
+      emit_protect(&mut tag_writer, tag)?;
+      24
     }
     ast::Tag::RemoveObject(ref tag) => {
       match emit_remove_object_any(&mut tag_writer, tag)? {
@@ -405,10 +419,73 @@ pub fn emit_define_font_align_zones<W: io::Write>(writer: &mut W, value: &ast::t
   Ok(())
 }
 
+pub(crate) fn emit_define_font_info_any<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontInfo) -> io::Result<DefineFontInfoVersion> {
+  let version = match value.language {
+    Some(ast::LanguageCode::Auto) => DefineFontInfoVersion::FontInfo1,
+    _ => DefineFontInfoVersion::FontInfo2,
+  };
+
+  emit_le_u16(writer, value.font_id)?;
+
+  let font_name_c_string = std::ffi::CString::new(value.font_name.clone()).unwrap();
+  let font_name_bytes = font_name_c_string.as_bytes_with_nul();
+  emit_u8(writer, font_name_bytes.len().try_into().unwrap())?;
+  writer.write_all(font_name_bytes)?;
+
+  let mut use_wide_codes = version >= DefineFontInfoVersion::FontInfo2;
+  if !use_wide_codes {
+    for code_unit in value.code_units.iter() {
+      if *code_unit >= 256 {
+        use_wide_codes = true;
+        break;
+      }
+    }
+  }
+
+  // TODO: `is_ansi` and `is_shift_jis` must be `false` in FontInfo2.
+  let flags: u8 = 0
+    | (if use_wide_codes { 1 << 0 } else { 0 })
+    | (if value.is_bold { 1 << 1 } else { 0 })
+    | (if value.is_italic { 1 << 2 } else { 0 })
+    | (if value.is_ansi { 1 << 3 } else { 0 })
+    | (if value.is_shift_jis { 1 << 4 } else { 0 })
+    | (if value.is_small { 1 << 5 } else { 0 });
+  emit_u8(writer, flags)?;
+
+  if version >= DefineFontInfoVersion::FontInfo2 {
+    emit_language_code(writer, value.language.unwrap())?;
+  }
+
+  for code_unit in value.code_units.iter() {
+    if use_wide_codes {
+      emit_le_u16(writer, *code_unit)?;
+    } else {
+      emit_u8(writer, (*code_unit).try_into().unwrap())?;
+    }
+  }
+
+  Ok(version)
+}
+
 pub fn emit_define_font_name<W: io::Write>(writer: &mut W, value: &ast::tags::DefineFontName) -> io::Result<()> {
   emit_le_u16(writer, value.font_id)?;
   emit_c_string(writer, &value.name)?;
   emit_c_string(writer, &value.copyright)
+}
+
+pub fn emit_define_glyph_font<W: io::Write>(writer: &mut W, value: &ast::tags::DefineGlyphFont) -> io::Result<()> {
+  emit_le_u16(writer, value.id)?;
+  if value.glyphs.len() == 0 {
+    return Ok(())
+  }
+
+  let first_offset = value.glyphs.len() * 2;
+  let mut glyph_writer = Vec::new();
+  for glyph in value.glyphs.iter() {
+    emit_le_u16(writer, (first_offset + glyph_writer.len()) as u16)?;
+    emit_glyph(&mut glyph_writer, glyph)?;
+  }
+  writer.write_all(&glyph_writer)
 }
 
 pub fn emit_define_jpeg_tables<W: io::Write>(writer: &mut W, value: &ast::tags::DefineJpegTables) -> io::Result<()> {
@@ -693,6 +770,13 @@ pub fn emit_place_object_any<W: io::Write>(writer: &mut W, value: &ast::tags::Pl
     }
     Ok(PlaceObjectVersion::PlaceObject1)
   }
+}
+
+pub fn emit_protect<W: io::Write>(writer: &mut W, value: &ast::tags::Protect) -> io::Result<()> {
+  if value.password.len() > 0 {
+    emit_c_string(writer, &value.password)?;
+  }
+  Ok(())
 }
 
 pub enum RemoveObjectVersion {

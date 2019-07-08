@@ -56,15 +56,20 @@ mod tests {
   test_expand_paths! { test_emit_tag; "../tests/tags/*/*/" }
   fn test_emit_tag(path: &str) {
     let path: &Path = Path::new(path);
-    let _name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
+    let name = path.components().last().unwrap().as_os_str().to_str().expect("Failed to retrieve sample name");
 
     let value_path = path.join("value.json");
     let value_file = ::std::fs::File::open(value_path).expect("Failed to open value file");
     let value_reader = ::std::io::BufReader::new(value_file);
     let value = serde_json::from_reader::<_, Tag>(value_reader).expect("Failed to read value");
 
+    let swf_version: u8 = match name {
+      "po2-swf5" => 5,
+      _ => 10,
+    };
+
     let mut actual_bytes = Vec::new();
-    emit_tag(&mut actual_bytes, &value, 10).unwrap();
+    emit_tag(&mut actual_bytes, &value, swf_version).unwrap();
 
     let expected_bytes: Vec<u8> = {
       match ::std::fs::read(path.join("output.bytes")) {

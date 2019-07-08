@@ -12,10 +12,16 @@ use crate::shape::emit_glyph;
 #[allow(dead_code)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum DefineFontVersion {
-  Font1,
+  // `Font1` corresponds to `DefineGlyphFont` and is handled separately.
   Font2,
   Font3,
   Font4,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub(crate) enum DefineFontInfoVersion {
+  FontInfo1,
+  FontInfo2,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
