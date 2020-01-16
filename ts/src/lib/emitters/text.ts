@@ -1,7 +1,7 @@
 import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
-import { Glyph, LanguageCode, text } from "swf-tree";
+import { Glyph, LanguageCode, text } from "swf-types";
 import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGlyph } from "./shape";
 

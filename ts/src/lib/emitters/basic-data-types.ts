@@ -1,6 +1,6 @@
 import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import { Uint16, UintSize } from "semantic-types";
-import { ColorTransform, ColorTransformWithAlpha, Matrix, Rect, SRgb8, StraightSRgba8 } from "swf-tree";
+import { ColorTransform, ColorTransformWithAlpha, Matrix, Rect, SRgb8, StraightSRgba8 } from "swf-types";
 import { getSintMinBitCount } from "../get-bit-count";
 
 export function emitRect(byteStream: WritableByteStream, value: Rect): void {

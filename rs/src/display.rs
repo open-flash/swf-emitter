@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 use std::io;
 
-use swf_tree as ast;
+use swf_types as ast;
 
 use crate::basic_data_types::emit_straight_s_rgba8;
 use crate::primitives::{emit_le_f32, emit_le_i16, emit_le_i32, emit_le_u16, emit_le_u32, emit_u8};

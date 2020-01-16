@@ -1,6 +1,3 @@
-extern crate swf_fixed;
-extern crate swf_tree;
-
 pub mod basic_data_types;
 pub mod bit_count;
 pub mod button;
@@ -20,9 +17,9 @@ mod tests {
   use std::path::Path;
 
   use swf_parser;
-  use swf_tree::Matrix;
-  use swf_tree::Rect;
-  use swf_tree::{ColorTransformWithAlpha, CompressionMethod, Header, Movie, SwfSignature, Tag};
+  use swf_types::Matrix;
+  use swf_types::Rect;
+  use swf_types::{ColorTransformWithAlpha, CompressionMethod, Header, Movie, SwfSignature, Tag};
 
   use ::test_generator::test_expand_paths;
 
@@ -53,8 +50,7 @@ mod tests {
     let actual_movie_path = path.join("local-main.rs.swf");
     ::std::fs::write(actual_movie_path, &actual_bytes).expect("Failed to write actual SWF");
 
-    let (_, actual_movie): (_, Movie) =
-      swf_parser::parsers::movie::parse_movie(&actual_bytes).expect("Failed to parse movie");
+    let actual_movie = swf_parser::parse_swf(&actual_bytes).expect("Failed to parse movie");
 
     assert_eq!(actual_movie, value);
   }

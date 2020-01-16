@@ -10,13 +10,13 @@
 [![Build status](https://img.shields.io/travis/com/open-flash/swf-emitter/master.svg)](https://travis-ci.com/open-flash/swf-emitter)
 
 SWF emitter implemented in Rust.
-Converts [`swf-tree` movies][swf-tree] to bytes.
+Converts [`swf-types` movies][swf-types] to bytes.
 
 ## Usage
 
 ```rust
 use swf_emitter;
-use swf_tree::{CompressionMethod, Movie};
+use swf_types::{CompressionMethod, Movie};
 
 fn main() {
   let movie: Movie = ...;
@@ -44,4 +44,4 @@ Prefer non-`master` branches when sending a PR so your changes can be rebased if
 needed. All the commits must be made on top of `master` (fast-forward merge).
 CI must pass for changes to be accepted.
 
-[swf-tree]: https://github.com/open-flash/swf-tree
+[swf-types]: https://github.com/open-flash/swf-types

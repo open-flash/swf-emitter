@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import { JsonReader } from "kryo/readers/json";
 import * as sysPath from "path";
-import { CompressionMethod, Movie } from "swf-tree";
-import { $Movie } from "swf-tree/movie";
+import { CompressionMethod, Movie } from "swf-types";
+import { $Movie } from "swf-types/movie";
 import { movieToBytes } from "../lib";
 
 async function main(): Promise<void> {

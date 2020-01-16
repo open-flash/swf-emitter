@@ -3,9 +3,9 @@
 import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint2, Uint3, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
-import { LanguageCode, Tag, tags, TagType } from "swf-tree";
-import { SoundType } from "swf-tree/sound/sound-type";
-import { TextAlignment } from "swf-tree/text";
+import { LanguageCode, Tag, tags, TagType } from "swf-types";
+import { SoundType } from "swf-types/sound/sound-type";
+import { TextAlignment } from "swf-types/text";
 import { getSintBitCount, getUintBitCount } from "../get-bit-count";
 import {
   emitColorTransform,
@@ -217,7 +217,11 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
     [TagType.ShowFrame, 1],
   ]);
 
-  if (value.type === TagType.Unknown) {
+  if (value.type === TagType.Raw) {
+    byteStream.writeBytes(value.data);
+    return;
+  }
+  if (value.type === TagType.RawBody) {
     emitTagHeader(byteStream, {code: value.code, length: value.data.length});
     byteStream.writeBytes(value.data);
     return;
@@ -353,7 +357,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
 
   const fontNameStream: WritableStream = new WritableStream();
   // TODO: Check if it should be `.writeCString` or `.writeString`
-  fontNameStream.writeCString(value.fontName); // TODO: See DefineFontInfo for encoding
+  fontNameStream.writeNulUtf8(value.fontName); // TODO: See DefineFontInfo for encoding
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
 
@@ -404,7 +408,7 @@ export function emitDefineFontInfoAny(
   byteStream.writeUint16LE(value.fontId);
 
   const fontNameStream: WritableStream = new WritableStream();
-  fontNameStream.writeCString(value.fontName);
+  fontNameStream.writeNulUtf8(value.fontName);
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
 
@@ -444,8 +448,8 @@ export function emitDefineFontInfoAny(
 
 export function emitDefineFontName(byteStream: WritableByteStream, value: tags.DefineFontName): void {
   byteStream.writeUint16LE(value.fontId);
-  byteStream.writeCString(value.name);
-  byteStream.writeCString(value.copyright);
+  byteStream.writeNulUtf8(value.name);
+  byteStream.writeNulUtf8(value.copyright);
 }
 
 export function emitDefineGlyphFont(byteStream: WritableByteStream, value: tags.DefineGlyphFont): void {
@@ -502,12 +506,12 @@ export function emitDefineSceneAndFrameLabelData(
   byteStream.writeUint32Leb128(value.scenes.length);
   for (const scene of value.scenes) {
     byteStream.writeUint32Leb128(scene.offset);
-    byteStream.writeCString(scene.name);
+    byteStream.writeNulUtf8(scene.name);
   }
   byteStream.writeUint32Leb128(value.labels.length);
   for (const label of value.labels) {
     byteStream.writeUint32Leb128(label.frame);
-    byteStream.writeCString(label.name);
+    byteStream.writeNulUtf8(label.name);
   }
 }
 
@@ -572,7 +576,7 @@ export function emitDefineDynamicText(byteStream: WritableByteStream, value: tag
     byteStream.writeUint16LE(value.fontId!);
   }
   if (hasFontClass) {
-    byteStream.writeCString(value.fontClass!);
+    byteStream.writeNulUtf8(value.fontClass!);
   }
   if (hasFont || hasFontClass) {
     byteStream.writeUint16LE(value.fontSize!);
@@ -590,9 +594,9 @@ export function emitDefineDynamicText(byteStream: WritableByteStream, value: tag
     byteStream.writeUint16LE(value.indent);
     byteStream.writeSint16LE(value.leading);
   }
-  byteStream.writeCString(value.variableName !== undefined ? value.variableName : "");
+  byteStream.writeNulUtf8(value.variableName !== undefined ? value.variableName : "");
   if (hasText) {
-    byteStream.writeCString(value.text!);
+    byteStream.writeNulUtf8(value.text!);
   }
 }
 
@@ -658,7 +662,7 @@ export function emitExportAssets(byteStream: WritableByteStream, value: tags.Exp
   byteStream.writeUint16LE(value.assets.length);
   for (const asset of value.assets) {
     byteStream.writeUint16LE(asset.id);
-    byteStream.writeCString(asset.name);
+    byteStream.writeNulUtf8(asset.name);
   }
 }
 
@@ -678,7 +682,7 @@ export function emitFileAttributes(byteStream: WritableByteStream, value: tags.F
 }
 
 export function emitFrameLabel(byteStream: WritableByteStream, value: tags.FrameLabel): void {
-  byteStream.writeCString(value.name);
+  byteStream.writeNulUtf8(value.name);
   if (value.isAnchor) {
     byteStream.writeUint8(1);
   }
@@ -697,7 +701,7 @@ export function emitImportAssetsAny(
   const version: ImportAssetsVersion = swfVersion < 8
     ? ImportAssetsVersion.ImportAssets1
     : ImportAssetsVersion.ImportAssets2;
-  byteStream.writeCString(value.url);
+  byteStream.writeNulUtf8(value.url);
   if (version === ImportAssetsVersion.ImportAssets2) {
     byteStream.writeUint8(1); // Must be 1 according to the spec
     byteStream.writeUint8(0); // Must be 0 according to the spec
@@ -705,13 +709,13 @@ export function emitImportAssetsAny(
   byteStream.writeUint16LE(value.assets.length);
   for (const asset of value.assets) {
     byteStream.writeUint16LE(asset.id);
-    byteStream.writeCString(asset.name);
+    byteStream.writeNulUtf8(asset.name);
   }
   return version;
 }
 
 export function emitMetadata(byteStream: WritableByteStream, value: tags.Metadata): void {
-  byteStream.writeCString(value.metadata);
+  byteStream.writeNulUtf8(value.metadata);
 }
 
 export enum PlaceObjectVersion {
@@ -764,7 +768,7 @@ export function emitPlaceObjectAny(
     byteStream.writeUint16LE(flags);
     byteStream.writeUint16LE(value.depth);
     if (hasClassName) {
-      byteStream.writeCString(value.className!);
+      byteStream.writeNulUtf8(value.className!);
     }
     if (hasCharacterId) {
       byteStream.writeUint16LE(value.characterId!);
@@ -779,7 +783,7 @@ export function emitPlaceObjectAny(
       byteStream.writeUint16LE(value.ratio!);
     }
     if (hasName) {
-      byteStream.writeCString(value.name!);
+      byteStream.writeNulUtf8(value.name!);
     }
     if (hasClipDepth) {
       byteStream.writeUint16LE(value.clipDepth!);
@@ -831,7 +835,7 @@ export function emitPlaceObjectAny(
       byteStream.writeUint16LE(value.ratio!);
     }
     if (hasName) {
-      byteStream.writeCString(value.name!);
+      byteStream.writeNulUtf8(value.name!);
     }
     if (hasClipDepth) {
       byteStream.writeUint16LE(value.clipDepth!);
@@ -854,7 +858,7 @@ export function emitPlaceObjectAny(
 
 export function emitProtect(byteStream: WritableByteStream, value: tags.Protect): void {
   if (value.password.length > 0) {
-    byteStream.writeCString(value.password);
+    byteStream.writeNulUtf8(value.password);
   }
 }
 

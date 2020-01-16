@@ -1,4 +1,4 @@
-use swf_tree as ast;
+use swf_types as ast;
 
 pub(crate) fn audio_coding_format_to_code(value: ast::AudioCodingFormat) -> u8 {
   match value {

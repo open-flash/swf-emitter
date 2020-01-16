@@ -15,9 +15,9 @@ import {
   ShapeRecord,
   shapeRecords,
   ShapeRecordType,
-} from "swf-tree";
-import { ShapeStyles } from "swf-tree/shape-styles";
-import { Vector2D } from "swf-tree/vector-2d";
+} from "swf-types";
+import { ShapeStyles } from "swf-types/shape-styles";
+import { Vector2D } from "swf-types/vector-2d";
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
 import { emitGradient } from "./gradient";

@@ -10,14 +10,14 @@
 [![Build status](https://img.shields.io/travis/com/open-flash/swf-emitter/master.svg)](https://travis-ci.com/open-flash/swf-emitter)
 
 SWF emitter implemented in Typescript, for Node and browsers.
-Converts [`swf-tree` movies][swf-tree] to bytes.
+Converts [`swf-types` movies][swf-types] to bytes.
 
 ## Usage
 
 ```typescript
 import fs from "fs";
-import { CompressionMethod } from "swf-tree";
-import { Movie } from "swf-tree/movie";
+import { CompressionMethod } from "swf-types";
+import { Movie } from "swf-types/movie";
 import { movieToBytes } from "swf-emitter";
 
 function main(): void {
@@ -53,4 +53,4 @@ Prefer non-`master` branches when sending a PR so your changes can be rebased if
 needed. All the commits must be made on top of `master` (fast-forward merge).
 CI must pass for changes to be accepted.
 
-[swf-tree]: https://github.com/open-flash/swf-tree
+[swf-types]: https://github.com/open-flash/swf-types

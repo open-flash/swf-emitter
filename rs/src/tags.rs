@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::io;
 
 use swf_fixed::Sfixed8P8;
-use swf_tree as ast;
+use swf_types as ast;
 
 use crate::basic_data_types::{
   emit_c_string, emit_color_transform, emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect,
@@ -89,6 +89,8 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       ButtonVersion::Button1 => 7,
       ButtonVersion::Button2 => 34,
     },
+    ast::Tag::DefineButtonColorTransform(ref _tag) => unimplemented!(),
+    ast::Tag::DefineButtonSound(ref _tag) => unimplemented!(),
     ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineDynamicText(ref tag) => {
       emit_define_dynamic_text(&mut tag_writer, tag)?;
@@ -126,6 +128,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       MorphShapeVersion::MorphShape1 => 46,
       MorphShapeVersion::MorphShape2 => 84,
     },
+    ast::Tag::DefineScalingGrid(ref _tag) => unimplemented!(),
     ast::Tag::DefineSceneAndFrameLabelData(ref tag) => {
       emit_define_scene_and_frame_label_data(&mut tag_writer, tag)?;
       86
@@ -148,6 +151,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       DefineTextVersion::Text1 => 11,
       DefineTextVersion::Text2 => 33,
     },
+    ast::Tag::DefineVideoStream(ref _tag) => unimplemented!(),
     ast::Tag::DoAbc(ref _tag) => unimplemented!(),
     ast::Tag::DoAction(ref tag) => {
       emit_do_action(&mut tag_writer, tag)?;
@@ -155,6 +159,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     }
     ast::Tag::DoInitAction(ref _tag) => unimplemented!(),
     ast::Tag::EnableDebugger(ref _tag) => unimplemented!(),
+    ast::Tag::EnablePostscript => unimplemented!(),
     ast::Tag::ExportAssets(ref tag) => {
       emit_export_assets(&mut tag_writer, tag)?;
       56
@@ -181,6 +186,8 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_protect(&mut tag_writer, tag)?;
       24
     }
+    ast::Tag::Raw(ref _tag) => unimplemented!(),
+    ast::Tag::RawBody(ref _tag) => unimplemented!(),
     ast::Tag::RemoveObject(ref tag) => match emit_remove_object_any(&mut tag_writer, tag)? {
       RemoveObjectVersion::RemoveObject1 => 5,
       RemoveObjectVersion::RemoveObject2 => 28,
@@ -190,6 +197,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_set_background_color(&mut tag_writer, tag)?;
       9
     }
+    ast::Tag::SetTabIndex(ref _tag) => unimplemented!(),
     ast::Tag::ShowFrame => 1,
     ast::Tag::SoundStreamBlock(ref _tag) => unimplemented!(),
     ast::Tag::SoundStreamHead(ref _tag) => unimplemented!(),
@@ -197,7 +205,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::StartSound2(ref _tag) => unimplemented!(),
     ast::Tag::SymbolClass(ref _tag) => unimplemented!(),
     ast::Tag::Telemetry(ref _tag) => unimplemented!(),
-    ast::Tag::Unknown(ref _tag) => unimplemented!(),
+    ast::Tag::VideoFrame(ref _tag) => unimplemented!(),
   };
 
   emit_tag_header(
@@ -246,6 +254,7 @@ pub fn emit_define_bitmap_any<W: io::Write>(
     ast::ImageType::SwfAbmp => DefineBitmapVersion::DefineBitsLossless2,
     ast::ImageType::Jpeg | ast::ImageType::Gif | ast::ImageType::Png => DefineBitmapVersion::DefineBitsJpeg2,
     ast::ImageType::Ajpeg => DefineBitmapVersion::DefineBitsJpeg3,
+    ast::ImageType::Ajpegd => unimplemented!("x-ajpegd"),
     ast::ImageType::PartialJpeg => DefineBitmapVersion::DefineBitsJpeg1,
   };
 

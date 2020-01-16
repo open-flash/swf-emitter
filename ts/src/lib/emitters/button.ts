@@ -1,10 +1,10 @@
 import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { Uint16, Uint7, Uint8, UintSize } from "semantic-types";
-import { BlendMode } from "swf-tree/blend-mode";
-import { ButtonCond } from "swf-tree/button/button-cond";
-import { ButtonCondAction } from "swf-tree/button/button-cond-action";
-import { ButtonRecord } from "swf-tree/button/button-record";
+import { BlendMode } from "swf-types/blend-mode";
+import { ButtonCond } from "swf-types/button/button-cond";
+import { ButtonCondAction } from "swf-types/button/button-cond-action";
+import { ButtonRecord } from "swf-types/button/button-record";
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types";
 import { emitBlendMode, emitFilterList } from "./display";
 

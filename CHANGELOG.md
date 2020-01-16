@@ -1,3 +1,7 @@
+# Next
+
+- **[Breaking change]** Update to `swf-types@0.10.0`.
+
 # 0.8.0 (2019-07-08)
 
 - **[Breaking change]** Update to `swf-tree@0.8`.

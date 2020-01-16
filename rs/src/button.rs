@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 use std::io;
 
-use swf_tree as ast;
+use swf_types as ast;
 
 use crate::basic_data_types::{emit_color_transform_with_alpha, emit_matrix};
 use crate::display::{emit_blend_mode, emit_filter_list};

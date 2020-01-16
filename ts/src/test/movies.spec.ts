@@ -3,9 +3,9 @@ import fs from "fs";
 import { JsonReader } from "kryo/readers/json";
 import { JsonValueWriter } from "kryo/writers/json-value";
 import sysPath from "path";
-import { movieFromBytes } from "swf-parser";
-import { CompressionMethod } from "swf-tree";
-import { $Movie, Movie } from "swf-tree/movie";
+import { parseSwf } from "swf-parser";
+import { CompressionMethod } from "swf-types";
+import { $Movie, Movie } from "swf-types/movie";
 import { movieToBytes } from "../lib";
 import meta from "./meta.js";
 import { readTextFile } from "./utils";
@@ -34,7 +34,7 @@ describe("movies", function () {
 
       fs.writeFileSync(sysPath.join(MOVIE_SAMPLES_ROOT, sample.name, "local-main.ts.swf"), actualBytes);
 
-      const actualMovie: Movie = movieFromBytes(actualBytes);
+      const actualMovie: Movie = parseSwf(actualBytes);
 
       try {
         chai.assert.isTrue($Movie.equals(actualMovie, value));

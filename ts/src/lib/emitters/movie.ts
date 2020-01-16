@@ -1,7 +1,7 @@
 import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import { Incident } from "incident";
 import { UintSize } from "semantic-types";
-import { CompressionMethod, Header, Movie, SwfSignature } from "swf-tree";
+import { CompressionMethod, Header, Movie, SwfSignature } from "swf-types";
 import * as zlib from "zlib";
 import { emitRect } from "./basic-data-types";
 import { emitTagString } from "./tags";

@@ -1,6 +1,6 @@
 import { WritableByteStream, WritableStream } from "@open-flash/stream";
-import * as ast from "swf-tree";
-import { CompressionMethod } from "swf-tree";
+import * as ast from "swf-types";
+import { CompressionMethod } from "swf-types";
 import { emitMovie } from "./emitters/movie";
 
 export { ast };

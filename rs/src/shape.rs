@@ -2,7 +2,7 @@ use std::cmp::max;
 use std::convert::{TryFrom, TryInto};
 use std::io;
 
-use swf_tree as ast;
+use swf_types as ast;
 
 use crate::basic_data_types::{emit_matrix, emit_s_rgb8, emit_straight_s_rgba8};
 use crate::bit_count::{get_i32_min_bit_count, get_u32_bit_count};

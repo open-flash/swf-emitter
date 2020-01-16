@@ -4,7 +4,7 @@ use std::io;
 use crate::basic_data_types::emit_rect;
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::tags::emit_tag_string;
-use swf_tree as ast;
+use swf_types as ast;
 
 const SWF_SIGNATURE_SIZE: usize = 8;
 

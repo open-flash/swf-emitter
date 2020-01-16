@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io;
 
 use swf_fixed::{Sfixed16P16, Sfixed8P8};
-use swf_tree as ast;
+use swf_types as ast;
 
 use crate::bit_count::get_i32_min_bit_count;
 use crate::io_bits::{BitsWriter, WriteBits};
