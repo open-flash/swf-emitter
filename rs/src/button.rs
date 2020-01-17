@@ -7,12 +7,35 @@ use crate::basic_data_types::{emit_color_transform_with_alpha, emit_matrix};
 use crate::display::{emit_blend_mode, emit_filter_list};
 use crate::primitives::{emit_le_u16, emit_u8};
 
-// TODO: Remove unused variants (`dead_code` should not be allowed)
-#[allow(dead_code)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum ButtonVersion {
   Button1,
   Button2,
+}
+
+pub(crate) fn get_min_button_version(value: &ast::tags::DefineButton) -> ButtonVersion {
+  if value.track_as_menu {
+    return ButtonVersion::Button2;
+  }
+  for record in &value.characters {
+    let is_default_color_transform = match record.color_transform {
+      None => true,
+      Some(transform) => transform == ast::ColorTransformWithAlpha::default(),
+    };
+
+    if !is_default_color_transform || !record.filters.is_empty() || record.blend_mode != ast::BlendMode::Normal {
+      return ButtonVersion::Button2;
+    }
+  }
+
+  if value.actions.len() != 1 {
+    return ButtonVersion::Button2;
+  }
+  let action = &value.actions[0];
+  if action.conditions.is_some() {
+    return ButtonVersion::Button2;
+  }
+  ButtonVersion::Button1
 }
 
 pub(crate) fn emit_button_record_string<W: io::Write>(
@@ -63,6 +86,7 @@ pub(crate) fn emit_button2_cond_action_string<W: io::Write>(
   writer: &mut W,
   value: &[ast::ButtonCondAction],
 ) -> io::Result<()> {
+  debug_assert!(!value.is_empty());
   for (index, action) in value.iter().enumerate() {
     let mut action_writer = Vec::new();
     emit_button2_cond_action(&mut action_writer, action)?;

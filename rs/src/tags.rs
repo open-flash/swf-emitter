@@ -10,7 +10,9 @@ use crate::basic_data_types::{
   emit_s_rgb8, emit_straight_s_rgba8,
 };
 use crate::bit_count::{get_i32_bit_count, get_u32_bit_count};
-use crate::button::{emit_button2_cond_action_string, emit_button_record_string, ButtonVersion};
+use crate::button::{
+  emit_button2_cond_action_string, emit_button_record_string, get_min_button_version, ButtonVersion,
+};
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_f32, emit_le_i16, emit_le_u16, emit_le_u32, emit_u8};
@@ -186,8 +188,11 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       emit_protect(&mut tag_writer, tag)?;
       24
     }
-    ast::Tag::Raw(ref _tag) => unimplemented!(),
-    ast::Tag::RawBody(ref _tag) => unimplemented!(),
+    ast::Tag::Raw(ref tag) => return writer.write_all(&tag.data),
+    ast::Tag::RawBody(ref tag) => {
+      emit_raw_body(&mut tag_writer, tag)?;
+      tag.code
+    }
     ast::Tag::RemoveObject(ref tag) => match emit_remove_object_any(&mut tag_writer, tag)? {
       RemoveObjectVersion::RemoveObject1 => 5,
       RemoveObjectVersion::RemoveObject2 => 28,
@@ -267,24 +272,37 @@ pub(crate) fn emit_define_button_any<W: io::Write>(
 ) -> io::Result<ButtonVersion> {
   emit_le_u16(writer, value.id)?;
 
-  let flags: u8 = 0 | (if value.track_as_menu { 1 << 0 } else { 0 });
-  emit_u8(writer, flags)?;
-
-  // TODO: Select the lowest compatible `ButtonVersion`
-  let version: ButtonVersion = ButtonVersion::Button2;
+  let version: ButtonVersion = get_min_button_version(value);
 
   let mut record_writer: Vec<u8> = Vec::new();
   emit_button_record_string(&mut record_writer, &value.characters, version)?;
-  if value.actions.len() == 0 {
-    emit_le_u16(writer, 0)?;
-    writer.write_all(&record_writer)?;
-  } else {
-    // Add the size of the offset field itself
-    let action_offset = record_writer.len() + std::mem::size_of::<u16>();
-    emit_le_u16(writer, action_offset.try_into().unwrap())?;
-    writer.write_all(&record_writer)?;
-    emit_button2_cond_action_string(writer, &value.actions)?;
+
+  match version {
+    ButtonVersion::Button1 => {
+      debug_assert_eq!(value.track_as_menu, false);
+      writer.write_all(&record_writer)?;
+      debug_assert_eq!(value.actions.len(), 1);
+      let action: &ast::ButtonCondAction = value.actions.get(0).unwrap();
+      debug_assert!(action.conditions.is_none());
+      writer.write_all(&action.actions)?;
+    }
+    ButtonVersion::Button2 => {
+      let flags: u8 = 0 | (if value.track_as_menu { 1 << 0 } else { 0 });
+      emit_u8(writer, flags)?;
+
+      if value.actions.len() == 0 {
+        emit_le_u16(writer, 0)?;
+        writer.write_all(&record_writer)?;
+      } else {
+        // Add the size of the offset field itself
+        let action_offset = std::mem::size_of::<u16>() + record_writer.len();
+        emit_le_u16(writer, action_offset.try_into().unwrap())?;
+        writer.write_all(&record_writer)?;
+        emit_button2_cond_action_string(writer, &value.actions)?;
+      }
+    }
   }
+
   Ok(version)
 }
 
@@ -869,4 +887,8 @@ pub fn emit_set_background_color<W: io::Write>(
   value: &ast::tags::SetBackgroundColor,
 ) -> io::Result<()> {
   emit_s_rgb8(writer, value.color)
+}
+
+pub fn emit_raw_body<W: io::Write>(writer: &mut W, value: &ast::tags::RawBody) -> io::Result<()> {
+  writer.write_all(&value.data)
 }

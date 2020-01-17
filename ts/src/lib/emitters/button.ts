@@ -5,12 +5,51 @@ import { BlendMode } from "swf-types/blend-mode";
 import { ButtonCond } from "swf-types/button/button-cond";
 import { ButtonCondAction } from "swf-types/button/button-cond-action";
 import { ButtonRecord } from "swf-types/button/button-record";
+import {
+  $ColorTransformWithAlpha,
+  ColorTransformWithAlpha,
+} from "swf-types/color-transform-with-alpha";
+import { Sfixed8P8 } from "swf-types/fixed-point/sfixed8p8";
+import { DefineButton } from "swf-types/tags";
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types";
 import { emitBlendMode, emitFilterList } from "./display";
 
 export enum ButtonVersion {
   Button1,
   Button2,
+}
+
+export function getMinButtonVersion(value: DefineButton): ButtonVersion {
+  if (value.trackAsMenu) {
+    return ButtonVersion.Button2;
+  }
+  for (const record of value.characters) {
+    const DEFAULT_COLOR_TRANSFORM: ColorTransformWithAlpha = {
+      redMult: Sfixed8P8.fromValue(1),
+      greenMult: Sfixed8P8.fromValue(1),
+      blueMult: Sfixed8P8.fromValue(1),
+      alphaMult: Sfixed8P8.fromValue(1),
+      redAdd: 0,
+      greenAdd: 0,
+      blueAdd: 0,
+      alphaAdd: 0,
+    };
+    const isDefaultColorTransform: boolean = record.colorTransform === undefined
+      || $ColorTransformWithAlpha.equals(record.colorTransform, DEFAULT_COLOR_TRANSFORM);
+
+    if (!isDefaultColorTransform || record.filters.length > 0 || record.blendMode !== BlendMode.Normal) {
+      return ButtonVersion.Button2;
+    }
+  }
+
+  if (value.actions.length !== 1) {
+    return ButtonVersion.Button2;
+  }
+  const action: ButtonCondAction = value.actions[0];
+  if (action.conditions !== undefined) {
+    return ButtonVersion.Button2;
+  }
+  return ButtonVersion.Button1;
 }
 
 export function emitButtonRecordString(
@@ -75,7 +114,10 @@ export function emitButton2CondActionString(
   }
 }
 
-export function emitButton2CondAction(byteStream: WritableByteStream, value: ButtonCondAction): void {
+export function emitButton2CondAction(
+  byteStream: WritableByteStream,
+  value: ButtonCondAction,
+): void {
   if (value.conditions === undefined) {
     throw new Incident("ExpectedConditionsToBeDefined");
   }

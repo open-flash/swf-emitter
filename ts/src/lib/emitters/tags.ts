@@ -15,7 +15,12 @@ import {
   emitSRgb8,
   emitStraightSRgba8,
 } from "./basic-data-types";
-import { ButtonVersion, emitButton2CondActionString, emitButtonRecordString } from "./button";
+import {
+  ButtonVersion,
+  emitButton2CondActionString,
+  emitButtonRecordString,
+  getMinButtonVersion,
+} from "./button";
 import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
 import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
@@ -288,22 +293,30 @@ export function emitDefineBitmapAny(byteStream: WritableByteStream, value: tags.
 
 export function emitDefineButtonAny(byteStream: WritableByteStream, value: tags.DefineButton): ButtonVersion {
   byteStream.writeUint16LE(value.id);
-  const flags: Uint8 = 0
-    | (value.trackAsMenu ? 1 << 0 : 0);
-  byteStream.writeUint8(flags);
+  const version: ButtonVersion = getMinButtonVersion(value);
+
   const buttonRecordStream: WritableStream = new WritableStream();
   // TODO: Select the lowest compatible `ButtonVersion`
-  const version: ButtonVersion = ButtonVersion.Button2;
   emitButtonRecordString(buttonRecordStream, value.characters, version);
-  if (value.actions.length === 0) {
-    byteStream.writeUint16LE(0);
+
+  if (version === ButtonVersion.Button1) {
     byteStream.write(buttonRecordStream);
+    byteStream.writeBytes(value.actions[0].actions);
   } else {
-    // `+ 2` for the offset field itself
-    byteStream.writeUint16LE(buttonRecordStream.bytePos + 2);
-    byteStream.write(buttonRecordStream);
-    emitButton2CondActionString(byteStream, value.actions);
+    const flags: Uint8 = 0
+      | (value.trackAsMenu ? 1 << 0 : 0);
+    byteStream.writeUint8(flags);
+    if (value.actions.length === 0) {
+      byteStream.writeUint16LE(0);
+      byteStream.write(buttonRecordStream);
+    } else {
+      // `+ 2` for the offset field itself
+      byteStream.writeUint16LE(buttonRecordStream.bytePos + 2);
+      byteStream.write(buttonRecordStream);
+      emitButton2CondActionString(byteStream, value.actions);
+    }
   }
+
   return version;
 }
 

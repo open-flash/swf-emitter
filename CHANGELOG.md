@@ -1,6 +1,7 @@
 # Next
 
 - **[Breaking change]** Update to `swf-types@0.10.0`.
+- **[Fix]** Add support for `DefineButton1`.
 
 # 0.8.0 (2019-07-08)
 
