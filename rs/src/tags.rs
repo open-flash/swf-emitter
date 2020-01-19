@@ -18,7 +18,7 @@ use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
 use crate::primitives::{emit_le_f32, emit_le_i16, emit_le_u16, emit_le_u32, emit_u8};
 use crate::shape::emit_glyph;
 use crate::shape::{emit_shape, get_min_shape_version, ShapeVersion};
-use crate::sound::{audio_coding_format_to_code, sound_rate_to_code};
+use crate::sound::{audio_coding_format_to_code, emit_sound_info, sound_rate_to_code};
 use crate::text::{
   csm_table_hint_to_code, emit_font_alignment_zone, emit_font_layout, emit_language_code, emit_offset_glyphs,
   emit_text_alignment, emit_text_record_string, grid_fitting_to_code, text_renderer_to_code, DefineFontInfoVersion,
@@ -206,7 +206,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
     ast::Tag::ShowFrame => 1,
     ast::Tag::SoundStreamBlock(ref _tag) => unimplemented!(),
     ast::Tag::SoundStreamHead(ref _tag) => unimplemented!(),
-    ast::Tag::StartSound(ref _tag) => unimplemented!(),
+    ast::Tag::StartSound(ref tag) => {
+      emit_start_sound(&mut tag_writer, tag)?;
+      15
+    }
     ast::Tag::StartSound2(ref _tag) => unimplemented!(),
     ast::Tag::SymbolClass(ref _tag) => unimplemented!(),
     ast::Tag::Telemetry(ref _tag) => unimplemented!(),
@@ -887,6 +890,12 @@ pub fn emit_set_background_color<W: io::Write>(
   value: &ast::tags::SetBackgroundColor,
 ) -> io::Result<()> {
   emit_s_rgb8(writer, value.color)
+}
+
+pub fn emit_start_sound<W: io::Write>(writer: &mut W, value: &ast::tags::StartSound) -> io::Result<()> {
+  emit_le_u16(writer, value.sound_id)?;
+  emit_sound_info(writer, &value.sound_info)?;
+  Ok(())
 }
 
 pub fn emit_raw_body<W: io::Write>(writer: &mut W, value: &ast::tags::RawBody) -> io::Result<()> {

@@ -24,7 +24,7 @@ import {
 import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
 import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
 import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
-import { audioCodingFormatToCode, soundRateToCode } from "./sound";
+import { audioCodingFormatToCode, emitSoundInfo, soundRateToCode } from "./sound";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -219,6 +219,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
       ],
     ],
     [TagType.SetBackgroundColor, <TagEmitter> [emitSetBackgroundColor, 9]],
+    [TagType.StartSound, <TagEmitter> [emitStartSound, 15]],
     [TagType.ShowFrame, 1],
   ]);
 
@@ -889,6 +890,11 @@ export function emitRemoveObjectAny(byteStream: WritableByteStream, value: tags.
     byteStream.writeUint16LE(value.depth);
     return RemoveObjectVersion.RemoveObject2;
   }
+}
+
+export function emitStartSound(byteStream: WritableByteStream, value: tags.StartSound): void {
+  byteStream.writeUint16LE(value.soundId);
+  emitSoundInfo(byteStream, value.soundInfo);
 }
 
 export function emitSetBackgroundColor(byteStream: WritableByteStream, value: tags.SetBackgroundColor): void {

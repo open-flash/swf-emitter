@@ -69,9 +69,6 @@ mod tests {
     match name {
       "button-sound-id3-empty" => return,
       "text2-www-free-flash-animations-com" => return,
-      "start-sound1-id18" => return,
-      "start-sound1-play17" => return,
-      "start-sound1-stop17" => return,
       _ => {}
     }
 

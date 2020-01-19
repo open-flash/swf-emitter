@@ -17,9 +17,6 @@ const BLACKLIST: ReadonlySet<string> = new Set([
   // "define-shape/shape1-squares",
   "define-button-sound/button-sound-id3-empty", // TODO
   "define-text/text2-www-free-flash-animations-com", // TODO
-  "start-sound/start-sound1-id18", // TODO
-  "start-sound/start-sound1-play17", // TODO
-  "start-sound/start-sound1-stop17", // TODO
 ]);
 // `WHITELIST` can be used to only enable a few tests.
 const WHITELIST: ReadonlySet<string> = new Set([
