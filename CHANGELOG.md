@@ -2,6 +2,7 @@
 
 - **[Breaking change]** Update to `swf-types@0.10.0`.
 - **[Fix]** Add support for `DefineButton1`.
+- **[Fix]** Add support for `DefineButtonSound`.
 - **[Fix]** Add support for `StartSound`.
 
 # 0.8.0 (2019-07-08)

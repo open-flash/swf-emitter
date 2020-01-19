@@ -6,6 +6,7 @@ use swf_types as ast;
 use crate::basic_data_types::{emit_color_transform_with_alpha, emit_matrix};
 use crate::display::{emit_blend_mode, emit_filter_list};
 use crate::primitives::{emit_le_u16, emit_u8};
+use crate::sound::emit_sound_info;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum ButtonVersion {
@@ -124,4 +125,16 @@ pub(crate) fn emit_button_cond<W: io::Write>(writer: &mut W, value: &ast::Button
     | (if value.over_down_to_idle { 1 << 8 } else { 0 })
     | (key_code << 9);
   emit_le_u16(writer, flags)
+}
+
+pub(crate) fn emit_button_sound<W: io::Write>(writer: &mut W, value: &Option<ast::ButtonSound>) -> io::Result<()> {
+  match value {
+    None => emit_le_u16(writer, 0)?,
+    Some(value) => {
+      assert_ne!(value.sound_id, 0);
+      emit_le_u16(writer, value.sound_id)?;
+      emit_sound_info(writer, &value.sound_info)?;
+    }
+  }
+  Ok(())
 }

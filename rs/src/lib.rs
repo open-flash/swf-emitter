@@ -67,7 +67,6 @@ mod tests {
 
     // Blacklist
     match name {
-      "button-sound-id3-empty" => return,
       "text2-www-free-flash-animations-com" => return,
       _ => {}
     }

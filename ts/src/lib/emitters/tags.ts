@@ -18,7 +18,7 @@ import {
 import {
   ButtonVersion,
   emitButton2CondActionString,
-  emitButtonRecordString,
+  emitButtonRecordString, emitButtonSound,
   getMinButtonVersion,
 } from "./button";
 import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
@@ -118,6 +118,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
         ]),
       ],
     ],
+    [TagType.DefineButtonSound, <TagEmitter> [emitDefineButtonSound, 17]],
     [TagType.DefineDynamicText, <TagEmitter> [emitDefineDynamicText, 37]],
     [
       TagType.DefineFont,
@@ -319,6 +320,14 @@ export function emitDefineButtonAny(byteStream: WritableByteStream, value: tags.
   }
 
   return version;
+}
+
+export function emitDefineButtonSound(byteStream: WritableByteStream, value: tags.DefineButtonSound): void {
+  byteStream.writeUint16LE(value.buttonId);
+  emitButtonSound(byteStream, value.overUpToIdle);
+  emitButtonSound(byteStream, value.idleToOverUp);
+  emitButtonSound(byteStream, value.overUpToOverDown);
+  emitButtonSound(byteStream, value.overDownToOverUp);
 }
 
 export function emitCsmTextSettings(byteStream: WritableByteStream, value: tags.CsmTextSettings): void {

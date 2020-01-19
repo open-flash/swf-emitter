@@ -11,7 +11,7 @@ use crate::basic_data_types::{
 };
 use crate::bit_count::{get_i32_bit_count, get_u32_bit_count};
 use crate::button::{
-  emit_button2_cond_action_string, emit_button_record_string, get_min_button_version, ButtonVersion,
+  emit_button2_cond_action_string, emit_button_record_string, emit_button_sound, get_min_button_version, ButtonVersion,
 };
 use crate::display::{emit_blend_mode, emit_clip_actions_string, emit_filter_list};
 use crate::morph_shape::{emit_morph_shape, MorphShapeVersion};
@@ -92,7 +92,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       ButtonVersion::Button2 => 34,
     },
     ast::Tag::DefineButtonColorTransform(ref _tag) => unimplemented!(),
-    ast::Tag::DefineButtonSound(ref _tag) => unimplemented!(),
+    ast::Tag::DefineButtonSound(ref tag) => {
+      emit_define_button_sound(&mut tag_writer, tag)?;
+      17
+    }
     ast::Tag::DefineCffFont(ref _tag) => unimplemented!(),
     ast::Tag::DefineDynamicText(ref tag) => {
       emit_define_dynamic_text(&mut tag_writer, tag)?;
@@ -307,6 +310,18 @@ pub(crate) fn emit_define_button_any<W: io::Write>(
   }
 
   Ok(version)
+}
+
+pub(crate) fn emit_define_button_sound<W: io::Write>(
+  writer: &mut W,
+  value: &ast::tags::DefineButtonSound,
+) -> io::Result<()> {
+  emit_le_u16(writer, value.button_id)?;
+  emit_button_sound(writer, &value.over_up_to_idle)?;
+  emit_button_sound(writer, &value.idle_to_over_up)?;
+  emit_button_sound(writer, &value.over_up_to_over_down)?;
+  emit_button_sound(writer, &value.over_down_to_over_up)?;
+  Ok(())
 }
 
 pub(crate) fn emit_define_dynamic_text<W: io::Write>(

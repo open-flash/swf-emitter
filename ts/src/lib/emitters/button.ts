@@ -5,6 +5,7 @@ import { BlendMode } from "swf-types/blend-mode";
 import { ButtonCond } from "swf-types/button/button-cond";
 import { ButtonCondAction } from "swf-types/button/button-cond-action";
 import { ButtonRecord } from "swf-types/button/button-record";
+import { ButtonSound } from "swf-types/button/button-sound";
 import {
   $ColorTransformWithAlpha,
   ColorTransformWithAlpha,
@@ -13,6 +14,7 @@ import { Sfixed8P8 } from "swf-types/fixed-point/sfixed8p8";
 import { DefineButton } from "swf-types/tags";
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types";
 import { emitBlendMode, emitFilterList } from "./display";
+import { emitSoundInfo } from "./sound";
 
 export enum ButtonVersion {
   Button1,
@@ -140,4 +142,16 @@ export function emitButtonCond(byteStream: WritableByteStream, value: ButtonCond
     | (keyCode << 9);
 
   byteStream.writeUint16LE(flags);
+}
+
+export function emitButtonSound(byteStream: WritableByteStream, value: ButtonSound | undefined): void {
+  if (value === undefined) {
+    byteStream.writeUint16LE(0);
+  } else {
+    if (value.soundId === 0) {
+      throw new Error("InvalidSoundId");
+    }
+    byteStream.writeUint16LE(value.soundId);
+    emitSoundInfo(byteStream, value.soundInfo);
+  }
 }
