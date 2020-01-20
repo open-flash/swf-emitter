@@ -6,6 +6,10 @@
 - **[Fix]** Add support for `DefineButtonSound`.
 - **[Fix]** Add support for `StartSound`.
 
+### Rust
+
+- **[Fix]** Remove unused dependencies.
+
 # 0.8.0 (2019-07-08)
 
 - **[Breaking change]** Update to `swf-tree@0.8`.
