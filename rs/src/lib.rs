@@ -65,12 +65,6 @@ mod tests {
       .to_str()
       .expect("Failed to retrieve sample name");
 
-    // Blacklist
-    match name {
-      "text2-www-free-flash-animations-com" => return,
-      _ => {}
-    }
-
     let value_path = path.join("value.json");
     let value_file = ::std::fs::File::open(value_path).expect("Failed to open value file");
     let value_reader = ::std::io::BufReader::new(value_file);
