@@ -1,6 +1,6 @@
 {
   "name": "swf-emitter",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "description": "SWF files emitter",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -15,6 +15,9 @@
       "url": "https://spdx.org/licenses/AGPL-3.0-or-later.html"
     }
   ],
+  "engines": {
+    "node": ">=13.2"
+  },
   "scripts": {
     "build": "gulp lib:build",
     "watch": "gulp lib:watch",
@@ -40,7 +43,7 @@
     "@types/gulp": "^4.0.6",
     "@types/minimist": "^1.2.0",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^13.1.7",
+    "@types/node": "^13.1.8",
     "chai": "^4.2.0",
     "gulp": "^4.0.2",
     "gulp-cli": "^2.2.0",
@@ -50,7 +53,7 @@
     "ts-node": "^8.6.2",
     "tslint": "^5.20.1",
     "turbo-gulp": "^0.21.1",
-    "typescript": "^3.7.4"
+    "typescript": "^3.7.5"
   },
   "c88": {
     "match": [

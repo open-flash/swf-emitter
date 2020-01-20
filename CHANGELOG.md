@@ -1,4 +1,4 @@
-# Next
+# 0.10.0 (2020-01-20)
 
 - **[Breaking change]** Update to `swf-types@0.10.0`.
 - **[Breaking change]** Refactor consumer API. The main export now consists in two simple functions `emitSwf` and `emitTag`, both return a byte array.
