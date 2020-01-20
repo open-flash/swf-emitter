@@ -1,6 +1,7 @@
 # Next
 
 - **[Breaking change]** Update to `swf-types@0.10.0`.
+- **[Breaking change]** Refactor consumer API. The main export now consists in two simple functions `emitSwf` and `emitTag`, both return a byte array.
 - **[Fix]** Add support for `DefineButton1`.
 - **[Fix]** Add support for `DefineButtonSound`.
 - **[Fix]** Add support for `StartSound`.

@@ -34,11 +34,7 @@ this is a bug. The same AST always produces the same output.
 
 ## Status
 
-The implementation is still incomplete. About half of the tags are supported.
-
-The Typescript implementation is currently ahead of the Rust implementation.
-Getting them in sync is part of the current work.
-
+Most of the tags are implemented but some are still missing.
 Help is welcome to complete the emitter.
 
 ## Contributing

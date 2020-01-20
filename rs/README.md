@@ -15,13 +15,12 @@ Converts [`swf-types` movies][swf-types] to bytes.
 ## Usage
 
 ```rust
-use swf_emitter;
+use swf_emitter::emit_swf;
 use swf_types::{CompressionMethod, Movie};
 
 fn main() {
   let movie: Movie = ...;
-  let mut bytes = Vec::new();
-  emit_movie(&mut bytes, &movie, CompressionMethod::None)
+  let swf_bytes = emit_swf(&movie, CompressionMethod::None)
     .expect("Failed to emit movie");
 }
 ```

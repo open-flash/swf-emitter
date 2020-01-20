@@ -6,7 +6,7 @@ import sysPath from "path";
 import { parseSwf } from "swf-parser";
 import { CompressionMethod } from "swf-types";
 import { $Movie, Movie } from "swf-types/movie";
-import { movieToBytes } from "../lib";
+import { emitSwf } from "../lib";
 import meta from "./meta.js";
 import { readTextFile } from "./utils";
 
@@ -30,7 +30,7 @@ describe("movies", function () {
       const valueJson: string = await readTextFile(sample.astPath);
       const value: Movie = $Movie.read(JSON_READER, valueJson);
 
-      const actualBytes: Uint8Array = movieToBytes(value, CompressionMethod.None);
+      const actualBytes: Uint8Array = emitSwf(value, CompressionMethod.None);
 
       fs.writeFileSync(sysPath.join(MOVIE_SAMPLES_ROOT, sample.name, "local-main.ts.swf"), actualBytes);
 

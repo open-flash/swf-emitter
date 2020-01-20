@@ -12,6 +12,22 @@ pub mod sound;
 pub mod tags;
 pub mod text;
 
+use crate::movie::emit_swf as write_swf;
+use crate::tags::emit_tag as write_tag;
+use swf_types::{CompressionMethod, Movie, Tag};
+
+pub fn emit_swf(value: &Movie, compression_method: CompressionMethod) -> std::io::Result<Vec<u8>> {
+  let mut swf_writer: Vec<u8> = Vec::new();
+  write_swf(&mut swf_writer, value, compression_method)?;
+  Ok(swf_writer)
+}
+
+pub fn emit_tag(value: &Tag, swf_version: u8) -> std::io::Result<Vec<u8>> {
+  let mut tag_writer: Vec<u8> = Vec::new();
+  write_tag(&mut tag_writer, value, swf_version)?;
+  Ok(tag_writer)
+}
+
 #[cfg(test)]
 mod tests {
   use std::path::Path;
@@ -23,9 +39,9 @@ mod tests {
   use swf_types::{ColorTransformWithAlpha, CompressionMethod, Header, Movie, SwfSignature, Tag};
 
   use crate::basic_data_types::{emit_color_transform_with_alpha, emit_leb128_u32, emit_matrix, emit_rect};
-  use crate::movie::{emit_header, emit_movie, emit_swf_signature};
+  use crate::movie::{emit_header, emit_swf_signature};
   use crate::primitives::emit_le_f16;
-  use crate::tags::emit_tag;
+  use crate::{emit_swf, emit_tag};
 
   test_expand_paths! { test_emit_movie; "../tests/movies/*/" }
   fn test_emit_movie(path: &str) {
@@ -43,8 +59,7 @@ mod tests {
     let ast_reader = ::std::io::BufReader::new(ast_file);
     let value: Movie = serde_json::from_reader(ast_reader).expect("Failed to read value");
 
-    let mut actual_bytes = Vec::new();
-    emit_movie(&mut actual_bytes, &value, CompressionMethod::None).unwrap();
+    let actual_bytes = emit_swf(&value, CompressionMethod::None).unwrap();
 
     let actual_movie_path = path.join("local-main.rs.swf");
     ::std::fs::write(actual_movie_path, &actual_bytes).expect("Failed to write actual SWF");
@@ -75,8 +90,7 @@ mod tests {
       _ => 10,
     };
 
-    let mut actual_bytes = Vec::new();
-    emit_tag(&mut actual_bytes, &value, swf_version).unwrap();
+    let actual_bytes = emit_tag(&value, swf_version).unwrap();
 
     let expected_bytes: Vec<u8> = {
       match ::std::fs::read(path.join("output.bytes")) {

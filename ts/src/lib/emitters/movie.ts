@@ -8,9 +8,9 @@ import { emitTagString } from "./tags";
 
 const SWF_SIGNATURE_SIZE: UintSize = 8;
 
-export function emitMovie(byteStream: WritableByteStream, value: Movie, compressionMethod: CompressionMethod): void {
+export function emitSwf(byteStream: WritableByteStream, value: Movie, compressionMethod: CompressionMethod): void {
   const movieStream: WritableByteStream = new WritableStream();
-  emitPayload(movieStream, value);
+  emitMovie(movieStream, value);
   const uncompressedFileLength: UintSize = SWF_SIGNATURE_SIZE + movieStream.bytePos;
   const signature: SwfSignature = {
     compressionMethod,
@@ -53,7 +53,7 @@ export function emitCompressionMethod(byteStream: WritableByteStream, value: Com
   byteStream.writeBytes(chunk);
 }
 
-function emitPayload(byteStream: WritableByteStream, value: Movie): void {
+function emitMovie(byteStream: WritableByteStream, value: Movie): void {
   emitHeader(byteStream, value.header);
   emitTagString(byteStream, value.tags, value.header.swfVersion);
 }

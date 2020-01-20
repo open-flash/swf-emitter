@@ -8,14 +8,14 @@ use swf_types as ast;
 
 const SWF_SIGNATURE_SIZE: usize = 8;
 
-pub fn emit_movie<W: io::Write>(
+pub fn emit_swf<W: io::Write>(
   writer: &mut W,
   value: &ast::Movie,
   compression_method: ast::CompressionMethod,
 ) -> io::Result<()> {
-  let mut payload_writer = Vec::new();
-  emit_payload(&mut payload_writer, value)?;
-  let uncompressed_file_length = SWF_SIGNATURE_SIZE + payload_writer.len();
+  let mut movie_writer = Vec::new();
+  emit_movie(&mut movie_writer, value)?;
+  let uncompressed_file_length = SWF_SIGNATURE_SIZE + movie_writer.len();
   let signature = ast::SwfSignature {
     compression_method,
     swf_version: value.header.swf_version,
@@ -25,7 +25,7 @@ pub fn emit_movie<W: io::Write>(
   match compression_method {
     ast::CompressionMethod::Deflate => unimplemented!(),
     ast::CompressionMethod::Lzma => unimplemented!(),
-    ast::CompressionMethod::None => writer.write_all(&payload_writer),
+    ast::CompressionMethod::None => writer.write_all(&movie_writer),
   }
 }
 
@@ -46,7 +46,7 @@ pub fn emit_compression_method<W: io::Write>(writer: &mut W, value: ast::Compres
   writer.write_all(code)
 }
 
-pub fn emit_payload<W: io::Write>(writer: &mut W, value: &ast::Movie) -> io::Result<()> {
+pub fn emit_movie<W: io::Write>(writer: &mut W, value: &ast::Movie) -> io::Result<()> {
   emit_header(writer, &value.header)?;
   emit_tag_string(writer, &value.tags, value.header.swf_version)
 }

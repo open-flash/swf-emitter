@@ -18,11 +18,11 @@ Converts [`swf-types` movies][swf-types] to bytes.
 import fs from "fs";
 import { CompressionMethod } from "swf-types";
 import { Movie } from "swf-types/movie";
-import { movieToBytes } from "swf-emitter";
+import { emitSwf } from "swf-emitter";
 
 function main(): void {
-  const movie: Movie = fs.readFileSync("ast.json");
-  const bytes: Uint8Array = movieToBytes(movie, CompressionMethod.Deflate);
+  const movie: Movie = fs.readFileSync("movie.json");
+  const bytes: Uint8Array = emitSwf(movie, CompressionMethod.Deflate);
   fs.writeFileSync("movie.swf", bytes);
 }
 
