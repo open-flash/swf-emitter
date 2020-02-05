@@ -157,7 +157,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       DefineTextVersion::Text2 => 33,
     },
     ast::Tag::DefineVideoStream(ref _tag) => unimplemented!(),
-    ast::Tag::DoAbc(ref _tag) => unimplemented!(),
+    ast::Tag::DoAbc(ref tag) => match emit_do_abc_any(&mut tag_writer, tag)? {
+      DoAbcVersion::Abc1 => 72,
+      DoAbcVersion::Abc2 => 82,
+    },
     ast::Tag::DoAction(ref tag) => {
       emit_do_action(&mut tag_writer, tag)?;
       12
@@ -261,12 +264,12 @@ pub fn emit_define_bitmap_any<W: io::Write>(
   writer.write_all(&value.data)?;
 
   let version = match value.media_type {
-    ast::ImageType::SwfBmp => DefineBitmapVersion::DefineBitsLossless1,
-    ast::ImageType::SwfAbmp => DefineBitmapVersion::DefineBitsLossless2,
+    ast::ImageType::SwfLossless1 => DefineBitmapVersion::DefineBitsLossless1,
+    ast::ImageType::SwfLossless2 => DefineBitmapVersion::DefineBitsLossless2,
     ast::ImageType::Jpeg | ast::ImageType::Gif | ast::ImageType::Png => DefineBitmapVersion::DefineBitsJpeg2,
-    ast::ImageType::Ajpeg => DefineBitmapVersion::DefineBitsJpeg3,
-    ast::ImageType::Ajpegd => unimplemented!("x-ajpegd"),
-    ast::ImageType::PartialJpeg => DefineBitmapVersion::DefineBitsJpeg1,
+    ast::ImageType::SwfJpeg3 => DefineBitmapVersion::DefineBitsJpeg3,
+    ast::ImageType::SwfJpeg4 => unimplemented!("image/x-swf-jpeg4"),
+    ast::ImageType::SwfPartialJpeg => DefineBitmapVersion::DefineBitsJpeg1,
   };
 
   Ok(version)
@@ -672,6 +675,23 @@ pub(crate) fn emit_define_text_any<W: io::Write>(
   } else {
     DefineTextVersion::Text1
   })
+}
+
+enum DoAbcVersion {
+  Abc1,
+  Abc2,
+}
+
+fn emit_do_abc_any<W: io::Write>(writer: &mut W, value: &ast::tags::DoAbc) -> io::Result<DoAbcVersion> {
+  let version: DoAbcVersion = if let Some(ref header) = &value.header {
+    emit_le_u32(writer, header.flags)?;
+    emit_c_string(writer, &header.name)?;
+    DoAbcVersion::Abc2
+  } else {
+    DoAbcVersion::Abc1
+  };
+  writer.write_all(&value.data)?;
+  Ok(version)
 }
 
 pub fn emit_do_action<W: io::Write>(writer: &mut W, value: &ast::tags::DoAction) -> io::Result<()> {

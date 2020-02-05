@@ -181,6 +181,16 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
         ]),
       ],
     ],
+    [
+      TagType.DoAbc,
+      <TagEmitter> [
+        emitDoAbcAny,
+        new Map([
+          [DoAbcVersion.Abc1, 72],
+          [DoAbcVersion.Abc2, 82],
+        ]),
+      ],
+    ],
     [TagType.DoAction, <TagEmitter> [emitDoAction, 12]],
     [TagType.DoInitAction, <TagEmitter> [emitDoInitAction, 59]],
     [TagType.ExportAssets, <TagEmitter> [emitExportAssets, 56]],
@@ -271,10 +281,10 @@ export enum DefineBitmapVersion {
 export function emitDefineBitmapAny(byteStream: WritableByteStream, value: tags.DefineBitmap): DefineBitmapVersion {
   byteStream.writeUint16LE(value.id);
   switch (value.mediaType) {
-    case "image/x-swf-bmp":
+    case "image/x-swf-lossless1":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsLossless1;
-    case "image/x-swf-abmp":
+    case "image/x-swf-lossless2":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsLossless2;
     case "image/jpeg":
@@ -282,10 +292,12 @@ export function emitDefineBitmapAny(byteStream: WritableByteStream, value: tags.
     case "image/png":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg2;
-    case "image/x-ajpeg":
+    case "image/x-swf-jpeg3":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg3;
-    case "image/x-partial-jpeg":
+    case "image/x-swf-jpeg4":
+      throw new Error("NotImplemented: image/x-swf-jpeg4 support");
+    case "image/x-swf-partial-jpeg":
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg1;
     default:
@@ -670,6 +682,24 @@ export function emitDefineTextAny(byteStream: WritableByteStream, value: tags.De
   byteStream.writeUint8(advanceBits);
   emitTextRecordString(byteStream, value.records, indexBits, advanceBits, hasAlpha);
   return hasAlpha ? DefineTextVersion.DefineText2 : DefineTextVersion.DefineText1;
+}
+
+enum DoAbcVersion {
+  Abc1,
+  Abc2,
+}
+
+export function emitDoAbcAny(byteStream: WritableByteStream, value: tags.DoAbc): DoAbcVersion {
+  let version: DoAbcVersion;
+  if (value.header !== undefined) {
+    version = DoAbcVersion.Abc2;
+    byteStream.writeUint32LE(value.header.flags);
+    byteStream.writeNulUtf8(value.header.name);
+  } else {
+    version = DoAbcVersion.Abc1;
+  }
+  byteStream.writeBytes(value.data);
+  return version;
 }
 
 export function emitDoAction(byteStream: WritableByteStream, value: tags.DoAction): void {
