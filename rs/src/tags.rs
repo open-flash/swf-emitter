@@ -217,7 +217,10 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
       15
     }
     ast::Tag::StartSound2(ref _tag) => unimplemented!(),
-    ast::Tag::SymbolClass(ref _tag) => unimplemented!(),
+    ast::Tag::SymbolClass(ref tag) => {
+      emit_symbol_class(&mut tag_writer, tag)?;
+      76
+    }
     ast::Tag::Telemetry(ref _tag) => unimplemented!(),
     ast::Tag::VideoFrame(ref _tag) => unimplemented!(),
   };
@@ -930,6 +933,16 @@ pub fn emit_set_background_color<W: io::Write>(
 pub fn emit_start_sound<W: io::Write>(writer: &mut W, value: &ast::tags::StartSound) -> io::Result<()> {
   emit_le_u16(writer, value.sound_id)?;
   emit_sound_info(writer, &value.sound_info)?;
+  Ok(())
+}
+
+pub fn emit_symbol_class<W: io::Write>(writer: &mut W, value: &ast::tags::SymbolClass) -> io::Result<()> {
+  let symbol_count: u16 = value.symbols.len().try_into().unwrap();
+  emit_le_u16(writer, symbol_count)?;
+  for symbol in &value.symbols {
+    emit_le_u16(writer, symbol.id)?;
+    emit_c_string(writer, &symbol.name)?;
+  }
   Ok(())
 }
 

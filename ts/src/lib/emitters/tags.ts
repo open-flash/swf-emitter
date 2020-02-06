@@ -232,6 +232,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
     [TagType.SetBackgroundColor, <TagEmitter> [emitSetBackgroundColor, 9]],
     [TagType.StartSound, <TagEmitter> [emitStartSound, 15]],
     [TagType.ShowFrame, 1],
+    [TagType.SymbolClass, <TagEmitter> [emitSymbolClass, 76]],
   ]);
 
   if (value.type === TagType.Raw) {
@@ -931,11 +932,19 @@ export function emitRemoveObjectAny(byteStream: WritableByteStream, value: tags.
   }
 }
 
+export function emitSetBackgroundColor(byteStream: WritableByteStream, value: tags.SetBackgroundColor): void {
+  emitSRgb8(byteStream, value.color);
+}
+
 export function emitStartSound(byteStream: WritableByteStream, value: tags.StartSound): void {
   byteStream.writeUint16LE(value.soundId);
   emitSoundInfo(byteStream, value.soundInfo);
 }
 
-export function emitSetBackgroundColor(byteStream: WritableByteStream, value: tags.SetBackgroundColor): void {
-  emitSRgb8(byteStream, value.color);
+export function emitSymbolClass(byteStream: WritableByteStream, value: tags.SymbolClass): void {
+  byteStream.writeUint16LE(value.symbols.length);
+  for (const symbol of value.symbols) {
+    byteStream.writeUint16LE(symbol.id);
+    byteStream.writeNulUtf8(symbol.name);
+  }
 }

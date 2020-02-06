@@ -1,3 +1,7 @@
+# Next
+
+- **[Feature]** Implement emitter for `SymbolClass`.
+
 # 0.11.0 (2020-02-05)
 
 - **[Breaking change]** Update to `swf-types@0.11.0`.
