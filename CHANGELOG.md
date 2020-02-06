@@ -1,4 +1,4 @@
-# Next
+# 0.11.1 (2020-02-06)
 
 - **[Feature]** Implement emitter for `SymbolClass`.
 

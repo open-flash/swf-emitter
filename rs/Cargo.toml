@@ -1,6 +1,6 @@
 [package]
 name = "swf-emitter"
-version = "0.11.0"
+version = "0.11.1"
 authors = ["Charles Samborski <demurgos@demurgos.net>"]
 description = "SWF emitter"
 documentation = "https://github.com/open-flash/swf-emitter"
