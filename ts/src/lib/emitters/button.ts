@@ -1,9 +1,9 @@
 import stream, { WritableByteStream } from "@open-flash/stream";
 import incident from "incident";
-import { Uint16, Uint7, Uint8, UintSize } from "semantic-types";
+import { Uint7, Uint8, Uint16, UintSize } from "semantic-types";
 import { BlendMode } from "swf-types/lib/blend-mode.js";
-import { ButtonCond } from "swf-types/lib/button/button-cond.js";
 import { ButtonCondAction } from "swf-types/lib/button/button-cond-action.js";
+import { ButtonCond } from "swf-types/lib/button/button-cond.js";
 import { ButtonRecord } from "swf-types/lib/button/button-record.js";
 import { ButtonSound } from "swf-types/lib/button/button-sound.js";
 import {
@@ -12,6 +12,7 @@ import {
 } from "swf-types/lib/color-transform-with-alpha.js";
 import { Sfixed8P8 } from "swf-types/lib/fixed-point/sfixed8p8.js";
 import { DefineButton } from "swf-types/lib/tags/define-button.js";
+
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types.js";
 import { emitBlendMode, emitFilterList } from "./display.js";
 import { emitSoundInfo } from "./sound.js";

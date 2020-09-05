@@ -2,6 +2,7 @@ import stream, { WritableBitStream, WritableByteStream } from "@open-flash/strea
 import incident from "incident";
 import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
 import { Glyph, LanguageCode, text } from "swf-types";
+
 import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
 import { emitGlyph } from "./shape.js";
 

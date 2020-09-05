@@ -3,6 +3,7 @@ import incident from "incident";
 import { UintSize } from "semantic-types";
 import { CompressionMethod, Header, Movie, SwfSignature } from "swf-types";
 import zlib from "zlib";
+
 import { emitRect } from "./basic-data-types.js";
 import { emitTagString } from "./tags.js";
 
@@ -19,17 +20,21 @@ export function emitSwf(byteStream: WritableByteStream, value: Movie, compressio
   };
   emitSwfSignature(byteStream, signature);
   switch (compressionMethod) {
-    case CompressionMethod.Deflate:
+    case CompressionMethod.Deflate: {
       const movieBytes: Uint8Array = movieStream.getBytes();
-      byteStream.writeBytes(zlib.deflateSync(<any> movieBytes));
+      byteStream.writeBytes(zlib.deflateSync(<any>movieBytes));
       break;
-    case CompressionMethod.Lzma:
+    }
+    case CompressionMethod.Lzma: {
       throw new incident.Incident("NotImplemented", "Lzma support");
-    case CompressionMethod.None:
+    }
+    case CompressionMethod.None: {
       byteStream.write(movieStream);
       break;
-    default:
+    }
+    default: {
       throw new incident.Incident("UnexpectedCompressionMethod");
+    }
   }
 }
 

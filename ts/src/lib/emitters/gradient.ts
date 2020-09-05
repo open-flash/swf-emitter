@@ -2,6 +2,7 @@ import { WritableByteStream } from "@open-flash/stream";
 import incident from "incident";
 import { Uint2, Uint8 } from "semantic-types";
 import { ColorSpace, ColorStop, Gradient, GradientSpread, MorphColorStop, MorphGradient } from "swf-types";
+
 import { emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
 
 const GRADIENT_SPREAD_TO_CODE: Map<GradientSpread, Uint2> = new Map([

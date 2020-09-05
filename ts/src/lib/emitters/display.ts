@@ -1,7 +1,8 @@
 import stream, { WritableByteStream } from "@open-flash/stream";
 import incident from "incident";
-import { Uint16, Uint32, Uint8 } from "semantic-types";
+import { Uint8,Uint16, Uint32 } from "semantic-types";
 import { BlendMode, ClipAction, ClipEventFlags, Filter, filters, FilterType } from "swf-types";
+
 import { emitStraightSRgba8 } from "./basic-data-types.js";
 
 export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode): void {

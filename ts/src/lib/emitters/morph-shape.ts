@@ -1,16 +1,17 @@
 import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import incident from "incident";
-import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
+import { Uint2, Uint5, Uint8, Uint16, UintSize } from "semantic-types";
 import { FillStyleType } from "swf-types";
 import * as fillStyles from "swf-types/lib/fill-styles/index.js";
 import { JoinStyleType } from "swf-types/lib/join-styles/_type.js";
 import { MorphFillStyle } from "swf-types/lib/morph-fill-style.js";
 import { MorphLineStyle } from "swf-types/lib/morph-line-style.js";
-import { MorphShape } from "swf-types/lib/morph-shape.js";
 import { MorphShapeRecord } from "swf-types/lib/morph-shape-record.js";
 import { MorphShapeStyles } from "swf-types/lib/morph-shape-styles.js";
-import { MorphStyleChange } from "swf-types/lib/shape-records/morph-style-change.js";
+import { MorphShape } from "swf-types/lib/morph-shape.js";
 import { ShapeRecordType } from "swf-types/lib/shape-records/_type.js";
+import { MorphStyleChange } from "swf-types/lib/shape-records/morph-style-change.js";
+
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
 import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types.js";
 import { emitMorphGradient } from "./gradient.js";
@@ -43,9 +44,7 @@ export function emitMorphShapeBits(
   value: MorphShape,
   morphShapeVersion: MorphShapeVersion,
 ): UintSize {
-  let fillBits: UintSize;
-  let lineBits: UintSize;
-  [fillBits, lineBits] = emitMorphShapeStylesBits(bitStream, value.initialStyles, morphShapeVersion);
+  const [fillBits, lineBits] = emitMorphShapeStylesBits(bitStream, value.initialStyles, morphShapeVersion);
   emitMorphShapeStartRecordStringBits(bitStream, value.records, fillBits, lineBits, morphShapeVersion);
   bitStream.align();
 
@@ -189,7 +188,7 @@ export function emitMorphFillStyleList(byteStream: WritableByteStream, value: Mo
 
 export function emitMorphFillStyle(byteStream: WritableByteStream, value: MorphFillStyle): void {
   switch (value.type) {
-    case FillStyleType.Bitmap:
+    case FillStyleType.Bitmap: {
       const code: Uint8 = 0
         | (!value.repeating ? 1 << 0 : 0)
         | (!value.smoothed ? 1 << 1 : 0)
@@ -197,24 +196,30 @@ export function emitMorphFillStyle(byteStream: WritableByteStream, value: MorphF
       byteStream.writeUint8(code);
       emitMorphBitmapFill(byteStream, value);
       break;
-    case FillStyleType.FocalGradient:
+    }
+    case FillStyleType.FocalGradient: {
       byteStream.writeUint8(0x13);
       emitMorphFocalGradientFill(byteStream, value);
       break;
-    case FillStyleType.LinearGradient:
+    }
+    case FillStyleType.LinearGradient: {
       byteStream.writeUint8(0x10);
       emitMorphLinearGradientFill(byteStream, value);
       break;
-    case FillStyleType.RadialGradient:
+    }
+    case FillStyleType.RadialGradient: {
       byteStream.writeUint8(0x12);
       emitMorphRadialGradientFill(byteStream, value);
       break;
-    case FillStyleType.Solid:
+    }
+    case FillStyleType.Solid: {
       byteStream.writeUint8(0x00);
       emitMorphSolidFill(byteStream, value);
       break;
-    default:
+    }
+    default: {
       throw new incident.Incident("UnexpectedMorphFillStyle");
+    }
   }
 }
 

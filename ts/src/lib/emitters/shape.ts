@@ -1,6 +1,6 @@
 import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import incident from "incident";
-import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
+import { Uint2, Uint5, Uint8, Uint16, UintSize } from "semantic-types";
 import {
   CapStyle,
   ColorStop,
@@ -18,6 +18,7 @@ import {
 } from "swf-types";
 import { ShapeStyles } from "swf-types/lib/shape-styles.js";
 import { Vector2D } from "swf-types/lib/vector-2d.js";
+
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
 import { emitGradient } from "./gradient.js";
@@ -52,9 +53,7 @@ export function emitShape(byteStream: WritableByteStream, value: Shape, shapeVer
 }
 
 export function emitShapeBits(bitStream: WritableBitStream, value: Shape, shapeVersion: ShapeVersion): void {
-  let fillBits: UintSize;
-  let lineBits: UintSize;
-  [fillBits, lineBits] = emitShapeStylesBits(bitStream, value.initialStyles, shapeVersion);
+  const [fillBits, lineBits] = emitShapeStylesBits(bitStream, value.initialStyles, shapeVersion);
   emitShapeRecordStringBits(bitStream, value.records, fillBits, lineBits, shapeVersion);
 }
 
@@ -217,7 +216,7 @@ export function emitFillStyleList(
 
 export function emitFillStyle(byteStream: WritableByteStream, value: FillStyle, withAlpha: boolean): void {
   switch (value.type) {
-    case FillStyleType.Bitmap:
+    case FillStyleType.Bitmap: {
       const code: Uint8 = 0
         | (!value.repeating ? 1 << 0 : 0)
         | (!value.smoothed ? 1 << 1 : 0)
@@ -225,28 +224,34 @@ export function emitFillStyle(byteStream: WritableByteStream, value: FillStyle, 
       byteStream.writeUint8(code);
       emitBitmapFill(byteStream, value);
       break;
-    case FillStyleType.FocalGradient:
+    }
+    case FillStyleType.FocalGradient: {
       byteStream.writeUint8(0x13);
       emitFocalGradientFill(byteStream, value, withAlpha);
       break;
-    case FillStyleType.LinearGradient:
+    }
+    case FillStyleType.LinearGradient: {
       byteStream.writeUint8(0x10);
       emitLinearGradientFill(byteStream, value, withAlpha);
       break;
-    case FillStyleType.RadialGradient:
+    }
+    case FillStyleType.RadialGradient: {
       byteStream.writeUint8(0x12);
       emitRadialGradientFill(byteStream, value, withAlpha);
       break;
-    case FillStyleType.Solid:
+    }
+    case FillStyleType.Solid: {
       byteStream.writeUint8(0x00);
       emitSolidFill(byteStream, value, withAlpha);
       break;
-    default:
+    }
+    default: {
       throw new incident.Incident("UnexpectedFillStyle");
+    }
   }
 }
 
-export function emitBitmapFill(byteStream: WritableByteStream, value: {bitmapId: Uint16; matrix: Matrix}): void {
+export function emitBitmapFill(byteStream: WritableByteStream, value: { bitmapId: Uint16; matrix: Matrix }): void {
   byteStream.writeUint16LE(value.bitmapId);
   emitMatrix(byteStream, value.matrix);
 }

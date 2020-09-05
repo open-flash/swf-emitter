@@ -2,12 +2,13 @@ import stream, { WritableByteStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
 import { IoType } from "kryo";
+import { JSON_READER } from "kryo-json/lib/json-reader.js";
 import sysPath from "path";
-import { Tag, $Tag } from "swf-types/lib/tag.js";
+import { $Tag,Tag } from "swf-types/lib/tag.js";
+
 import { emitTag } from "../lib/emitters/tags.js";
 import meta from "./meta.js";
 import { prettyPrintBytes, readFile, readTextFile } from "./utils.js";
-import { JSON_READER } from "kryo-json/lib/json-reader.js";
 
 const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const TAG_SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "tags");

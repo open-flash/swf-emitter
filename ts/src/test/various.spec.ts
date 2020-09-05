@@ -1,8 +1,10 @@
 import stream, { WritableByteStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
-import { $Uint32 } from "kryo/lib/integer.js";
 import { IoType } from "kryo";
+import { JSON_READER } from "kryo-json/lib/json-reader.js";
+import { Float64Type } from "kryo/lib/float64.js";
+import { $Uint32 } from "kryo/lib/integer.js";
 import sysPath from "path";
 import { Float32, Uint32 } from "semantic-types";
 import { $ColorTransformWithAlpha } from "swf-types/lib/color-transform-with-alpha.js";
@@ -10,12 +12,11 @@ import { $Header } from "swf-types/lib/header.js";
 import { $Matrix } from "swf-types/lib/matrix.js";
 import { $Rect } from "swf-types/lib/rect.js";
 import { $SwfSignature } from "swf-types/lib/swf-signature.js";
+
 import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types.js";
 import { emitHeader, emitSwfSignature } from "../lib/emitters/movie.js";
 import meta from "./meta.js";
 import { prettyPrintBytes, readFile, readTextFile } from "./utils.js";
-import { JSON_READER } from "kryo-json/lib/json-reader.js";
-import { Float64Type } from "kryo/lib/float64.js";
 
 const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "various");

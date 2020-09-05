@@ -1,11 +1,14 @@
 import stream, { WritableByteStream } from "@open-flash/stream";
 import { Uint8 } from "semantic-types";
-import * as ast from "swf-types";
-import { CompressionMethod } from "swf-types";
+import * as swf from "swf-types";
+import { CompressionMethod } from "swf-types/lib/compression-method.js";
+import { Movie } from "swf-types/lib/movie.js";
+import { Tag } from "swf-types/lib/tag.js";
+
 import { emitSwf as emitSwfStream } from "./emitters/movie.js";
 import { emitTag as emitTagStream } from "./emitters/tags.js";
 
-export { ast };
+export { swf };
 
 /**
  * Emits an SWF movie as a byte array.
@@ -15,7 +18,7 @@ export { ast };
  * @returns Corresponding byte array.
  */
 export function emitSwf(
-  value: ast.Movie,
+  value: Movie,
   compressionMethod: CompressionMethod = CompressionMethod.None,
 ): Uint8Array {
   const s: WritableByteStream = new stream.WritableStream();
@@ -31,7 +34,7 @@ export function emitSwf(
  * @returns Corresponding byte array.
  */
 export function emitTag(
-  value: ast.Tag,
+  value: Tag,
   swfVersion: Uint8,
 ): Uint8Array {
   const s: WritableByteStream = new stream.WritableStream();

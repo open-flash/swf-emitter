@@ -1,9 +1,10 @@
 import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
 import incident from "incident";
-import { Uint16, Uint2, Uint3, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
+import { Uint2, Uint3, Uint4, Uint8, Uint16, Uint32, UintSize } from "semantic-types";
 import { LanguageCode, Tag, tags, TagType } from "swf-types";
 import { SoundType } from "swf-types/lib/sound/sound-type.js";
 import { TextAlignment } from "swf-types/lib/text/text-alignment.js";
+
 import { getSintBitCount, getUintBitCount } from "../get-bit-count.js";
 import {
   emitColorTransform,
