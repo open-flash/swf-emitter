@@ -18,11 +18,8 @@ pub(crate) fn get_min_button_version(value: &ast::tags::DefineButton) -> ButtonV
   if value.track_as_menu {
     return ButtonVersion::Button2;
   }
-  for record in &value.characters {
-    let is_default_color_transform = match record.color_transform {
-      None => true,
-      Some(transform) => transform == ast::ColorTransformWithAlpha::default(),
-    };
+  for record in &value.records {
+    let is_default_color_transform = record.color_transform == ast::ColorTransformWithAlpha::default();
 
     if !is_default_color_transform || !record.filters.is_empty() || record.blend_mode != ast::BlendMode::Normal {
       return ButtonVersion::Button2;
@@ -72,7 +69,7 @@ pub(crate) fn emit_button_record<W: io::Write>(
   emit_le_u16(writer, value.depth)?;
   emit_matrix(writer, &value.matrix)?;
   if version >= ButtonVersion::Button2 {
-    emit_color_transform_with_alpha(writer, &value.color_transform.unwrap())?;
+    emit_color_transform_with_alpha(writer, &value.color_transform)?;
     if has_filters {
       emit_filter_list(writer, &value.filters)?;
     }

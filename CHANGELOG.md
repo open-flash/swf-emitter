@@ -1,5 +1,7 @@
 # Next
 
+- **[Breaking change]** Update to `swf-types@0.12.0`.
+
 ## Typescript
 
 - **[Breaking change]** Update to native ESM.

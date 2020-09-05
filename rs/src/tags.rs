@@ -287,7 +287,7 @@ pub(crate) fn emit_define_button_any<W: io::Write>(
   let version: ButtonVersion = get_min_button_version(value);
 
   let mut record_writer: Vec<u8> = Vec::new();
-  emit_button_record_string(&mut record_writer, &value.characters, version)?;
+  emit_button_record_string(&mut record_writer, &value.records, version)?;
 
   match version {
     ButtonVersion::Button1 => {
