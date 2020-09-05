@@ -1,20 +1,20 @@
-import { WritableByteStream, WritableStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import stream, { WritableByteStream } from "@open-flash/stream";
+import incident from "incident";
 import { Uint16, Uint7, Uint8, UintSize } from "semantic-types";
-import { BlendMode } from "swf-types/blend-mode";
-import { ButtonCond } from "swf-types/button/button-cond";
-import { ButtonCondAction } from "swf-types/button/button-cond-action";
-import { ButtonRecord } from "swf-types/button/button-record";
-import { ButtonSound } from "swf-types/button/button-sound";
+import { BlendMode } from "swf-types/lib/blend-mode.js";
+import { ButtonCond } from "swf-types/lib/button/button-cond.js";
+import { ButtonCondAction } from "swf-types/lib/button/button-cond-action.js";
+import { ButtonRecord } from "swf-types/lib/button/button-record.js";
+import { ButtonSound } from "swf-types/lib/button/button-sound.js";
 import {
   $ColorTransformWithAlpha,
   ColorTransformWithAlpha,
-} from "swf-types/color-transform-with-alpha";
-import { Sfixed8P8 } from "swf-types/fixed-point/sfixed8p8";
-import { DefineButton } from "swf-types/tags";
-import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types";
-import { emitBlendMode, emitFilterList } from "./display";
-import { emitSoundInfo } from "./sound";
+} from "swf-types/lib/color-transform-with-alpha.js";
+import { Sfixed8P8 } from "swf-types/lib/fixed-point/sfixed8p8.js";
+import { DefineButton } from "swf-types/lib/tags/define-button.js";
+import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types.js";
+import { emitBlendMode, emitFilterList } from "./display.js";
+import { emitSoundInfo } from "./sound.js";
 
 export enum ButtonVersion {
   Button1,
@@ -25,7 +25,7 @@ export function getMinButtonVersion(value: DefineButton): ButtonVersion {
   if (value.trackAsMenu) {
     return ButtonVersion.Button2;
   }
-  for (const record of value.characters) {
+  for (const record of value.records) {
     const DEFAULT_COLOR_TRANSFORM: ColorTransformWithAlpha = {
       redMult: Sfixed8P8.fromValue(1),
       greenMult: Sfixed8P8.fromValue(1),
@@ -88,7 +88,7 @@ export function emitButtonRecord(
   emitMatrix(byteStream, value.matrix);
   if (buttonVersion >= ButtonVersion.Button2) {
     if (value.colorTransform === undefined) {
-      throw new Incident("ExpectedColorTransform");
+      throw new incident.Incident("ExpectedColorTransform");
     }
     emitColorTransformWithAlpha(byteStream, value.colorTransform);
     if (hasFilters) {
@@ -105,7 +105,7 @@ export function emitButton2CondActionString(
   value: ReadonlyArray<ButtonCondAction>,
 ): void {
   for (let i: UintSize = 0; i < value.length; i++) {
-    const actionStream: WritableStream = new WritableStream();
+    const actionStream: stream.WritableStream = new stream.WritableStream();
     emitButton2CondAction(actionStream, value[i]);
     if (i < value.length - 1) { // !isLast
       byteStream.writeUint16LE(actionStream.bytePos);
@@ -121,7 +121,7 @@ export function emitButton2CondAction(
   value: ButtonCondAction,
 ): void {
   if (value.conditions === undefined) {
-    throw new Incident("ExpectedConditionsToBeDefined");
+    throw new incident.Incident("ExpectedConditionsToBeDefined");
   }
   emitButtonCond(byteStream, value.conditions);
   byteStream.writeBytes(value.actions);

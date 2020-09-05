@@ -1,5 +1,5 @@
 import { WritableBitStream, WritableByteStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import incident from "incident";
 import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
 import {
   CapStyle,
@@ -16,11 +16,11 @@ import {
   shapeRecords,
   ShapeRecordType,
 } from "swf-types";
-import { ShapeStyles } from "swf-types/shape-styles";
-import { Vector2D } from "swf-types/vector-2d";
-import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
-import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
-import { emitGradient } from "./gradient";
+import { ShapeStyles } from "swf-types/lib/shape-styles.js";
+import { Vector2D } from "swf-types/lib/vector-2d.js";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
+import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
+import { emitGradient } from "./gradient.js";
 
 export enum ShapeVersion {
   Shape1 = 1,
@@ -102,7 +102,7 @@ export function emitShapeRecordStringBits(
         [fillBits, lineBits] = emitStyleChangeBits(bitStream, record, fillBits, lineBits, shapeVersion);
         break;
       default:
-        throw new Incident("UnexpectedShapeRecordType");
+        throw new incident.Incident("UnexpectedShapeRecordType");
     }
   }
   bitStream.writeUint16Bits(6, 0);
@@ -242,7 +242,7 @@ export function emitFillStyle(byteStream: WritableByteStream, value: FillStyle, 
       emitSolidFill(byteStream, value, withAlpha);
       break;
     default:
-      throw new Incident("UnexpectedFillStyle");
+      throw new incident.Incident("UnexpectedFillStyle");
   }
 }
 
@@ -304,7 +304,7 @@ export function emitLineStyleList(
 
 export function emitLineStyle1(byteStream: WritableByteStream, value: LineStyle, withAlpha: boolean): void {
   if (value.fill.type !== FillStyleType.Solid) {
-    throw new Incident("ExpectedSolidFill");
+    throw new incident.Incident("ExpectedSolidFill");
   }
   byteStream.writeUint16LE(value.width);
   emitSolidFill(byteStream, value.fill, withAlpha);
@@ -350,7 +350,7 @@ export function joinStyleToCode(joinStyleType: JoinStyleType): Uint2 {
     case JoinStyleType.Miter:
       return 2 as Uint2;
     default:
-      throw new Incident("UnexpectedJoinStyleType");
+      throw new incident.Incident("UnexpectedJoinStyleType");
   }
 }
 
@@ -363,7 +363,7 @@ export function capStyleToCode(capStyle: CapStyle): Uint2 {
     case CapStyle.Square:
       return 2 as Uint2;
     default:
-      throw new Incident("UnexpectedCapStyle");
+      throw new incident.Incident("UnexpectedCapStyle");
   }
 }
 

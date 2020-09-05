@@ -1,20 +1,18 @@
 import chai from "chai";
 import fs from "fs";
-import { JsonReader } from "kryo/readers/json";
-import { JsonValueWriter } from "kryo/writers/json-value";
 import sysPath from "path";
 import { parseSwf } from "swf-parser";
 import { CompressionMethod } from "swf-types";
-import { $Movie, Movie } from "swf-types/movie";
-import { emitSwf } from "../lib";
+import { $Movie, Movie } from "swf-types/lib/movie.js";
+import { emitSwf } from "../lib/index.js";
 import meta from "./meta.js";
-import { readTextFile } from "./utils";
+import { readTextFile } from "./utils.js";
+import { JSON_READER } from "kryo-json/lib/json-reader.js";
+import { JSON_VALUE_WRITER } from "kryo-json/lib/json-value-writer.js";
 
-const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..", "..", "..");
+const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const MOVIE_SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "movies");
 
-const JSON_READER: JsonReader = new JsonReader();
-const JSON_VALUE_WRITER: JsonValueWriter = new JsonValueWriter();
 // `BLACKLIST` can be used to forcefully skip some tests.
 const BLACKLIST: ReadonlySet<string> = new Set([]);
 // `WHITELIST` can be used to only enable a few tests.

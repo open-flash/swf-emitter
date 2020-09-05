@@ -1,8 +1,8 @@
-import { WritableByteStream, WritableStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import stream, { WritableByteStream } from "@open-flash/stream";
+import incident from "incident";
 import { Uint16, Uint32, Uint8 } from "semantic-types";
 import { BlendMode, ClipAction, ClipEventFlags, Filter, filters, FilterType } from "swf-types";
-import { emitStraightSRgba8 } from "./basic-data-types";
+import { emitStraightSRgba8 } from "./basic-data-types.js";
 
 export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode): void {
   const BLEND_MODE_TO_CODE: Map<BlendMode, Uint8> = new Map<BlendMode, Uint8>([
@@ -24,7 +24,7 @@ export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode):
 
   const code: Uint8 | undefined = BLEND_MODE_TO_CODE.get(value);
   if (code === undefined) {
-    throw new Incident("UnexpectedBlendMode");
+    throw new incident.Incident("UnexpectedBlendMode");
   }
   byteStream.writeUint8(code);
 }
@@ -127,11 +127,11 @@ export function emitClipEventFlags(
 
 export function emitClipAction(byteStream: WritableByteStream, value: ClipAction, extendedEvents: boolean): void {
   emitClipEventFlags(byteStream, value.events, extendedEvents);
-  const actionStream: WritableByteStream = new WritableStream();
+  const actionStream: WritableByteStream = new stream.WritableStream();
 
   if (value.events.keyPress) {
     if (value.keyCode === undefined) {
-      throw new Incident("Expected keyCode to be defined");
+      throw new incident.Incident("Expected keyCode to be defined");
     }
     actionStream.writeUint8(value.keyCode);
   }
@@ -163,7 +163,7 @@ export function emitFilter(byteStream: WritableByteStream, value: Filter): void 
 
   const filterEmitter: FilterEmitter | undefined = FILTER_TYPE_TO_EMITTER.get(value.filter);
   if (filterEmitter === undefined) {
-    throw new Incident("InvalidFilterType");
+    throw new incident.Incident("InvalidFilterType");
   }
   byteStream.writeUint8(filterEmitter[1]);
   filterEmitter[0](byteStream, value);

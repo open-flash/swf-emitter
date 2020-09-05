@@ -1,12 +1,10 @@
-// tslint:disable:max-file-line-count
-
-import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
+import incident from "incident";
 import { Uint16, Uint2, Uint3, Uint32, Uint4, Uint8, UintSize } from "semantic-types";
 import { LanguageCode, Tag, tags, TagType } from "swf-types";
-import { SoundType } from "swf-types/sound/sound-type";
-import { TextAlignment } from "swf-types/text";
-import { getSintBitCount, getUintBitCount } from "../get-bit-count";
+import { SoundType } from "swf-types/lib/sound/sound-type.js";
+import { TextAlignment } from "swf-types/lib/text/text-alignment.js";
+import { getSintBitCount, getUintBitCount } from "../get-bit-count.js";
 import {
   emitColorTransform,
   emitColorTransformWithAlpha,
@@ -14,17 +12,17 @@ import {
   emitRect,
   emitSRgb8,
   emitStraightSRgba8,
-} from "./basic-data-types";
+} from "./basic-data-types.js";
 import {
   ButtonVersion,
   emitButton2CondActionString,
   emitButtonRecordString, emitButtonSound,
   getMinButtonVersion,
-} from "./button";
-import { emitBlendMode, emitClipActionString, emitFilterList } from "./display";
-import { emitMorphShape, MorphShapeVersion } from "./morph-shape";
-import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape";
-import { audioCodingFormatToCode, emitSoundInfo, soundRateToCode } from "./sound";
+} from "./button.js";
+import { emitBlendMode, emitClipActionString, emitFilterList } from "./display.js";
+import { emitMorphShape, MorphShapeVersion } from "./morph-shape.js";
+import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape.js";
+import { audioCodingFormatToCode, emitSoundInfo, soundRateToCode } from "./sound.js";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -35,7 +33,7 @@ import {
   emitTextRecordString,
   gridFittingToCode,
   textRendererToCode,
-} from "./text";
+} from "./text.js";
 
 /**
  * Read tags until the end of the stream or "end-of-tags".
@@ -248,7 +246,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
   const tagEmitter: TagEmitter | undefined = TAG_TYPE_TO_EMITTER.get(value.type);
 
   if (tagEmitter === undefined) {
-    throw new Incident("UnexpectedTagType", {type: value.type, typeName: TagType[value.type]});
+    throw new incident.Incident("UnexpectedTagType", {type: value.type, typeName: TagType[value.type]});
   }
 
   if (typeof tagEmitter === "number") {
@@ -256,13 +254,13 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
     return;
   }
 
-  const tagStream: WritableStream = new WritableStream();
+  const tagStream: stream.WritableStream = new stream.WritableStream();
   const result: any = tagEmitter[0](tagStream, value, swfVersion);
   let code: number | Map<any, number> = <any> tagEmitter[tagEmitter.length - 1];
   if (typeof code !== "number") {
     const resolved: number | undefined = code.get(result);
     if (resolved === undefined) {
-      throw new Incident("UnexpectedTagVersion");
+      throw new incident.Incident("UnexpectedTagVersion");
     }
     code = resolved;
   }
@@ -302,7 +300,7 @@ export function emitDefineBitmapAny(byteStream: WritableByteStream, value: tags.
       byteStream.writeBytes(value.data);
       return DefineBitmapVersion.DefineBitsJpeg1;
     default:
-      throw new Incident("UnexpectedMediaType", {tag: value});
+      throw new incident.Incident("UnexpectedMediaType", {tag: value});
   }
 }
 
@@ -310,9 +308,9 @@ export function emitDefineButtonAny(byteStream: WritableByteStream, value: tags.
   byteStream.writeUint16LE(value.id);
   const version: ButtonVersion = getMinButtonVersion(value);
 
-  const buttonRecordStream: WritableStream = new WritableStream();
+  const buttonRecordStream: stream.WritableStream = new stream.WritableStream();
   // TODO: Select the lowest compatible `ButtonVersion`
-  emitButtonRecordString(buttonRecordStream, value.characters, version);
+  emitButtonRecordString(buttonRecordStream, value.records, version);
 
   if (version === ButtonVersion.Button1) {
     byteStream.write(buttonRecordStream);
@@ -372,7 +370,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
   byteStream.writeUint16LE(value.id);
 
   const useWideCodes: boolean = true; // `false` is deprecated since SWF6
-  const offsetGlyphStream: WritableStream = new WritableStream();
+  const offsetGlyphStream: stream.WritableStream = new stream.WritableStream();
   const useWideOffsets: boolean = value.glyphs !== undefined
     ? emitOffsetGlyphs(offsetGlyphStream, value.glyphs)
     : false;
@@ -391,7 +389,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
 
   emitLanguageCode(byteStream, value.language);
 
-  const fontNameStream: WritableStream = new WritableStream();
+  const fontNameStream: stream.WritableStream = new stream.WritableStream();
   // TODO: Check if it should be `.writeCString` or `.writeString`
   fontNameStream.writeNulUtf8(value.fontName); // TODO: See DefineFontInfo for encoding
   byteStream.writeUint8(fontNameStream.bytePos);
@@ -443,7 +441,7 @@ export function emitDefineFontInfoAny(
 
   byteStream.writeUint16LE(value.fontId);
 
-  const fontNameStream: WritableStream = new WritableStream();
+  const fontNameStream: stream.WritableStream = new stream.WritableStream();
   fontNameStream.writeNulUtf8(value.fontName);
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
@@ -495,7 +493,7 @@ export function emitDefineGlyphFont(byteStream: WritableByteStream, value: tags.
   }
   const firstOffset: UintSize = value.glyphs.length * 2;
 
-  const glyphStream: WritableStream = new WritableStream();
+  const glyphStream: stream.WritableStream = new stream.WritableStream();
   for (const glyph of value.glyphs) {
     byteStream.writeUint16LE(firstOffset + glyphStream.bytePos);
     emitGlyph(glyphStream, glyph);

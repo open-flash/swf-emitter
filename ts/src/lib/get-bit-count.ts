@@ -1,4 +1,4 @@
-import { Incident } from "incident";
+import incident from "incident";
 import { SintSize, UintSize } from "semantic-types";
 
 /**
@@ -7,7 +7,7 @@ import { SintSize, UintSize } from "semantic-types";
 export function getUintBitCount(value: UintSize): UintSize {
   // TODO: Check why we are restricting to 2^31 instead of 2^32
   if (value < 0 || value >= 2 ** 31) {
-    throw new Incident("UnsupportedValue", {value});
+    throw new incident.Incident("UnsupportedValue", {value});
   }
   return 32 - Math.clz32(value);
 }
@@ -17,7 +17,7 @@ export function getUintBitCount(value: UintSize): UintSize {
  */
 export function getSintBitCount(value: SintSize): UintSize {
   if (value < -(2 ** 31) || value >= 2 ** 31) {
-    throw new Incident("UnsupportedValue", {value});
+    throw new incident.Incident("UnsupportedValue", {value});
   }
   if (value === 0) {
     return 0;

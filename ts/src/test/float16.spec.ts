@@ -1,4 +1,4 @@
-import { WritableStream } from "@open-flash/stream";
+import stream from "@open-flash/stream";
 import chai from "chai";
 import { Float16, Uint8 } from "semantic-types";
 
@@ -39,9 +39,9 @@ describe("stream", function () {
 
     for (const {input, expected} of items) {
       it(`should write ${input}`, function () {
-        const stream: WritableStream = new WritableStream();
-        stream.writeFloat16BE(input);
-        const actual: Uint8Array = stream.getBytes();
+        const s: stream.WritableStream = new stream.WritableStream();
+        s.writeFloat16BE(input);
+        const actual: Uint8Array = s.getBytes();
         const actualBits: string = [...actual].map(toBinary8).join("");
         const expectedBits: string = expected.map(toBinary8).join("");
         chai.assert.strictEqual(actualBits, expectedBits);

@@ -1,26 +1,24 @@
-import { WritableByteStream, WritableStream } from "@open-flash/stream";
+import stream, { WritableByteStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
-import { $Uint32 } from "kryo/builtins/uint32";
-import { IoType } from "kryo/core";
-import { JsonReader } from "kryo/readers/json";
-import { Float64Type } from "kryo/types/float64";
+import { $Uint32 } from "kryo/lib/integer.js";
+import { IoType } from "kryo";
 import sysPath from "path";
 import { Float32, Uint32 } from "semantic-types";
-import { $ColorTransformWithAlpha } from "swf-types/color-transform-with-alpha";
-import { $Header } from "swf-types/header";
-import { $Matrix } from "swf-types/matrix";
-import { $Rect } from "swf-types/rect";
-import { $SwfSignature } from "swf-types/swf-signature";
-import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types";
-import { emitHeader, emitSwfSignature } from "../lib/emitters/movie";
+import { $ColorTransformWithAlpha } from "swf-types/lib/color-transform-with-alpha.js";
+import { $Header } from "swf-types/lib/header.js";
+import { $Matrix } from "swf-types/lib/matrix.js";
+import { $Rect } from "swf-types/lib/rect.js";
+import { $SwfSignature } from "swf-types/lib/swf-signature.js";
+import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types.js";
+import { emitHeader, emitSwfSignature } from "../lib/emitters/movie.js";
 import meta from "./meta.js";
-import { prettyPrintBytes, readFile, readTextFile } from "./utils";
+import { prettyPrintBytes, readFile, readTextFile } from "./utils.js";
+import { JSON_READER } from "kryo-json/lib/json-reader.js";
+import { Float64Type } from "kryo/lib/float64.js";
 
-const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..", "..", "..");
+const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "various");
-
-const JSON_READER: JsonReader = new JsonReader();
 
 for (const group of getSampleGroups()) {
   describe(group.name, function () {
@@ -28,9 +26,9 @@ for (const group of getSampleGroups()) {
       it(sample.name, async function () {
         const valueJson: string = await readTextFile(sample.valuePath);
         const value: any = group.type.read(JSON_READER, valueJson);
-        const stream: WritableByteStream = new WritableStream();
-        group.emitter(stream, value);
-        const actualBytes: Uint8Array = stream.getBytes();
+        const s: WritableByteStream = new stream.WritableStream();
+        group.emitter(s, value);
+        const actualBytes: Uint8Array = s.getBytes();
 
         const expectedBytes: Uint8Array = await readFile(sample.outputPath);
 

@@ -1,9 +1,9 @@
-import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
+import incident from "incident";
 import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
 import { Glyph, LanguageCode, text } from "swf-types";
-import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types";
-import { emitGlyph } from "./shape";
+import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
+import { emitGlyph } from "./shape.js";
 
 export function emitLanguageCode(byteStream: WritableByteStream, value: LanguageCode): void {
   const VALUE_TO_CODE: Map<LanguageCode, Uint8> = new Map([
@@ -16,7 +16,7 @@ export function emitLanguageCode(byteStream: WritableByteStream, value: Language
   ]);
   const code: Uint8 | undefined = VALUE_TO_CODE.get(value);
   if (code === undefined) {
-    throw new Incident("Unexpected value");
+    throw new incident.Incident("Unexpected value");
   }
   byteStream.writeUint8(code);
 }
@@ -29,7 +29,7 @@ export function gridFittingToCode(value: text.GridFitting): Uint3 {
   ]);
   const code: Uint3 | undefined = VALUE_TO_CODE.get(value);
   if (code === undefined) {
-    throw new Incident("Unexpected value");
+    throw new incident.Incident("Unexpected value");
   }
   return code;
 }
@@ -41,7 +41,7 @@ export function textRendererToCode(value: text.TextRenderer): Uint2 {
   ]);
   const code: Uint2 | undefined = VALUE_TO_CODE.get(value);
   if (code === undefined) {
-    throw new Incident("Unexpected value");
+    throw new incident.Incident("Unexpected value");
   }
   return code;
 }
@@ -116,7 +116,7 @@ export function emitCsmTableHintBits(bitStream: WritableBitStream, value: text.C
   ]);
   const code: Uint2 | undefined = VALUE_TO_CODE.get(value);
   if (code === undefined) {
-    throw new Incident("Unexpected value");
+    throw new incident.Incident("Unexpected value");
   }
   bitStream.writeUint32Bits(2, code);
 }
@@ -148,7 +148,7 @@ export function emitOffsetGlyphs(
   value: ReadonlyArray<Glyph>,
 ): boolean {
   const endOffsets: UintSize[] = new Array(value.length);
-  const glyphStream: WritableStream = new WritableStream();
+  const glyphStream: stream.WritableStream = new stream.WritableStream();
   for (let i: UintSize = 0; i < value.length; i++) {
     emitGlyph(glyphStream, value[i]);
     endOffsets[i] = glyphStream.bytePos;
@@ -210,7 +210,7 @@ export function emitTextAlignment(byteStream: WritableByteStream, value: text.Te
   ]);
   const code: Uint8 | undefined = TEXT_ALIGNMENT_TO_CODE.get(value);
   if (code === undefined) {
-    throw new Incident("UnexpectedTextAlignment");
+    throw new incident.Incident("UnexpectedTextAlignment");
   }
   byteStream.writeUint8(code);
 }

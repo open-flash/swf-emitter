@@ -1,15 +1,15 @@
-import { WritableByteStream, WritableStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import stream, { WritableByteStream } from "@open-flash/stream";
+import incident from "incident";
 import { UintSize } from "semantic-types";
 import { CompressionMethod, Header, Movie, SwfSignature } from "swf-types";
-import * as zlib from "zlib";
-import { emitRect } from "./basic-data-types";
-import { emitTagString } from "./tags";
+import zlib from "zlib";
+import { emitRect } from "./basic-data-types.js";
+import { emitTagString } from "./tags.js";
 
 const SWF_SIGNATURE_SIZE: UintSize = 8;
 
 export function emitSwf(byteStream: WritableByteStream, value: Movie, compressionMethod: CompressionMethod): void {
-  const movieStream: WritableByteStream = new WritableStream();
+  const movieStream: WritableByteStream = new stream.WritableStream();
   emitMovie(movieStream, value);
   const uncompressedFileLength: UintSize = SWF_SIGNATURE_SIZE + movieStream.bytePos;
   const signature: SwfSignature = {
@@ -24,12 +24,12 @@ export function emitSwf(byteStream: WritableByteStream, value: Movie, compressio
       byteStream.writeBytes(zlib.deflateSync(<any> movieBytes));
       break;
     case CompressionMethod.Lzma:
-      throw new Incident("NotImplemented", "Lzma support");
+      throw new incident.Incident("NotImplemented", "Lzma support");
     case CompressionMethod.None:
       byteStream.write(movieStream);
       break;
     default:
-      throw new Incident("UnexpectedCompressionMethod");
+      throw new incident.Incident("UnexpectedCompressionMethod");
   }
 }
 
@@ -48,7 +48,7 @@ export function emitCompressionMethod(byteStream: WritableByteStream, value: Com
 
   const chunk: Uint8Array | undefined = COMPRESSION_TO_CHUNK.get(value);
   if (chunk === undefined) {
-    throw new Incident("UnexpectedCompressionMethod");
+    throw new incident.Incident("UnexpectedCompressionMethod");
   }
   byteStream.writeBytes(chunk);
 }

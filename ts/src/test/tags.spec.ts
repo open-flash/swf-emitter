@@ -1,16 +1,15 @@
-import { WritableByteStream, WritableStream } from "@open-flash/stream";
+import stream, { WritableByteStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
-import { IoType } from "kryo/core";
-import { JsonReader } from "kryo/readers/json";
+import { IoType } from "kryo";
 import sysPath from "path";
-import { Tag } from "swf-types";
-import { $Tag } from "swf-types/tag";
-import { emitTag } from "../lib/emitters/tags";
+import { Tag, $Tag } from "swf-types/lib/tag.js";
+import { emitTag } from "../lib/emitters/tags.js";
 import meta from "./meta.js";
-import { prettyPrintBytes, readFile, readTextFile } from "./utils";
+import { prettyPrintBytes, readFile, readTextFile } from "./utils.js";
+import { JSON_READER } from "kryo-json/lib/json-reader.js";
 
-const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..", "..", "..");
+const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const TAG_SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "tags");
 // `BLACKLIST` can be used to forcefully skip some tests.
 const BLACKLIST: ReadonlySet<string> = new Set([
@@ -22,8 +21,6 @@ const WHITELIST: ReadonlySet<string> = new Set([
   // "place-object3/update-depth-1",
 ]);
 
-const JSON_READER: JsonReader = new JsonReader();
-
 describe("tags", function () {
   for (const group of getSampleGroups()) {
     describe(group.name, function () {
@@ -31,7 +28,7 @@ describe("tags", function () {
         it(sample.name, async function () {
           const valueJson: string = await readTextFile(sample.valuePath);
           const value: Tag = group.type.read(JSON_READER, valueJson);
-          const stream: WritableByteStream = new WritableStream();
+          const s: WritableByteStream = new stream.WritableStream();
 
           let swfVersion: number;
           switch (`${group.name}/${sample.name}`) {
@@ -43,8 +40,8 @@ describe("tags", function () {
               break;
           }
 
-          emitTag(stream, value, swfVersion);
-          const actualBytes: Uint8Array = stream.getBytes();
+          emitTag(s, value, swfVersion);
+          const actualBytes: Uint8Array = s.getBytes();
 
           const expectedBytes: Uint8Array = await readFile(sample.outputPath);
 

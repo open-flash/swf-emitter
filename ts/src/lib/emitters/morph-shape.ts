@@ -1,20 +1,20 @@
-import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
-import { Incident } from "incident";
+import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
+import incident from "incident";
 import { Uint16, Uint2, Uint5, Uint8, UintSize } from "semantic-types";
 import { FillStyleType } from "swf-types";
-import * as fillStyles from "swf-types/fill-styles/index";
-import { JoinStyleType } from "swf-types/join-styles/_type";
-import { MorphFillStyle } from "swf-types/morph-fill-style";
-import { MorphLineStyle } from "swf-types/morph-line-style";
-import { MorphShape } from "swf-types/morph-shape";
-import { MorphShapeRecord } from "swf-types/morph-shape-record";
-import { MorphShapeStyles } from "swf-types/morph-shape-styles";
-import { MorphStyleChange } from "swf-types/shape-records";
-import { ShapeRecordType } from "swf-types/shape-records/_type";
-import { getSintMinBitCount, getUintBitCount } from "../get-bit-count";
-import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types";
-import { emitMorphGradient } from "./gradient";
-import { capStyleToCode, emitEdgeBits, emitListLength, joinStyleToCode } from "./shape";
+import * as fillStyles from "swf-types/lib/fill-styles/index.js";
+import { JoinStyleType } from "swf-types/lib/join-styles/_type.js";
+import { MorphFillStyle } from "swf-types/lib/morph-fill-style.js";
+import { MorphLineStyle } from "swf-types/lib/morph-line-style.js";
+import { MorphShape } from "swf-types/lib/morph-shape.js";
+import { MorphShapeRecord } from "swf-types/lib/morph-shape-record.js";
+import { MorphShapeStyles } from "swf-types/lib/morph-shape-styles.js";
+import { MorphStyleChange } from "swf-types/lib/shape-records/morph-style-change.js";
+import { ShapeRecordType } from "swf-types/lib/shape-records/_type.js";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
+import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types.js";
+import { emitMorphGradient } from "./gradient.js";
+import { capStyleToCode, emitEdgeBits, emitListLength, joinStyleToCode } from "./shape.js";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,
@@ -26,7 +26,7 @@ export function emitMorphShape(
   value: MorphShape,
   morphShapeVersion: MorphShapeVersion,
 ): void {
-  const shapeStream: WritableStream = new WritableStream();
+  const shapeStream: stream.WritableStream = new stream.WritableStream();
   const startShapeSize: UintSize = emitMorphShapeBits(shapeStream, value, morphShapeVersion);
   byteStream.writeUint32LE(startShapeSize);
   byteStream.write(shapeStream);
@@ -112,7 +112,7 @@ export function emitMorphShapeEndRecordStringBits(
       const flags: Uint5 = 0b00001; // Pure `moveTo`
       bitStream.writeUint16Bits(5, flags);
       if (record.morphMoveTo === undefined) {
-        throw new Incident("UndefinedEndMoveTo");
+        throw new incident.Incident("UndefinedEndMoveTo");
       }
       const bitCount: UintSize = getSintMinBitCount(record.morphMoveTo.x, record.morphMoveTo.y);
       bitStream.writeUint16Bits(5, bitCount);
@@ -214,7 +214,7 @@ export function emitMorphFillStyle(byteStream: WritableByteStream, value: MorphF
       emitMorphSolidFill(byteStream, value);
       break;
     default:
-      throw new Incident("UnexpectedMorphFillStyle");
+      throw new incident.Incident("UnexpectedMorphFillStyle");
   }
 }
 
@@ -272,7 +272,7 @@ export function emitMorphLineStyleList(
 
 export function emitMorphLineStyle1(byteStream: WritableByteStream, value: MorphLineStyle): void {
   if (value.fill.type !== FillStyleType.Solid) {
-    throw new Incident("ExpectedSolidMorphFill");
+    throw new incident.Incident("ExpectedSolidMorphFill");
   }
   byteStream.writeUint16LE(value.width);
   byteStream.writeUint16LE(value.morphWidth);
