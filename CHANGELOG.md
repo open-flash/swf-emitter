@@ -1,5 +1,10 @@
 # Next
 
+## Rust
+
+- **[Breaking change]** Update to `swf-types@0.13`.
+- **[Fix]** Update dependencies.
+
 ## Typescript
 
 - **[Breaking change]** Update to `swf-types@0.13`.
