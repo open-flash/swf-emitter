@@ -43,16 +43,16 @@ fn emit_tag_header<W: io::Write>(writer: &mut W, value: TagHeader) -> io::Result
   const SHORT_TAG_MAX_LENGTH: u16 = (1 << 6) - 1;
 
   // Some tags require a long header
-  let is_long_required = match value.code {
-    6 => true,  // DefineBits
-    21 => true, // DefineBitsJPEG2
-    35 => true, // DefineBitsJPEG3
-    20 => true, // DefineBitsLossless
-    36 => true, // DefineBitsLossless2
-    90 => true, // DefineBitsJPEG4
-    19 => true, // SoundStreamBlock
-    _ => false,
-  };
+  let is_long_required = matches!(
+    value.code,
+    6 // DefineBits
+    | 21 // DefineBitsJPEG2
+    | 35 // DefineBitsJPEG3
+    | 20 // DefineBitsLossless
+    | 36 // DefineBitsLossless2
+    | 90 // DefineBitsJPEG4
+    | 19 // SoundStreamBlock
+  );
   let is_leading_byte_non_zero = value.length > 0 || (value.code & 0b11) != 0;
 
   if !is_long_required && value.length < u32::from(SHORT_TAG_MAX_LENGTH) && is_leading_byte_non_zero {
@@ -238,6 +238,7 @@ pub fn emit_tag<W: io::Write>(writer: &mut W, value: &ast::Tag, swf_version: u8)
 pub fn emit_csm_text_settings<W: io::Write>(writer: &mut W, value: &ast::tags::CsmTextSettings) -> io::Result<()> {
   emit_le_u16(writer, value.text_id)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     // Skip bits [0, 2]
     | (grid_fitting_to_code(value.fitting) << 3)
@@ -291,7 +292,7 @@ pub(crate) fn emit_define_button_any<W: io::Write>(
 
   match version {
     ButtonVersion::Button1 => {
-      debug_assert_eq!(value.track_as_menu, false);
+      debug_assert!(!value.track_as_menu);
       writer.write_all(&record_writer)?;
       debug_assert_eq!(value.actions.len(), 1);
       let action: &ast::ButtonCondAction = value.actions.get(0).unwrap();
@@ -299,10 +300,10 @@ pub(crate) fn emit_define_button_any<W: io::Write>(
       writer.write_all(&action.actions)?;
     }
     ButtonVersion::Button2 => {
-      let flags: u8 = 0 | (if value.track_as_menu { 1 << 0 } else { 0 });
+      let flags: u8 = if value.track_as_menu { 1 << 0 } else { 0 };
       emit_u8(writer, flags)?;
 
-      if value.actions.len() == 0 {
+      if value.actions.is_empty() {
         emit_le_u16(writer, 0)?;
         writer.write_all(&record_writer)?;
       } else {
@@ -348,6 +349,7 @@ pub(crate) fn emit_define_dynamic_text<W: io::Write>(
     || value.leading != 0;
   let has_font_class = value.font_class.is_some() && value.font_size.is_some();
 
+  #[allow(clippy::identity_op)]
   let flags: u16 = 0
     | (if has_font { 1 << 0 } else { 0 })
     | (if has_max_length { 1 << 1 } else { 0 })
@@ -426,6 +428,7 @@ pub(crate) fn emit_define_font_any<W: io::Write>(
   };
   let has_layout = value.layout.is_some();
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | (if value.is_bold { 1 << 0 } else { 0 })
     | (if value.is_italic { 1 << 1 } else { 0 })
@@ -471,6 +474,7 @@ pub fn emit_define_font_align_zones<W: io::Write>(
   value: &ast::tags::DefineFontAlignZones,
 ) -> io::Result<()> {
   emit_le_u16(writer, value.font_id)?;
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     // Skip bits [0, 5]
     | (csm_table_hint_to_code(value.csm_table_hint) << 6);
@@ -508,6 +512,7 @@ pub(crate) fn emit_define_font_info_any<W: io::Write>(
   }
 
   // TODO: `is_ansi` and `is_shift_jis` must be `false` in FontInfo2.
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | (if use_wide_codes { 1 << 0 } else { 0 })
     | (if value.is_bold { 1 << 1 } else { 0 })
@@ -540,7 +545,7 @@ pub fn emit_define_font_name<W: io::Write>(writer: &mut W, value: &ast::tags::De
 
 pub fn emit_define_glyph_font<W: io::Write>(writer: &mut W, value: &ast::tags::DefineGlyphFont) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
-  if value.glyphs.len() == 0 {
+  if value.glyphs.is_empty() {
     return Ok(());
   }
 
@@ -569,6 +574,7 @@ pub fn emit_define_morph_shape_any<W: io::Write>(
     let morph_edge_bounds = &value.morph_edge_bounds.unwrap();
     emit_rect(writer, &edge_bounds)?;
     emit_rect(writer, &morph_edge_bounds)?;
+    #[allow(clippy::identity_op)]
     let flags: u8 = 0
       | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
       | (if value.has_non_scaling_strokes { 1 << 1 } else { 0 });
@@ -604,6 +610,7 @@ pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::De
   emit_rect(writer, &value.bounds)?;
   let version = if let Some(ref edge_bounds) = &value.edge_bounds {
     emit_rect(writer, &edge_bounds)?;
+    #[allow(clippy::identity_op)]
     let flags: u8 = 0
       | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
       | (if value.has_non_scaling_strokes { 1 << 1 } else { 0 })
@@ -621,17 +628,13 @@ pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::De
 pub fn emit_define_sound<W: io::Write>(writer: &mut W, value: &ast::tags::DefineSound) -> io::Result<()> {
   emit_le_u16(writer, value.id)?;
 
-  let flags: u8 =
-    0 | (if value.sound_type == ast::SoundType::Stereo {
-      1 << 0
-    } else {
-      0
-    }) | (if value.sound_size == ast::SoundSize::SoundSize16 {
-      1 << 1
-    } else {
-      0
-    }) | (sound_rate_to_code(value.sound_rate) << 2)
-      | (audio_coding_format_to_code(value.format) << 4);
+  #[allow(clippy::identity_op)]
+  let flags: u8 = 0
+    // (this comment prevent rustfmt from changing the layout, todo: find how to disable on this assignment only)
+    | (if value.sound_type == ast::SoundType::Stereo { 1 << 0 } else { 0 })
+    | (if value.sound_size == ast::SoundSize::SoundSize16 { 1 << 1 } else { 0 })
+    | (sound_rate_to_code(value.sound_rate) << 2)
+    | (audio_coding_format_to_code(value.format) << 4);
   emit_u8(writer, flags)?;
 
   emit_le_u32(writer, value.sample_count)?;
@@ -666,7 +669,7 @@ pub(crate) fn emit_define_text_any<W: io::Write>(
     }
     for entry in &record.entries {
       index_bits = max(index_bits, get_u32_bit_count(entry.index.try_into().unwrap()));
-      advance_bits = max(advance_bits, get_i32_bit_count(entry.advance.try_into().unwrap()));
+      advance_bits = max(advance_bits, get_i32_bit_count(entry.advance));
     }
   }
   emit_u8(writer, index_bits.try_into().unwrap())?;
@@ -711,6 +714,7 @@ pub fn emit_export_assets<W: io::Write>(writer: &mut W, value: &ast::tags::Expor
 }
 
 pub fn emit_file_attributes<W: io::Write>(writer: &mut W, value: &ast::tags::FileAttributes) -> io::Result<()> {
+  #[allow(clippy::identity_op)]
   let flags: u32 = 0
     | (if value.use_network { 1 << 0 } else { 0 })
     | (if value.use_relative_urls { 1 << 1 } else { 0 })
@@ -777,6 +781,7 @@ pub fn emit_place_object_any<W: io::Write>(
     || has_visibility
     || has_background_color
   {
+    #[allow(clippy::identity_op)]
     let flags: u16 = 0
       | (if is_update { 1 << 0 } else { 0 })
       | (if has_character_id { 1 << 1 } else { 0 })
@@ -844,6 +849,7 @@ pub fn emit_place_object_any<W: io::Write>(
     || has_clip_depth
     || has_clip_actions
   {
+    #[allow(clippy::identity_op)]
     let flags: u8 = 0
       | (if is_update { 1 << 0 } else { 0 })
       | (if has_character_id { 1 << 1 } else { 0 })
@@ -898,7 +904,7 @@ pub fn emit_place_object_any<W: io::Write>(
 }
 
 pub fn emit_protect<W: io::Write>(writer: &mut W, value: &ast::tags::Protect) -> io::Result<()> {
-  if value.password.len() > 0 {
+  if !value.password.is_empty() {
     emit_c_string(writer, &value.password)?;
   }
   Ok(())

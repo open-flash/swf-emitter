@@ -35,6 +35,7 @@ pub(crate) fn emit_sound_info<W: io::Write>(writer: &mut W, value: &ast::SoundIn
   let sync_no_multiple = value.sync_no_multiple;
   let sync_stop = value.sync_stop;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | (if has_in_point { 1 << 0 } else { 0 })
     | (if has_out_point { 1 << 1 } else { 0 })
@@ -61,7 +62,7 @@ pub(crate) fn emit_sound_info<W: io::Write>(writer: &mut W, value: &ast::SoundIn
   Ok(())
 }
 
-pub(crate) fn emit_sound_envelope<W: io::Write>(writer: &mut W, value: &Vec<ast::SoundEnvelope>) -> io::Result<()> {
+pub(crate) fn emit_sound_envelope<W: io::Write>(writer: &mut W, value: &[ast::SoundEnvelope]) -> io::Result<()> {
   emit_u8(writer, value.len().try_into().unwrap())?;
   for record in value {
     emit_le_u32(writer, record.pos44)?;

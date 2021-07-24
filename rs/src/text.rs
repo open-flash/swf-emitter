@@ -90,6 +90,7 @@ pub(crate) fn emit_text_record<W: io::Write>(
   let has_color = value.color.is_some();
   let has_font = value.font_id.is_some() && value.font_size.is_some();
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | (if has_offset_x { 1 << 0 } else { 0 })
     | (if has_offset_y { 1 << 1 } else { 0 })
@@ -148,6 +149,7 @@ pub(crate) fn emit_font_alignment_zone<W: io::Write>(
     emit_le_f16(writer, zone_data.origin)?;
     emit_le_f16(writer, zone_data.size)?;
   }
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0 | (if value.has_x { 1 << 0 } else { 0 }) | (if value.has_y { 1 << 1 } else { 0 });
   // Skip bits [2, 7]
   emit_u8(writer, flags)

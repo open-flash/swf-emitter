@@ -5,21 +5,19 @@ pub fn get_u32_bit_count(value: u32) -> u32 {
 }
 
 pub fn get_i32_bit_count(value: i32) -> u32 {
-  if value == 0 {
-    0
-  } else if value < 0 {
-    33 - (!value).leading_zeros()
-  } else {
-    33 - value.leading_zeros()
+  match value {
+    0 => 0,
+    v if v < 0 => 33 - (!v).leading_zeros(),
+    v => 33 - v.leading_zeros()
   }
 }
 
 pub fn get_u32_min_bit_count<I: Iterator<Item = u32>>(values: I) -> u32 {
-  values.map(get_u32_bit_count).fold(0, |acc, count| max(acc, count))
+  values.map(get_u32_bit_count).fold(0, max)
 }
 
 pub fn get_i32_min_bit_count<I: Iterator<Item = i32>>(values: I) -> u32 {
-  values.map(get_i32_bit_count).fold(0, |acc, count| max(acc, count))
+  values.map(get_i32_bit_count).fold(0, max)
 }
 
 #[cfg(test)]

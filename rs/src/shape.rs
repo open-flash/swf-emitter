@@ -143,6 +143,7 @@ pub(crate) fn emit_style_change_bits<W: WriteBits>(
   let has_new_line_style = value.line_style.is_some();
   let has_new_styles = value.new_styles.is_some();
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | (if has_move_to { 1 << 0 } else { 0 })
     | (if has_new_left_fill { 1 << 1 } else { 0 })
@@ -216,8 +217,10 @@ pub(crate) fn emit_fill_style<W: io::Write + ?Sized>(
 ) -> io::Result<()> {
   match value {
     ast::FillStyle::Bitmap(ref style) => {
-      let code: u8 =
-        0 | (if !style.repeating { 1 << 0 } else { 0 }) | (if !style.smoothed { 1 << 1 } else { 0 }) | 0x40;
+      #[allow(clippy::identity_op)]
+      let code: u8 = 0
+        | (if !style.repeating { 1 << 0 } else { 0 })
+        | (if !style.smoothed { 1 << 1 } else { 0 }) | 0x40;
       emit_u8(writer, code)?;
       emit_bitmap_fill(writer, style)
     }
@@ -329,14 +332,12 @@ pub(crate) fn emit_line_style1<W: io::Write + ?Sized>(
 pub(crate) fn emit_line_style2<W: io::Write + ?Sized>(writer: &mut W, value: &ast::LineStyle) -> io::Result<()> {
   emit_le_u16(writer, value.width)?;
 
-  let has_fill = match &value.fill {
-    ast::FillStyle::Solid(_) => false,
-    _ => true,
-  };
+  let has_fill = !matches!(&value.fill, ast::FillStyle::Solid(_));
   let join_style_code = join_style_to_code(value.join);
   let start_cap_style_code = cap_style_to_code(value.start_cap);
   let end_cap_style_code = cap_style_to_code(value.end_cap);
 
+  #[allow(clippy::identity_op)]
   let flags: u16 = 0
     | (if value.pixel_hinting { 1 << 0 } else { 0 })
     | (if value.no_v_scale { 1 << 1 } else { 0 })
@@ -434,10 +435,7 @@ pub(crate) fn get_line_style_list_min_shape_version(value: &[ast::LineStyle]) ->
 }
 
 pub(crate) fn get_line_style_min_shape_version(value: &ast::LineStyle) -> ShapeVersion {
-  let is_solid_fill = match &value.fill {
-    ast::FillStyle::Solid(_) => true,
-    _ => false,
-  };
+  let is_solid_fill = !matches!(&value.fill, ast::FillStyle::Solid(_));
   let is_line_style2 = value.start_cap != ast::CapStyle::Round
     || value.end_cap != ast::CapStyle::Round
     || value.join != ast::JoinStyle::Round

@@ -4,6 +4,7 @@
 
 - **[Breaking change]** Update to `swf-types@0.13`.
 - **[Fix]** Update dependencies.
+- **[Internal]** Add clippy support.
 
 ## Typescript
 

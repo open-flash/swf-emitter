@@ -20,7 +20,7 @@ pub fn emit_leb128_u32<W: io::Write>(writer: &mut W, mut value: u32) -> io::Resu
   }
   while value != 0 {
     let mut next_byte: u8 = (value & 0x7f).try_into().unwrap();
-    value = value >> 7;
+    value >>= 7;
     if value != 0 {
       next_byte |= 0x80;
     }

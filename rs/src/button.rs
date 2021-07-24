@@ -52,9 +52,10 @@ pub(crate) fn emit_button_record<W: io::Write>(
   value: &ast::ButtonRecord,
   version: ButtonVersion,
 ) -> io::Result<()> {
-  let has_filters = value.filters.len() != 0;
+  let has_filters = !value.filters.is_empty();
   let has_blend_mode = value.blend_mode != ast::BlendMode::Normal;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | (if value.state_up { 1 << 0 } else { 0 })
     | (if value.state_over { 1 << 1 } else { 0 })
@@ -110,6 +111,7 @@ pub(crate) fn emit_button_cond<W: io::Write>(writer: &mut W, value: &ast::Button
     Some(key_code) => u16::try_from(key_code).unwrap() & 0x7f,
     None => 0,
   };
+  #[allow(clippy::identity_op)]
   let flags: u16 = 0
     | (if value.idle_to_over_up { 1 << 0 } else { 0 })
     | (if value.over_up_to_idle { 1 << 1 } else { 0 })
