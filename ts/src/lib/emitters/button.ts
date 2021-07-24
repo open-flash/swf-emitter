@@ -1,17 +1,17 @@
-import stream, { WritableByteStream } from "@open-flash/stream";
+import { WritableByteStream,WritableStream } from "@open-flash/stream";
 import incident from "incident";
 import { Uint7, Uint8, Uint16, UintSize } from "semantic-types";
-import { BlendMode } from "swf-types/lib/blend-mode.js";
-import { ButtonCondAction } from "swf-types/lib/button/button-cond-action.js";
-import { ButtonCond } from "swf-types/lib/button/button-cond.js";
-import { ButtonRecord } from "swf-types/lib/button/button-record.js";
-import { ButtonSound } from "swf-types/lib/button/button-sound.js";
+import { BlendMode } from "swf-types/blend-mode";
+import { ButtonCond } from "swf-types/button/button-cond";
+import { ButtonCondAction } from "swf-types/button/button-cond-action";
+import { ButtonRecord } from "swf-types/button/button-record";
+import { ButtonSound } from "swf-types/button/button-sound";
 import {
   $ColorTransformWithAlpha,
   ColorTransformWithAlpha,
-} from "swf-types/lib/color-transform-with-alpha.js";
-import { Sfixed8P8 } from "swf-types/lib/fixed-point/sfixed8p8.js";
-import { DefineButton } from "swf-types/lib/tags/define-button.js";
+} from "swf-types/color-transform-with-alpha";
+import { Sfixed8P8 } from "swf-types/fixed-point/sfixed8p8";
+import { DefineButton } from "swf-types/tags/define-button";
 
 import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types.js";
 import { emitBlendMode, emitFilterList } from "./display.js";
@@ -106,7 +106,7 @@ export function emitButton2CondActionString(
   value: ReadonlyArray<ButtonCondAction>,
 ): void {
   for (let i: UintSize = 0; i < value.length; i++) {
-    const actionStream: stream.WritableStream = new stream.WritableStream();
+    const actionStream: WritableStream = new WritableStream();
     emitButton2CondAction(actionStream, value[i]);
     if (i < value.length - 1) { // !isLast
       byteStream.writeUint16LE(actionStream.bytePos);

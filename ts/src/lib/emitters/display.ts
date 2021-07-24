@@ -1,4 +1,4 @@
-import stream, { WritableByteStream } from "@open-flash/stream";
+import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import incident from "incident";
 import { Uint8,Uint16, Uint32 } from "semantic-types";
 import { BlendMode, ClipAction, ClipEventFlags, Filter, filters, FilterType } from "swf-types";
@@ -128,7 +128,7 @@ export function emitClipEventFlags(
 
 export function emitClipAction(byteStream: WritableByteStream, value: ClipAction, extendedEvents: boolean): void {
   emitClipEventFlags(byteStream, value.events, extendedEvents);
-  const actionStream: WritableByteStream = new stream.WritableStream();
+  const actionStream: WritableByteStream = new WritableStream();
 
   if (value.events.keyPress) {
     if (value.keyCode === undefined) {
