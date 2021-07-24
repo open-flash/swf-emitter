@@ -1,17 +1,17 @@
-import stream, { WritableByteStream } from "@open-flash/stream";
+import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
 import { IoType } from "kryo";
-import { JSON_READER } from "kryo-json/lib/json-reader.js";
-import { Float64Type } from "kryo/lib/float64.js";
-import { $Uint32 } from "kryo/lib/integer.js";
+import { Float64Type } from "kryo/float64";
+import { $Uint32 } from "kryo/integer";
+import { JSON_READER } from "kryo-json/json-reader";
 import sysPath from "path";
 import { Float32, Uint32 } from "semantic-types";
-import { $ColorTransformWithAlpha } from "swf-types/lib/color-transform-with-alpha.js";
-import { $Header } from "swf-types/lib/header.js";
-import { $Matrix } from "swf-types/lib/matrix.js";
-import { $Rect } from "swf-types/lib/rect.js";
-import { $SwfSignature } from "swf-types/lib/swf-signature.js";
+import { $ColorTransformWithAlpha } from "swf-types/color-transform-with-alpha";
+import { $Header } from "swf-types/header";
+import { $Matrix } from "swf-types/matrix";
+import { $Rect } from "swf-types/rect";
+import { $SwfSignature } from "swf-types/swf-signature";
 
 import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types.js";
 import { emitHeader, emitSwfSignature } from "../lib/emitters/movie.js";
@@ -27,7 +27,7 @@ for (const group of getSampleGroups()) {
       it(sample.name, async function () {
         const valueJson: string = await readTextFile(sample.valuePath);
         const value: any = group.type.read(JSON_READER, valueJson);
-        const s: WritableByteStream = new stream.WritableStream();
+        const s: WritableByteStream = new WritableStream();
         group.emitter(s, value);
         const actualBytes: Uint8Array = s.getBytes();
 

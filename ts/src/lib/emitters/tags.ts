@@ -1,9 +1,9 @@
-import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
+import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import incident from "incident";
 import { Uint2, Uint3, Uint4, Uint8, Uint16, Uint32, UintSize } from "semantic-types";
 import { LanguageCode, Tag, tags, TagType } from "swf-types";
-import { SoundType } from "swf-types/lib/sound/sound-type.js";
-import { TextAlignment } from "swf-types/lib/text/text-alignment.js";
+import { SoundType } from "swf-types/sound/sound-type";
+import { TextAlignment } from "swf-types/text/text-alignment";
 
 import { getSintBitCount, getUintBitCount } from "../get-bit-count.js";
 import {
@@ -255,7 +255,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
     return;
   }
 
-  const tagStream: stream.WritableStream = new stream.WritableStream();
+  const tagStream: WritableStream = new WritableStream();
   const result: any = tagEmitter[0](tagStream, value, swfVersion);
   let code: number | Map<any, number> = <any> tagEmitter[tagEmitter.length - 1];
   if (typeof code !== "number") {
@@ -309,7 +309,7 @@ export function emitDefineButtonAny(byteStream: WritableByteStream, value: tags.
   byteStream.writeUint16LE(value.id);
   const version: ButtonVersion = getMinButtonVersion(value);
 
-  const buttonRecordStream: stream.WritableStream = new stream.WritableStream();
+  const buttonRecordStream: WritableStream = new WritableStream();
   // TODO: Select the lowest compatible `ButtonVersion`
   emitButtonRecordString(buttonRecordStream, value.records, version);
 
@@ -371,7 +371,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
   byteStream.writeUint16LE(value.id);
 
   const useWideCodes: boolean = true; // `false` is deprecated since SWF6
-  const offsetGlyphStream: stream.WritableStream = new stream.WritableStream();
+  const offsetGlyphStream: WritableStream = new WritableStream();
   const useWideOffsets: boolean = value.glyphs !== undefined
     ? emitOffsetGlyphs(offsetGlyphStream, value.glyphs)
     : false;
@@ -390,7 +390,7 @@ export function emitDefineFontAny(byteStream: WritableByteStream, value: tags.De
 
   emitLanguageCode(byteStream, value.language);
 
-  const fontNameStream: stream.WritableStream = new stream.WritableStream();
+  const fontNameStream: WritableStream = new WritableStream();
   // TODO: Check if it should be `.writeCString` or `.writeString`
   fontNameStream.writeNulUtf8(value.fontName); // TODO: See DefineFontInfo for encoding
   byteStream.writeUint8(fontNameStream.bytePos);
@@ -442,7 +442,7 @@ export function emitDefineFontInfoAny(
 
   byteStream.writeUint16LE(value.fontId);
 
-  const fontNameStream: stream.WritableStream = new stream.WritableStream();
+  const fontNameStream: WritableStream = new WritableStream();
   fontNameStream.writeNulUtf8(value.fontName);
   byteStream.writeUint8(fontNameStream.bytePos);
   byteStream.write(fontNameStream);
@@ -494,7 +494,7 @@ export function emitDefineGlyphFont(byteStream: WritableByteStream, value: tags.
   }
   const firstOffset: UintSize = value.glyphs.length * 2;
 
-  const glyphStream: stream.WritableStream = new stream.WritableStream();
+  const glyphStream: WritableStream = new WritableStream();
   for (const glyph of value.glyphs) {
     byteStream.writeUint16LE(firstOffset + glyphStream.bytePos);
     emitGlyph(glyphStream, glyph);

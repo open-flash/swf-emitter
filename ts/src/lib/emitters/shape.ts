@@ -16,8 +16,8 @@ import {
   shapeRecords,
   ShapeRecordType,
 } from "swf-types";
-import { ShapeStyles } from "swf-types/lib/shape-styles.js";
-import { Vector2D } from "swf-types/lib/vector-2d.js";
+import { ShapeStyles } from "swf-types/shape-styles";
+import { Vector2D } from "swf-types/vector-2d";
 
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
 import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";

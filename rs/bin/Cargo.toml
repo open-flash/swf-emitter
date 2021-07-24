@@ -2,7 +2,7 @@
 name = "swf-emitter-bin"
 version = "0.1.0"
 authors = ["Charles Samborski <demurgos@demurgos.net>"]
-description = "SWF parser"
+description = "SWF emitter"
 documentation = "https://github.com/open-flash/swf-emitter"
 homepage = "https://github.com/open-flash/swf-emitter"
 repository = "https://github.com/open-flash/swf-emitter"
@@ -12,7 +12,7 @@ license = "AGPL-3.0-or-later"
 edition = "2018"
 
 [[bin]]
-name = "swf-parser"
+name = "swf-emitter"
 path = "src/main.rs"
 
 [dependencies]

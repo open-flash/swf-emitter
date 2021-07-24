@@ -1,16 +1,16 @@
-import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
+import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import incident from "incident";
 import { Uint2, Uint5, Uint8, Uint16, UintSize } from "semantic-types";
 import { FillStyleType } from "swf-types";
-import * as fillStyles from "swf-types/lib/fill-styles/index.js";
-import { JoinStyleType } from "swf-types/lib/join-styles/_type.js";
-import { MorphFillStyle } from "swf-types/lib/morph-fill-style.js";
-import { MorphLineStyle } from "swf-types/lib/morph-line-style.js";
-import { MorphShapeRecord } from "swf-types/lib/morph-shape-record.js";
-import { MorphShapeStyles } from "swf-types/lib/morph-shape-styles.js";
-import { MorphShape } from "swf-types/lib/morph-shape.js";
-import { ShapeRecordType } from "swf-types/lib/shape-records/_type.js";
-import { MorphStyleChange } from "swf-types/lib/shape-records/morph-style-change.js";
+import * as fillStyles from "swf-types/fill-styles/index";
+import { JoinStyleType } from "swf-types/join-styles/_type";
+import { MorphFillStyle } from "swf-types/morph-fill-style";
+import { MorphLineStyle } from "swf-types/morph-line-style";
+import { MorphShapeRecord } from "swf-types/morph-shape-record";
+import { MorphShapeStyles } from "swf-types/morph-shape-styles";
+import { MorphShape } from "swf-types/morph-shape";
+import { ShapeRecordType } from "swf-types/shape-records/_type";
+import { MorphStyleChange } from "swf-types/shape-records/morph-style-change";
 
 import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
 import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types.js";
@@ -27,7 +27,7 @@ export function emitMorphShape(
   value: MorphShape,
   morphShapeVersion: MorphShapeVersion,
 ): void {
-  const shapeStream: stream.WritableStream = new stream.WritableStream();
+  const shapeStream: WritableStream = new WritableStream();
   const startShapeSize: UintSize = emitMorphShapeBits(shapeStream, value, morphShapeVersion);
   byteStream.writeUint32LE(startShapeSize);
   byteStream.write(shapeStream);

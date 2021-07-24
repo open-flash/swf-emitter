@@ -1,4 +1,4 @@
-import stream, { WritableBitStream, WritableByteStream } from "@open-flash/stream";
+import { WritableBitStream, WritableByteStream, WritableStream } from "@open-flash/stream";
 import incident from "incident";
 import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
 import { Glyph, LanguageCode, text } from "swf-types";
@@ -149,7 +149,7 @@ export function emitOffsetGlyphs(
   value: ReadonlyArray<Glyph>,
 ): boolean {
   const endOffsets: UintSize[] = new Array(value.length);
-  const glyphStream: stream.WritableStream = new stream.WritableStream();
+  const glyphStream: WritableStream = new WritableStream();
   for (let i: UintSize = 0; i < value.length; i++) {
     emitGlyph(glyphStream, value[i]);
     endOffsets[i] = glyphStream.bytePos;

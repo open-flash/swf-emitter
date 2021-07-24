@@ -1,10 +1,10 @@
-import stream, { WritableByteStream } from "@open-flash/stream";
+import { WritableStream, WritableByteStream } from "@open-flash/stream";
 import chai from "chai";
 import fs from "fs";
 import { IoType } from "kryo";
-import { JSON_READER } from "kryo-json/lib/json-reader.js";
+import { JSON_READER } from "kryo-json/json-reader";
 import sysPath from "path";
-import { $Tag,Tag } from "swf-types/lib/tag.js";
+import { $Tag,Tag } from "swf-types/tag";
 
 import { emitTag } from "../lib/emitters/tags.js";
 import meta from "./meta.js";
@@ -29,7 +29,7 @@ describe("tags", function () {
         it(sample.name, async function () {
           const valueJson: string = await readTextFile(sample.valuePath);
           const value: Tag = group.type.read(JSON_READER, valueJson);
-          const s: WritableByteStream = new stream.WritableStream();
+          const s: WritableByteStream = new WritableStream();
 
           let swfVersion: number;
           switch (`${group.name}/${sample.name}`) {

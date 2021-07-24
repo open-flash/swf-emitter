@@ -1,4 +1,4 @@
-import stream, { WritableByteStream } from "@open-flash/stream";
+import { WritableByteStream, WritableStream } from "@open-flash/stream";
 import incident from "incident";
 import { UintSize } from "semantic-types";
 import { CompressionMethod, Header, Movie, SwfSignature } from "swf-types";
@@ -10,7 +10,7 @@ import { emitTagString } from "./tags.js";
 const SWF_SIGNATURE_SIZE: UintSize = 8;
 
 export function emitSwf(byteStream: WritableByteStream, value: Movie, compressionMethod: CompressionMethod): void {
-  const movieStream: WritableByteStream = new stream.WritableStream();
+  const movieStream: WritableByteStream = new WritableStream();
   emitMovie(movieStream, value);
   const uncompressedFileLength: UintSize = SWF_SIGNATURE_SIZE + movieStream.bytePos;
   const signature: SwfSignature = {
