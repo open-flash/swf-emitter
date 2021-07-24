@@ -38,7 +38,7 @@ impl<W: io::Write> BitsWriter<W> {
 impl<W: io::Write> WriteBits for BitsWriter<W> {
   fn align(&mut self) -> io::Result<()> {
     if self.bit != 0 {
-      self.inner.write(&[self.buffer])?;
+      self.inner.write_all(&[self.buffer])?;
       self.bit = 0;
       self.buffer = 0;
     }
@@ -54,7 +54,7 @@ impl<W: io::Write> WriteBits for BitsWriter<W> {
     self.bit += 1;
 
     if self.bit == 8 {
-      self.inner.write(&[self.buffer])?;
+      self.inner.write_all(&[self.buffer])?;
       self.bit = 0;
       self.buffer = 0;
     }
@@ -79,7 +79,7 @@ impl<W: io::Write> WriteBits for BitsWriter<W> {
     while bits > 0 {
       let available_bits = 8 - self.bit;
       let consumed_bits = min(available_bits, bits);
-      debug_assert!(1 <= consumed_bits && consumed_bits <= 8);
+      debug_assert!((1..=8).contains(&consumed_bits));
 
       let chunk: u8 = ((value >> (bits - consumed_bits)) & ((1 << consumed_bits) - 1)) as u8;
       self.buffer |= chunk << (available_bits - consumed_bits);
@@ -87,7 +87,7 @@ impl<W: io::Write> WriteBits for BitsWriter<W> {
       self.bit += consumed_bits;
 
       if self.bit == 8 {
-        self.inner.write(&[self.buffer])?;
+        self.inner.write_all(&[self.buffer])?;
         self.bit = 0;
         self.buffer = 0;
       }

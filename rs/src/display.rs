@@ -93,6 +93,7 @@ pub fn emit_clip_event_flags<W: io::Write>(
   value: ast::ClipEventFlags,
   extended_events: bool,
 ) -> io::Result<()> {
+  #[allow(clippy::identity_op)]
   let flags: u16 = 0
     | (if value.load { 1 << 0 } else { 0 })
     | (if value.enter_frame { 1 << 1 } else { 0 })
@@ -200,6 +201,7 @@ pub fn emit_bevel_filter<W: io::Write>(writer: &mut W, value: &ast::filters::Bev
   emit_le_i32(writer, value.distance.epsilons)?;
   emit_le_i16(writer, value.strength.epsilons)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((value.passes & 0x0f) << 0)
     | (if value.on_top { 1 << 4 } else { 0 })
@@ -215,6 +217,7 @@ pub fn emit_blur_filter<W: io::Write>(writer: &mut W, value: &ast::filters::Blur
   emit_le_i32(writer, value.blur_x.epsilons)?;
   emit_le_i32(writer, value.blur_y.epsilons)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     // Skip bits [0, 2]
     | ((value.passes & 0x1f) << 3);
@@ -243,7 +246,10 @@ pub fn emit_convolution_filter<W: io::Write>(writer: &mut W, value: &ast::filter
   }
   emit_straight_s_rgba8(writer, value.default_color)?;
 
-  let flags: u8 = 0 | (if value.preserve_alpha { 1 << 0 } else { 0 }) | (if value.clamp { 1 << 1 } else { 0 });
+  #[allow(clippy::identity_op)]
+  let flags: u8 = 0
+    | (if value.preserve_alpha { 1 << 0 } else { 0 })
+    | (if value.clamp { 1 << 1 } else { 0 });
   emit_u8(writer, flags)
 }
 
@@ -257,6 +263,7 @@ pub fn emit_drop_shadow_filter<W: io::Write>(writer: &mut W, value: &ast::filter
   emit_le_i32(writer, value.distance.epsilons)?;
   emit_le_i16(writer, value.strength.epsilons)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((value.passes & 0x1f) << 0)
     | (if value.composite_source { 1 << 5 } else { 0 })
@@ -273,6 +280,7 @@ pub fn emit_glow_filter<W: io::Write>(writer: &mut W, value: &ast::filters::Glow
   emit_le_i32(writer, value.blur_y.epsilons)?;
   emit_le_i16(writer, value.strength.epsilons)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((value.passes & 0x1f) << 0)
     | (if value.composite_source { 1 << 5 } else { 0 })
@@ -298,6 +306,7 @@ pub fn emit_gradient_bevel_filter<W: io::Write>(writer: &mut W, value: &ast::fil
   emit_le_i32(writer, value.distance.epsilons)?;
   emit_le_i16(writer, value.strength.epsilons)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((value.passes & 0x0f) << 0)
     | (if value.on_top { 1 << 4 } else { 0 })
@@ -324,6 +333,7 @@ pub fn emit_gradient_glow_filter<W: io::Write>(writer: &mut W, value: &ast::filt
   emit_le_i32(writer, value.distance.epsilons)?;
   emit_le_i16(writer, value.strength.epsilons)?;
 
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((value.passes & 0x0f) << 0)
     | (if value.on_top { 1 << 4 } else { 0 })

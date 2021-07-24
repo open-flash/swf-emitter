@@ -27,6 +27,7 @@ pub(crate) fn emit_gradient<W: io::Write + ?Sized>(
   with_alpha: bool,
 ) -> io::Result<()> {
   assert!(value.colors.len() <= 0x0f);
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((u8::try_from(value.colors.len()).unwrap() & 0x0f) << 0)
     | ((gradient_spread_to_code(value.spread) & 0b11) << 4)
@@ -63,6 +64,7 @@ pub(crate) fn emit_color_stop<W: io::Write + ?Sized>(
 
 pub(crate) fn emit_morph_gradient<W: io::Write + ?Sized>(writer: &mut W, value: &ast::MorphGradient) -> io::Result<()> {
   assert!(value.colors.len() <= 0x0f);
+  #[allow(clippy::identity_op)]
   let flags: u8 = 0
     | ((u8::try_from(value.colors.len()).unwrap() & 0x0f) << 0)
     | ((gradient_spread_to_code(value.spread) & 0b11) << 4)

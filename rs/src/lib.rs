@@ -33,7 +33,6 @@ mod tests {
   use std::path::Path;
 
   use ::test_generator::test_expand_paths;
-  use swf_parser;
   use swf_types::Matrix;
   use swf_types::Rect;
   use swf_types::{ColorTransformWithAlpha, CompressionMethod, Header, Movie, SwfSignature, Tag};
