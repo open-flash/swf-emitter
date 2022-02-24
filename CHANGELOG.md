@@ -1,3 +1,10 @@
+# Next
+
+## Rust
+
+- **[Breaking Change]** `emit_swf` now returns `Result<(), SwfEmitError>`.
+- **[Change]** Unsupported compression methods no longer panic, they return an error instead. 
+
 # 0.13.0 (2021-07-24)
 
 ## Rust

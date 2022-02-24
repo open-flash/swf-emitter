@@ -2,6 +2,7 @@ pub mod basic_data_types;
 pub mod bit_count;
 pub mod button;
 pub mod display;
+mod error;
 pub mod gradient;
 pub mod io_bits;
 pub mod morph_shape;
@@ -16,7 +17,9 @@ use crate::movie::emit_swf as write_swf;
 use crate::tags::emit_tag as write_tag;
 use swf_types::{CompressionMethod, Movie, Tag};
 
-pub fn emit_swf(value: &Movie, compression_method: CompressionMethod) -> std::io::Result<Vec<u8>> {
+pub use error::SwfEmitError;
+
+pub fn emit_swf(value: &Movie, compression_method: CompressionMethod) -> Result<Vec<u8>, SwfEmitError> {
   let mut swf_writer: Vec<u8> = Vec::new();
   write_swf(&mut swf_writer, value, compression_method)?;
   Ok(swf_writer)

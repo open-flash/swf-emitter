@@ -2,6 +2,7 @@ use std::convert::TryInto;
 use std::io;
 
 use crate::basic_data_types::emit_rect;
+use crate::error::SwfEmitError;
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::tags::emit_tag_string;
 use swf_types as ast;
@@ -12,20 +13,19 @@ pub fn emit_swf<W: io::Write>(
   writer: &mut W,
   value: &ast::Movie,
   compression_method: ast::CompressionMethod,
-) -> io::Result<()> {
+) -> Result<(), SwfEmitError> {
   let mut movie_writer = Vec::new();
-  emit_movie(&mut movie_writer, value)?;
+  emit_movie(&mut movie_writer, value).map_err(SwfEmitError::Io)?;
   let uncompressed_file_length = SWF_SIGNATURE_SIZE + movie_writer.len();
   let signature = ast::SwfSignature {
     compression_method,
     swf_version: value.header.swf_version,
     uncompressed_file_length,
   };
-  emit_swf_signature(writer, &signature)?;
+  emit_swf_signature(writer, &signature).map_err(SwfEmitError::Io)?;
   match compression_method {
-    ast::CompressionMethod::Deflate => unimplemented!(),
-    ast::CompressionMethod::Lzma => unimplemented!(),
-    ast::CompressionMethod::None => writer.write_all(&movie_writer),
+    ast::CompressionMethod::None => writer.write_all(&movie_writer).map_err(SwfEmitError::Io),
+    method => Err(SwfEmitError::UnsupportedCompression(method)),
   }
 }
 
