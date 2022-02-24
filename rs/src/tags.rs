@@ -572,8 +572,8 @@ pub fn emit_define_morph_shape_any<W: io::Write>(
 
   let version = if let Some(ref edge_bounds) = &value.edge_bounds {
     let morph_edge_bounds = &value.morph_edge_bounds.unwrap();
-    emit_rect(writer, &edge_bounds)?;
-    emit_rect(writer, &morph_edge_bounds)?;
+    emit_rect(writer, edge_bounds)?;
+    emit_rect(writer, morph_edge_bounds)?;
     #[allow(clippy::identity_op)]
     let flags: u8 = 0
       | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
@@ -609,7 +609,7 @@ pub fn emit_define_shape_any<W: io::Write>(writer: &mut W, value: &ast::tags::De
   emit_le_u16(writer, value.id)?;
   emit_rect(writer, &value.bounds)?;
   let version = if let Some(ref edge_bounds) = &value.edge_bounds {
-    emit_rect(writer, &edge_bounds)?;
+    emit_rect(writer, edge_bounds)?;
     #[allow(clippy::identity_op)]
     let flags: u8 = 0
       | (if value.has_scaling_strokes { 1 << 0 } else { 0 })
