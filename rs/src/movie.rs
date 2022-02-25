@@ -5,6 +5,7 @@ use crate::basic_data_types::emit_rect;
 use crate::error::SwfEmitError;
 use crate::primitives::{emit_le_u16, emit_le_u32, emit_u8};
 use crate::tags::emit_tag_string;
+use ast::CompressionMethod;
 use swf_types as ast;
 
 const SWF_SIGNATURE_SIZE: usize = 8;
@@ -25,16 +26,30 @@ pub fn emit_swf<W: io::Write>(
   };
 
   let mut movie_bytes = Vec::new();
-  emit_movie(&mut movie_bytes, value).map_err(SwfEmitError::Io)?;
-  let uncompressed_file_length = SWF_SIGNATURE_SIZE + movie_bytes.len();
-  let signature = ast::SwfSignature {
+  let signature = emit_movie_bytes_to_buf(&mut movie_bytes, value, compression_method).map_err(SwfEmitError::Io)?;
+  emit_swf_signature(writer, &signature).map_err(SwfEmitError::Io)?;
+  write_movie_fn(writer, &movie_bytes).map_err(SwfEmitError::Io)
+}
+
+/// Special case of [`emit_swf`] that avoids an extra copy
+pub(crate) fn emit_uncompressed_swf_to_buf(buf: &mut Vec<u8>, value: &ast::Movie) -> Result<(), SwfEmitError> {
+  let start = buf.len();
+  buf.extend([0; SWF_SIGNATURE_SIZE]);
+  let signature = emit_movie_bytes_to_buf(buf, value, CompressionMethod::None).map_err(SwfEmitError::Io)?;
+
+  let mut header = &mut buf[start..(start + SWF_SIGNATURE_SIZE)];
+  emit_swf_signature(&mut header, &signature).map_err(SwfEmitError::Io)
+}
+
+fn emit_movie_bytes_to_buf(buf: &mut Vec<u8>, value: &ast::Movie, compression_method: CompressionMethod) -> io::Result<ast::SwfSignature> {
+  let before = buf.len();
+  emit_movie(buf, value)?;
+  let uncompressed_file_length = SWF_SIGNATURE_SIZE + (buf.len() - before);
+  Ok(ast::SwfSignature {
     compression_method,
     swf_version: value.header.swf_version,
     uncompressed_file_length,
-  };
-
-  emit_swf_signature(writer, &signature).map_err(SwfEmitError::Io)?;
-  write_movie_fn(writer, &movie_bytes).map_err(SwfEmitError::Io)
+  })
 }
 
 #[cfg(feature="lzma")]

@@ -21,7 +21,10 @@ pub use error::SwfEmitError;
 
 pub fn emit_swf(value: &Movie, compression_method: CompressionMethod) -> Result<Vec<u8>, SwfEmitError> {
   let mut swf_writer: Vec<u8> = Vec::new();
-  write_swf(&mut swf_writer, value, compression_method)?;
+  match compression_method {
+    CompressionMethod::None => crate::movie::emit_uncompressed_swf_to_buf(&mut swf_writer, value)?,
+    _ => write_swf(&mut swf_writer, value, compression_method)?,
+  }
   Ok(swf_writer)
 }
 
