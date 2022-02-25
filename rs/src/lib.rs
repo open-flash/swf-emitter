@@ -61,14 +61,22 @@ mod tests {
     let ast_reader = ::std::io::BufReader::new(ast_file);
     let value: Movie = serde_json::from_reader(ast_reader).expect("Failed to read value");
 
-    let actual_bytes = emit_swf(&value, CompressionMethod::None).unwrap();
+    const COMPRESSION_METHODS: &[(CompressionMethod, &str)] = &[
+      (CompressionMethod::None, "local-main.rs.swf"),
+      #[cfg(feature="deflate")]
+      (CompressionMethod::Deflate, "local-main-deflate.rs.swf"),
+    ];
 
-    let actual_movie_path = path.join("local-main.rs.swf");
-    ::std::fs::write(actual_movie_path, &actual_bytes).expect("Failed to write actual SWF");
+    for (method, filename) in COMPRESSION_METHODS {
+      let actual_bytes = emit_swf(&value, *method).unwrap();
 
-    let actual_movie = swf_parser::parse_swf(&actual_bytes).expect("Failed to parse movie");
+      let actual_movie_path = path.join(*filename);
+      ::std::fs::write(actual_movie_path, &actual_bytes).expect("Failed to write actual SWF");
+  
+      let actual_movie = swf_parser::parse_swf(&actual_bytes).expect("Failed to parse movie");
 
-    assert_eq!(actual_movie, value);
+      assert_eq!(actual_movie, value);
+    }
   }
 
   test_expand_paths! { test_emit_tag; "../tests/tags/*/*/" }

@@ -14,19 +14,47 @@ pub fn emit_swf<W: io::Write>(
   value: &ast::Movie,
   compression_method: ast::CompressionMethod,
 ) -> Result<(), SwfEmitError> {
-  let mut movie_writer = Vec::new();
-  emit_movie(&mut movie_writer, value).map_err(SwfEmitError::Io)?;
-  let uncompressed_file_length = SWF_SIGNATURE_SIZE + movie_writer.len();
+  let write_movie_fn = match compression_method {
+    ast::CompressionMethod::None => W::write_all,
+    #[cfg(feature="deflate")]
+    ast::CompressionMethod::Deflate => write_bytes_deflate,
+    method => return Err(SwfEmitError::UnsupportedCompression(method)),
+  };
+
+  let mut movie_bytes = Vec::new();
+  emit_movie(&mut movie_bytes, value).map_err(SwfEmitError::Io)?;
+  let uncompressed_file_length = SWF_SIGNATURE_SIZE + movie_bytes.len();
   let signature = ast::SwfSignature {
     compression_method,
     swf_version: value.header.swf_version,
     uncompressed_file_length,
   };
+
   emit_swf_signature(writer, &signature).map_err(SwfEmitError::Io)?;
-  match compression_method {
-    ast::CompressionMethod::None => writer.write_all(&movie_writer).map_err(SwfEmitError::Io),
-    method => Err(SwfEmitError::UnsupportedCompression(method)),
+  write_movie_fn(writer, &movie_bytes).map_err(SwfEmitError::Io)
+}
+
+#[cfg(feature="deflate")]
+fn write_bytes_deflate<W: io::Write>(writer: &mut W, bytes: &[u8]) -> io::Result<()> {
+  use miniz_oxide::deflate::{core, CompressionLevel};
+
+  let mut compressor = core::CompressorOxide::default();
+  compressor.set_format_and_level(miniz_oxide::DataFormat::Zlib, CompressionLevel::DefaultLevel as u8);
+
+  let mut result = Ok(());
+  let (status, written) = core::compress_to_output(&mut compressor, bytes, core::TDEFLFlush::Finish, |out| {
+    result = writer.write_all(out);
+    result.is_ok()
+  });
+  
+  // Check the compression status; panicking here is a bug.
+  match status {
+    core::TDEFLStatus::PutBufFailed => assert!(result.is_err(), "miniz_oxide: unexpected error"),
+    core::TDEFLStatus::BadParam => panic!("miniz_oxide: bad deflate params"),
+    core::TDEFLStatus::Okay => panic!("miniz_oxide: unexpected partial compression"),
+    core::TDEFLStatus::Done => assert!(result.is_ok() && written == bytes.len(), "miniz_oxide: unexpected success"),
   }
+  result
 }
 
 pub fn emit_swf_signature<W: io::Write>(writer: &mut W, value: &ast::SwfSignature) -> io::Result<()> {

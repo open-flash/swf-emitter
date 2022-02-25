@@ -3,7 +3,8 @@
 ## Rust
 
 - **[Breaking Change]** `emit_swf` now returns `Result<(), SwfEmitError>`.
-- **[Change]** Unsupported compression methods no longer panic, they return an error instead. 
+- **[Change]** Unsupported compression methods no longer panic, they return an error instead.
+- **[Feature]** Add support for DEFLATE compression with the `miniz_oxide` crate.
 
 # 0.13.0 (2021-07-24)
 

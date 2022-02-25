@@ -25,6 +25,14 @@ fn main() {
 }
 ```
 
+## Features
+
+SWF compression is provided by the following features, enabled by default:
+
+- `deflate`: enable support for `CompressionMethod::Deflate`, using the [`miniz_oxide`](https://github.com/Frommi/miniz_oxide) crate.
+
+Disabling these features will cause `emit_swf` to return an error when passed the corresponding `CompressionMethod`.
+
 ## Contributing
 
 This repo uses Git submodules for its test samples:
