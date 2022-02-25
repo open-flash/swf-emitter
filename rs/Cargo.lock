@@ -264,6 +264,7 @@ version = "0.13.0"
 dependencies = [
  "byteorder",
  "half",
+ "lzma-rs",
  "miniz_oxide",
  "serde_json",
  "swf-fixed",

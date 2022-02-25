@@ -65,6 +65,8 @@ mod tests {
       (CompressionMethod::None, "local-main.rs.swf"),
       #[cfg(feature="deflate")]
       (CompressionMethod::Deflate, "local-main-deflate.rs.swf"),
+      #[cfg(feature="lzma")]
+      (CompressionMethod::Lzma, "local-main-lzma.rs.swf"),
     ];
 
     for (method, filename) in COMPRESSION_METHODS {

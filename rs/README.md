@@ -30,6 +30,7 @@ fn main() {
 SWF compression is provided by the following features, enabled by default:
 
 - `deflate`: enable support for `CompressionMethod::Deflate`, using the [`miniz_oxide`](https://github.com/Frommi/miniz_oxide) crate.
+- `lzma`: enable support for `CompressionMethod::Lzma`, using the [`lzma-rs`](https://github.com/gendx/lzma-rs) crate.
 
 Disabling these features will cause `emit_swf` to return an error when passed the corresponding `CompressionMethod`.
 

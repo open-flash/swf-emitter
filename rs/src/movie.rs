@@ -18,6 +18,9 @@ pub fn emit_swf<W: io::Write>(
     ast::CompressionMethod::None => W::write_all,
     #[cfg(feature="deflate")]
     ast::CompressionMethod::Deflate => write_bytes_deflate,
+    #[cfg(feature="lzma")]
+    ast::CompressionMethod::Lzma => write_bytes_lzma,
+    #[allow(unreachable_patterns)]
     method => return Err(SwfEmitError::UnsupportedCompression(method)),
   };
 
@@ -32,6 +35,11 @@ pub fn emit_swf<W: io::Write>(
 
   emit_swf_signature(writer, &signature).map_err(SwfEmitError::Io)?;
   write_movie_fn(writer, &movie_bytes).map_err(SwfEmitError::Io)
+}
+
+#[cfg(feature="lzma")]
+fn write_bytes_lzma<W: io::Write>(writer: &mut W, mut bytes: &[u8]) -> io::Result<()> {
+  lzma_rs::lzma_compress(&mut bytes, writer)
 }
 
 #[cfg(feature="deflate")]
