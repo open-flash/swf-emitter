@@ -1,4 +1,4 @@
-# Next
+# 0.14.0 (2022-05-08)
 
 - **[Breaking change]** Update to `swf-types@0.14`.
 
