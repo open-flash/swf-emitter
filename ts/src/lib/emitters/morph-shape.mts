@@ -12,10 +12,10 @@ import { MorphShape } from "swf-types/morph-shape";
 import { ShapeRecordType } from "swf-types/shape-records/_type";
 import { MorphStyleChange } from "swf-types/shape-records/morph-style-change";
 
-import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
-import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types.js";
-import { emitMorphGradient } from "./gradient.js";
-import { capStyleToCode, emitEdgeBits, emitListLength, joinStyleToCode } from "./shape.js";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.mjs";
+import { emitMatrix, emitStraightSRgba8 } from "./basic-data-types.mjs";
+import { emitMorphGradient } from "./gradient.mjs";
+import { capStyleToCode, emitEdgeBits, emitListLength, joinStyleToCode } from "./shape.mjs";
 
 export enum MorphShapeVersion {
   MorphShape1 = 1,

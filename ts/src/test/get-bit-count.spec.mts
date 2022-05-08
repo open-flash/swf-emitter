@@ -1,7 +1,7 @@
 import chai from "chai";
 import { SintSize, UintSize } from "semantic-types";
 
-import { getSintBitCount, getSintMinBitCount, getUintBitCount, getUintMinBitCount } from "../lib/get-bit-count.js";
+import { getSintBitCount, getSintMinBitCount, getUintBitCount, getUintMinBitCount } from "../lib/get-bit-count.mjs";
 
 // function toUint8Array(array: number[]): Uint8Array {
 //   const result: Uint8Array = new Uint8Array(array.length);

@@ -13,9 +13,9 @@ import {
 import { Sfixed8P8 } from "swf-types/fixed-point/sfixed8p8";
 import { DefineButton } from "swf-types/tags/define-button";
 
-import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types.js";
-import { emitBlendMode, emitFilterList } from "./display.js";
-import { emitSoundInfo } from "./sound.js";
+import { emitColorTransformWithAlpha, emitMatrix } from "./basic-data-types.mjs";
+import { emitBlendMode, emitFilterList } from "./display.mjs";
+import { emitSoundInfo } from "./sound.mjs";
 
 export enum ButtonVersion {
   Button1,

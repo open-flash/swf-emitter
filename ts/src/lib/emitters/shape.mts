@@ -19,9 +19,9 @@ import {
 import { ShapeStyles } from "swf-types/shape-styles";
 import { Vector2D } from "swf-types/vector-2d";
 
-import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.js";
-import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
-import { emitGradient } from "./gradient.js";
+import { getSintMinBitCount, getUintBitCount } from "../get-bit-count.mjs";
+import { emitMatrix, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.mjs";
+import { emitGradient } from "./gradient.mjs";
 
 export enum ShapeVersion {
   Shape1 = 1,

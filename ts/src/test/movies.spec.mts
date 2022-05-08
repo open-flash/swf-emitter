@@ -7,9 +7,9 @@ import { parseSwf } from "swf-parser";
 import { CompressionMethod } from "swf-types";
 import { $Movie, Movie } from "swf-types/movie";
 
-import { emitSwf } from "../lib/index.js";
-import meta from "./meta.js";
-import { readTextFile } from "./utils.js";
+import { emitSwf } from "../lib/index.mjs";
+import meta from "./meta.mjs";
+import { readTextFile } from "./utils.mjs";
 
 const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const MOVIE_SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "movies");

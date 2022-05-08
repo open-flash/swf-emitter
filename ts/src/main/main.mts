@@ -4,7 +4,7 @@ import * as sysPath from "path";
 import { CompressionMethod, Movie } from "swf-types";
 import { $Movie } from "swf-types/movie";
 
-import { emitSwf } from "../lib/index.js";
+import { emitSwf } from "../lib/index.mjs";
 
 async function main(): Promise<void> {
   if (process.argv.length < 3) {

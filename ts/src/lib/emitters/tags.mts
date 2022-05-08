@@ -5,7 +5,7 @@ import { LanguageCode, Tag, tags, TagType } from "swf-types";
 import { SoundType } from "swf-types/sound/sound-type";
 import { TextAlignment } from "swf-types/text/text-alignment";
 
-import { getSintBitCount, getUintBitCount } from "../get-bit-count.js";
+import { getSintBitCount, getUintBitCount } from "../get-bit-count.mjs";
 import {
   emitColorTransform,
   emitColorTransformWithAlpha,
@@ -13,17 +13,17 @@ import {
   emitRect,
   emitSRgb8,
   emitStraightSRgba8,
-} from "./basic-data-types.js";
+} from "./basic-data-types.mjs";
 import {
   ButtonVersion,
   emitButton2CondActionString,
   emitButtonRecordString, emitButtonSound,
   getMinButtonVersion,
-} from "./button.js";
-import { emitBlendMode, emitClipActionString, emitFilterList } from "./display.js";
-import { emitMorphShape, MorphShapeVersion } from "./morph-shape.js";
-import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape.js";
-import { audioCodingFormatToCode, emitSoundInfo, soundRateToCode } from "./sound.js";
+} from "./button.mjs";
+import { emitBlendMode, emitClipActionString, emitFilterList } from "./display.mjs";
+import { emitMorphShape, MorphShapeVersion } from "./morph-shape.mjs";
+import { emitGlyph, emitShape, getMinShapeVersion, ShapeVersion } from "./shape.mjs";
+import { audioCodingFormatToCode, emitSoundInfo, soundRateToCode } from "./sound.mjs";
 import {
   emitCsmTableHintBits,
   emitFontAlignmentZone,
@@ -34,7 +34,7 @@ import {
   emitTextRecordString,
   gridFittingToCode,
   textRendererToCode,
-} from "./text.js";
+} from "./text.mjs";
 
 /**
  * Read tags until the end of the stream or "end-of-tags".
@@ -92,10 +92,10 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
   ) => any, number | Map<any, number>];
 
   const TAG_TYPE_TO_EMITTER: Map<TagType, TagEmitter> = new Map<TagType, TagEmitter>([
-    [TagType.CsmTextSettings, <TagEmitter> [emitCsmTextSettings, 74]],
+    [TagType.CsmTextSettings, [emitCsmTextSettings, 74] as TagEmitter],
     [
       TagType.DefineBitmap,
-      <TagEmitter> [
+      [
         emitDefineBitmapAny,
         new Map([
           [DefineBitmapVersion.DefineBitsJpeg1, 6],
@@ -105,23 +105,23 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
           [DefineBitmapVersion.DefineBitsLossless2, 36],
           [DefineBitmapVersion.DefineBitsJpeg4, 90],
         ]),
-      ],
+      ] as TagEmitter,
     ],
     [
       TagType.DefineButton,
-      <TagEmitter> [
+      [
         emitDefineButtonAny,
         new Map([
           [ButtonVersion.Button1, 7],
           [ButtonVersion.Button2, 34],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.DefineButtonSound, <TagEmitter> [emitDefineButtonSound, 17]],
-    [TagType.DefineDynamicText, <TagEmitter> [emitDefineDynamicText, 37]],
+    [TagType.DefineButtonSound, [emitDefineButtonSound, 17] as TagEmitter],
+    [TagType.DefineDynamicText, [emitDefineDynamicText, 37] as TagEmitter],
     [
       TagType.DefineFont,
-      <TagEmitter> [
+      [
         emitDefineFontAny,
         new Map([
           // `Font1` is handled in `DefineGlyphFont`
@@ -129,36 +129,36 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
           [DefineFontVersion.Font3, 75],
           [DefineFontVersion.Font4, 91],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.DefineFontAlignZones, <TagEmitter> [emitDefineFontAlignZones, 73]],
+    [TagType.DefineFontAlignZones, [emitDefineFontAlignZones, 73] as TagEmitter],
     [
       TagType.DefineFontInfo,
-      <TagEmitter> [
+      [
         emitDefineFontInfoAny,
         new Map([
           [DefineFontInfoVersion.FontInfo1, 13],
           [DefineFontInfoVersion.FontInfo2, 62],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.DefineFontName, <TagEmitter> [emitDefineFontName, 88]],
-    [TagType.DefineGlyphFont, <TagEmitter> [emitDefineGlyphFont, 10]],
-    [TagType.DefineJpegTables, <TagEmitter> [emitDefineJpegTables, 8]],
+    [TagType.DefineFontName, [emitDefineFontName, 88] as TagEmitter],
+    [TagType.DefineGlyphFont, [emitDefineGlyphFont, 10] as TagEmitter],
+    [TagType.DefineJpegTables, [emitDefineJpegTables, 8] as TagEmitter],
     [
       TagType.DefineMorphShape,
-      <TagEmitter> [
+      [
         emitDefineMorphShapeAny,
         new Map([
           [MorphShapeVersion.MorphShape1, 46],
           [MorphShapeVersion.MorphShape2, 84],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.DefineSceneAndFrameLabelData, <TagEmitter> [emitDefineSceneAndFrameLabelData, 86]],
+    [TagType.DefineSceneAndFrameLabelData, [emitDefineSceneAndFrameLabelData, 86] as TagEmitter],
     [
       TagType.DefineShape,
-      <TagEmitter> [
+      [
         emitDefineShapeAny,
         new Map([
           [ShapeVersion.Shape1, 2],
@@ -166,72 +166,72 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
           [ShapeVersion.Shape3, 32],
           [ShapeVersion.Shape4, 83],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.DefineSound, <TagEmitter> [emitDefineSound, 14]],
-    [TagType.DefineSprite, <TagEmitter> [emitDefineSprite, 39]],
+    [TagType.DefineSound, [emitDefineSound, 14] as TagEmitter],
+    [TagType.DefineSprite, [emitDefineSprite, 39] as TagEmitter],
     [
       TagType.DefineText,
-      <TagEmitter> [
+      [
         emitDefineTextAny,
         new Map([
           [DefineTextVersion.DefineText1, 11],
           [DefineTextVersion.DefineText2, 33],
         ]),
-      ],
+      ] as TagEmitter,
     ],
     [
       TagType.DoAbc,
-      <TagEmitter> [
+      [
         emitDoAbcAny,
         new Map([
           [DoAbcVersion.Abc1, 72],
           [DoAbcVersion.Abc2, 82],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.DoAction, <TagEmitter> [emitDoAction, 12]],
-    [TagType.DoInitAction, <TagEmitter> [emitDoInitAction, 59]],
-    [TagType.ExportAssets, <TagEmitter> [emitExportAssets, 56]],
-    [TagType.FileAttributes, <TagEmitter> [emitFileAttributes, 69]],
-    [TagType.FrameLabel, <TagEmitter> [emitFrameLabel, 43]],
+    [TagType.DoAction, [emitDoAction, 12] as TagEmitter],
+    [TagType.DoInitAction, [emitDoInitAction, 59] as TagEmitter],
+    [TagType.ExportAssets, [emitExportAssets, 56] as TagEmitter],
+    [TagType.FileAttributes, [emitFileAttributes, 69] as TagEmitter],
+    [TagType.FrameLabel, [emitFrameLabel, 43] as TagEmitter],
     [
       TagType.ImportAssets,
-      <TagEmitter> [
+      [
         emitImportAssetsAny,
         new Map([
           [ImportAssetsVersion.ImportAssets1, 57],
           [ImportAssetsVersion.ImportAssets2, 71],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.Metadata, <TagEmitter> [emitMetadata, 77]],
+    [TagType.Metadata, [emitMetadata, 77] as TagEmitter],
     [
       TagType.PlaceObject,
-      <TagEmitter> [
+      [
         emitPlaceObjectAny,
         new Map([
           [PlaceObjectVersion.PlaceObject1, 4],
           [PlaceObjectVersion.PlaceObject2, 26],
           [PlaceObjectVersion.PlaceObject3, 70],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.Protect, <TagEmitter> [emitProtect, 24]],
+    [TagType.Protect, [emitProtect, 24] as TagEmitter],
     [
       TagType.RemoveObject,
-      <TagEmitter> [
+      [
         emitRemoveObjectAny,
         new Map([
           [RemoveObjectVersion.RemoveObject1, 5],
           [RemoveObjectVersion.RemoveObject2, 28],
         ]),
-      ],
+      ] as TagEmitter,
     ],
-    [TagType.SetBackgroundColor, <TagEmitter> [emitSetBackgroundColor, 9]],
-    [TagType.StartSound, <TagEmitter> [emitStartSound, 15]],
+    [TagType.SetBackgroundColor, [emitSetBackgroundColor, 9] as TagEmitter],
+    [TagType.StartSound, [emitStartSound, 15] as TagEmitter],
     [TagType.ShowFrame, 1],
-    [TagType.SymbolClass, <TagEmitter> [emitSymbolClass, 76]],
+    [TagType.SymbolClass, [emitSymbolClass, 76] as TagEmitter],
   ]);
 
   if (value.type === TagType.Raw) {
@@ -257,7 +257,7 @@ export function emitTag(byteStream: WritableByteStream, value: Tag, swfVersion: 
 
   const tagStream: WritableStream = new WritableStream();
   const result: any = tagEmitter[0](tagStream, value, swfVersion);
-  let code: number | Map<any, number> = <any> tagEmitter[tagEmitter.length - 1];
+  let code: number | Map<any, number> = tagEmitter[tagEmitter.length - 1] as any;
   if (typeof code !== "number") {
     const resolved: number | undefined = code.get(result);
     if (resolved === undefined) {

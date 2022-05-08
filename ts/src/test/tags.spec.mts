@@ -6,9 +6,9 @@ import { JSON_READER } from "kryo-json/json-reader";
 import sysPath from "path";
 import { $Tag,Tag } from "swf-types/tag";
 
-import { emitTag } from "../lib/emitters/tags.js";
-import meta from "./meta.js";
-import { prettyPrintBytes, readFile, readTextFile } from "./utils.js";
+import { emitTag } from "../lib/emitters/tags.mjs";
+import meta from "./meta.mjs";
+import { prettyPrintBytes, readFile, readTextFile } from "./utils.mjs";
 
 const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const TAG_SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "tags");

@@ -3,7 +3,7 @@ import incident from "incident";
 import { Uint8,Uint16, Uint32 } from "semantic-types";
 import { BlendMode, ClipAction, ClipEventFlags, Filter, filters, FilterType } from "swf-types";
 
-import { emitStraightSRgba8 } from "./basic-data-types.js";
+import { emitStraightSRgba8 } from "./basic-data-types.mjs";
 
 export function emitBlendMode(byteStream: WritableByteStream, value: BlendMode): void {
   const BLEND_MODE_TO_CODE: Map<BlendMode, Uint8> = new Map<BlendMode, Uint8>([
@@ -152,14 +152,14 @@ export function emitFilterList(byteStream: WritableByteStream, value: ReadonlyAr
 export function emitFilter(byteStream: WritableByteStream, value: Filter): void {
   type FilterEmitter = [(byteStream: WritableByteStream, value: Filter) => void, Uint8];
   const FILTER_TYPE_TO_EMITTER: Map<FilterType, FilterEmitter> = new Map([
-    [FilterType.Bevel, <FilterEmitter> [emitBevelFilter, 3]],
-    [FilterType.Blur, <FilterEmitter> [emitBlurFilter, 1]],
-    [FilterType.Convolution, <FilterEmitter> [emitConvolutionFilter, 5]],
-    [FilterType.ColorMatrix, <FilterEmitter> [emitColorMatrixFilter, 6]],
-    [FilterType.DropShadow, <FilterEmitter> [emitDropShadowFilter, 0]],
-    [FilterType.Glow, <FilterEmitter> [emitGlowFilter, 2]],
-    [FilterType.GradientBevel, <FilterEmitter> [emitGradientBevelFilter, 7]],
-    [FilterType.GradientGlow, <FilterEmitter> [emitGradientGlowFilter, 4]],
+    [FilterType.Bevel, [emitBevelFilter, 3] as FilterEmitter],
+    [FilterType.Blur, [emitBlurFilter, 1] as FilterEmitter],
+    [FilterType.Convolution, [emitConvolutionFilter, 5] as FilterEmitter],
+    [FilterType.ColorMatrix, [emitColorMatrixFilter, 6] as FilterEmitter],
+    [FilterType.DropShadow, [emitDropShadowFilter, 0] as FilterEmitter],
+    [FilterType.Glow, [emitGlowFilter, 2] as FilterEmitter],
+    [FilterType.GradientBevel, [emitGradientBevelFilter, 7] as FilterEmitter],
+    [FilterType.GradientGlow, [emitGradientGlowFilter, 4] as FilterEmitter],
   ]);
 
   const filterEmitter: FilterEmitter | undefined = FILTER_TYPE_TO_EMITTER.get(value.filter);

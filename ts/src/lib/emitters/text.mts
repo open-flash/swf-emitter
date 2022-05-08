@@ -3,8 +3,8 @@ import incident from "incident";
 import { Uint2, Uint3, Uint8, UintSize } from "semantic-types";
 import { Glyph, LanguageCode, text } from "swf-types";
 
-import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
-import { emitGlyph } from "./shape.js";
+import { emitRect, emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.mjs";
+import { emitGlyph } from "./shape.mjs";
 
 export function emitLanguageCode(byteStream: WritableByteStream, value: LanguageCode): void {
   const VALUE_TO_CODE: Map<LanguageCode, Uint8> = new Map([

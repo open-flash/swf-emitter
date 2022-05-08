@@ -13,10 +13,10 @@ import { $Matrix } from "swf-types/matrix";
 import { $Rect } from "swf-types/rect";
 import { $SwfSignature } from "swf-types/swf-signature";
 
-import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types.js";
-import { emitHeader, emitSwfSignature } from "../lib/emitters/movie.js";
-import meta from "./meta.js";
-import { prettyPrintBytes, readFile, readTextFile } from "./utils.js";
+import { emitColorTransformWithAlpha, emitMatrix, emitRect } from "../lib/emitters/basic-data-types.mjs";
+import { emitHeader, emitSwfSignature } from "../lib/emitters/movie.mjs";
+import meta from "./meta.mjs";
+import { prettyPrintBytes, readFile, readTextFile } from "./utils.mjs";
 
 const PROJECT_ROOT: string = sysPath.join(meta.dirname, "..");
 const SAMPLES_ROOT: string = sysPath.join(PROJECT_ROOT, "..", "tests", "various");

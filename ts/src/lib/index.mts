@@ -5,8 +5,8 @@ import { CompressionMethod } from "swf-types/compression-method";
 import { Movie } from "swf-types/movie";
 import { Tag } from "swf-types/tag";
 
-import { emitSwf as emitSwfStream } from "./emitters/movie.js";
-import { emitTag as emitTagStream } from "./emitters/tags.js";
+import { emitSwf as emitSwfStream } from "./emitters/movie.mjs";
+import { emitTag as emitTagStream } from "./emitters/tags.mjs";
 
 export { swf };
 

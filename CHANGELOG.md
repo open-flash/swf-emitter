@@ -1,11 +1,19 @@
 # Next
 
+- **[Breaking change]** Update to `swf-types@0.14`.
+
 ## Rust
 
 - **[Breaking Change]** `emit_swf` now returns `Result<(), SwfEmitError>`.
 - **[Change]** Unsupported compression methods no longer panic, they return an error instead.
 - **[Feature]** Add support for DEFLATE compression with the `miniz_oxide` crate.
 - **[Feature]** Add support for LZMA compression with the `lzma-rs` crate.
+
+# Typescript
+
+- **[Breaking change]** Compile to `.mjs`.
+- **[Fix]** Update dependencies.
+- **[Internal]** Use Yarn's Plug'n'Play linker.
 
 # 0.13.0 (2021-07-24)
 

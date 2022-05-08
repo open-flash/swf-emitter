@@ -3,7 +3,7 @@ import incident from "incident";
 import { Uint2, Uint8 } from "semantic-types";
 import { ColorSpace, ColorStop, Gradient, GradientSpread, MorphColorStop, MorphGradient } from "swf-types";
 
-import { emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.js";
+import { emitSRgb8, emitStraightSRgba8 } from "./basic-data-types.mjs";
 
 const GRADIENT_SPREAD_TO_CODE: Map<GradientSpread, Uint2> = new Map([
   [GradientSpread.Pad, 0 as Uint2],
