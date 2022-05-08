@@ -22,15 +22,15 @@ lzma = ["lzma-rs"]
 
 [dependencies]
 byteorder = "1.4.3"
-half = "1.7.1"
-swf-types = "0.13.0"
+half = "1.8.2"
+swf-types = "0.14.0"
 swf-fixed = "0.1.5"
 miniz_oxide = { version = "0.5.1", optional = true }
 lzma-rs = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
-serde_json = "1.0.64"
-swf-parser = "0.13.0"
+serde_json = "1.0.81"
+swf-parser = "0.14.0"
 test-generator = "0.3.0"
 
 # [replace]

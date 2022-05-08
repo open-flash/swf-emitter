@@ -36,7 +36,7 @@
     "build": "tsc --build src/lib/tsconfig.json",
     "prepack": "yarn run build",
     "test:build": "tsc --build src/test/tsconfig.json",
-    "test": "yarn run test:build && mocha \"test/**/*.spec.js\"",
+    "test": "yarn run test:build && c8 mocha \"test/**/*.spec.js\"",
     "main:build": "tsc --build src/main/tsconfig.json",
     "start": "yarn run main:build && node ./main/main.js"
   },
@@ -55,6 +55,7 @@
     "@types/node": "^16.4.1",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
+    "c8": "^7.11.2",
     "chai": "^4.3.4",
     "eslint": "^7.31.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
@@ -68,5 +69,11 @@
   },
   "files": [
     "./lib/**/*.(js|map|ts)"
-  ]
+  ],
+  "packageManager": "yarn@4.0.0-rc.4",
+  "c8": {
+    "reportDir": "./coverage",
+    "reporter": ["lcov"],
+    "include": ["lib/**/*"]
+  }
 }
