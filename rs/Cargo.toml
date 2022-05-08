@@ -9,32 +9,32 @@ repository = "https://github.com/open-flash/swf-emitter"
 readme = "./README.md"
 keywords = ["emitter", "swf", "flash"]
 license = "AGPL-3.0-or-later"
-edition = "2018"
+edition = "2021"
+rust-version = "1.60.0"
 
 [lib]
 name = "swf_emitter"
 path = "src/lib.rs"
 
-[features]
-default = ["deflate", "lzma"]
-deflate = ["miniz_oxide"]
-lzma = ["lzma-rs"]
-
 [dependencies]
 byteorder = "1.4.3"
 half = "1.8.2"
+lzma-rs = { version = "0.2.0", optional = true }
+miniz_oxide = { version = "0.5.1", optional = true }
 swf-types = "0.14.0"
 swf-fixed = "0.1.5"
-miniz_oxide = { version = "0.5.1", optional = true }
-lzma-rs = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.81"
 swf-parser = "0.14.0"
 test-generator = "0.3.0"
 
-# [replace]
-# "swf-types:0.4.1" = { path = '../../swf-types/rs' }
+[features]
+default = ["deflate", "lzma"]
+# Enable support for the `Deflate` compression method
+deflate = ["dep:miniz_oxide"]
+# Enable support for the `Lzma` compression method
+lzma = ["dep:lzma-rs"]
 
 # When testing larger files, increasing `opt-level` provides a significant speed-up.
 # [profile.test]

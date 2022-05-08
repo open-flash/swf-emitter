@@ -38,8 +38,6 @@ pub struct TagHeader {
 }
 
 fn emit_tag_header<W: io::Write>(writer: &mut W, value: TagHeader) -> io::Result<()> {
-  use std::convert::TryFrom;
-
   const SHORT_TAG_MAX_LENGTH: u16 = (1 << 6) - 1;
 
   // Some tags require a long header
